@@ -118,3 +118,169 @@ footer {
   .mapPlaceholder { min-height: 520px; }
   footer { overflow-x: auto; white-space: nowrap; }
 }
+
+
+/* Live territory map */
+.territoryMapShell {
+  position: relative;
+  min-height: 620px;
+  overflow: hidden;
+  background: #101312;
+}
+
+.googleMapCanvas {
+  position: absolute;
+  inset: 0;
+}
+
+.mapHud {
+  position: absolute;
+  z-index: 3;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(9,11,11,.78);
+  backdrop-filter: blur(16px);
+  border-radius: 12px;
+  color: var(--text);
+  box-shadow: 0 12px 30px rgba(0,0,0,.16);
+}
+
+.mapHudTopLeft {
+  left: 24px;
+  top: 24px;
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+}
+
+.mapHudTopLeft strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.mapHudTopLeft small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.mapHudTopRight {
+  right: 18px;
+  top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.mapHudTopRight span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mapHudBottom {
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  padding: 11px 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.mapHudBottom > div {
+  display: grid;
+  gap: 3px;
+}
+
+.mapHudBottom strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.mapHudEyebrow {
+  font-size: 8px;
+  letter-spacing: .15em;
+  color: var(--accent);
+}
+
+.mapStatus {
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.mapStatus.isReady {
+  color: var(--accent);
+}
+
+.mapError {
+  min-height: 620px;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  background: #101312;
+}
+
+.mapError span {
+  color: #ffb36a;
+  letter-spacing: .16em;
+  font-size: 9px;
+}
+
+.mapError strong {
+  font-weight: 500;
+}
+
+.mapError small {
+  color: var(--muted);
+}
+
+.nextLayer {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.nextLayer > span {
+  color: var(--accent);
+  font-size: 8px;
+  letter-spacing: .14em;
+}
+
+.nextLayer strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nextLayer p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .territoryMapShell,
+  .mapError {
+    min-height: 520px;
+  }
+
+  .mapHudTopRight {
+    left: 18px;
+    right: auto;
+    top: 104px;
+    flex-wrap: wrap;
+    max-width: calc(100% - 36px);
+  }
+
+  .mapHudBottom {
+    left: 18px;
+    right: 18px;
+  }
+}

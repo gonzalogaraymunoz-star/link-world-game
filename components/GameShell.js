@@ -262,7 +262,7 @@ function BusinessInspector({ business, gameState, rrssProfile, progress, actions
   );
 }
 
-export default function GameShell()export default function GameShell() {
+export default function GameShell() {
   const [view, setView] = useState("mundo");
   const [businesses, setBusinesses] = useState([]);
   const [selectedId, setSelectedId] = useState(null);

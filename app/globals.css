@@ -884,3 +884,271 @@ button, input { font: inherit; }
   .gameStateRow { grid-template-columns: 1fr auto auto; }
   .gameStateRow .statusPill { grid-column: 1 / -1; }
 }
+
+
+/* Gameplay v1 · progreso visible y loop de misiones */
+.mapGameStage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+.gameProgressHud {
+  position: absolute;
+  z-index: 8;
+  top: 74px;
+  right: 18px;
+  width: 268px;
+  border: 1px solid rgba(216,255,114,.24);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(8,11,10,.88);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 45px rgba(0,0,0,.28);
+}
+.gameProgressTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.gameProgressTop strong { font-size: 15px; font-weight: 600; color: #d8ff72; }
+.gameLevel {
+  font-size: 8px;
+  letter-spacing: .16em;
+  color: rgba(255,255,255,.58);
+}
+.xpTrack {
+  height: 6px;
+  background: rgba(255,255,255,.09);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 9px 0 8px;
+}
+.xpTrack i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #d8ff72;
+  box-shadow: 0 0 18px rgba(216,255,114,.5);
+  transition: width .55s cubic-bezier(.2,.8,.2,1);
+}
+.gameProgressMeta {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 5px;
+}
+.gameProgressMeta span {
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 8px;
+  color: rgba(255,255,255,.65);
+  font-size: 7px;
+  line-height: 1.35;
+}
+.gameProgressHud > small {
+  display: block;
+  margin-top: 8px;
+  color: rgba(255,255,255,.36);
+  font-size: 7px;
+  line-height: 1.45;
+}
+
+.cellProgressDock {
+  position: absolute;
+  z-index: 8;
+  left: 18px;
+  right: 18px;
+  bottom: 82px;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 4px 2px 6px;
+  scrollbar-width: none;
+}
+.cellProgressDock::-webkit-scrollbar { display: none; }
+.cellProgressDock button {
+  min-width: 158px;
+  max-width: 190px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(8,11,10,.84);
+  backdrop-filter: blur(14px);
+  color: #fff;
+  border-radius: 11px;
+  padding: 9px 10px;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.cellProgressDock button:hover { transform: translateY(-2px); border-color: rgba(216,255,114,.28); }
+.cellProgressDock button.active {
+  border-color: rgba(216,255,114,.58);
+  background: rgba(216,255,114,.10);
+}
+.cellDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid rgba(216,255,114,.45);
+  box-shadow: 0 0 0 4px rgba(216,255,114,.04);
+}
+.cellDot[data-level="1"] { background: rgba(216,255,114,.20); }
+.cellDot[data-level="2"] { background: rgba(216,255,114,.38); }
+.cellDot[data-level="3"] { background: rgba(216,255,114,.58); box-shadow: 0 0 0 5px rgba(216,255,114,.07); }
+.cellDot[data-level="4"] { background: rgba(216,255,114,.82); box-shadow: 0 0 14px rgba(216,255,114,.24); }
+.cellDot[data-level="5"] { background: #d8ff72; box-shadow: 0 0 20px rgba(216,255,114,.46); }
+.cellCopy { display: grid; gap: 2px; min-width: 0; }
+.cellCopy b { font-size: 9px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cellCopy small { font-size: 7px; color: rgba(255,255,255,.44); }
+.cellMiniTrack {
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+}
+.cellMiniTrack i { display: block; height: 100%; background: #d8ff72; border-radius: inherit; transition: width .45s ease; }
+
+.evolutionCard {
+  border: 1px solid rgba(216,255,114,.16);
+  background: linear-gradient(180deg, rgba(216,255,114,.055), rgba(255,255,255,.015));
+  border-radius: 14px;
+  padding: 13px;
+  margin-bottom: 14px;
+}
+.evolutionHead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+}
+.evolutionHead > div { display: grid; gap: 4px; }
+.evolutionHead strong { font-size: 16px; font-weight: 500; }
+.evolutionHead > b { font-size: 24px; font-weight: 500; color: #d8ff72; }
+.evolutionTrack {
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  gap: 5px;
+  margin-top: 12px;
+}
+.evolutionTrack span {
+  height: 7px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+}
+.evolutionTrack span i { display: block; width: 0; height: 100%; }
+.evolutionTrack span.done i { width: 100%; background: #d8ff72; }
+.evolutionTrack span.next { box-shadow: inset 0 0 0 1px rgba(216,255,114,.38); animation: nextStagePulse 1.8s ease-in-out infinite; }
+.evolutionLabels {
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  gap: 5px;
+  margin-top: 5px;
+}
+.evolutionLabels span { font-size: 6px; color: rgba(255,255,255,.28); text-align: center; }
+.evolutionLabels span.done { color: rgba(216,255,114,.72); }
+.evolutionCard p {
+  margin: 10px 0 0;
+  color: rgba(255,255,255,.5);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.evolutionCard p b { color: #fff; font-weight: 500; }
+.evolutionComplete { color: #d8ff72 !important; }
+
+.questCard {
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  padding: 13px;
+  margin-bottom: 14px;
+  background: rgba(255,255,255,.025);
+  position: relative;
+  overflow: hidden;
+}
+.questCard::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: rgba(255,255,255,.16);
+}
+.quest-in_progress::before { background: #d8ff72; box-shadow: 0 0 18px rgba(216,255,114,.45); }
+.quest-awaiting_evidence::before { background: #ffb36a; }
+.questHead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.questCard h3 { font-size: 14px; font-weight: 500; margin: 10px 0 6px; line-height: 1.35; }
+.questCard p { color: rgba(255,255,255,.48); font-size: 9px; line-height: 1.5; margin: 0; }
+.questReward {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+.questReward span { font-size: 7px; text-transform: uppercase; letter-spacing: .12em; color: rgba(255,255,255,.36); }
+.questReward b { color: #d8ff72; font-size: 8px; font-weight: 500; }
+.questButton { width: 100%; margin-top: 10px; }
+.evidenceSubmit {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  margin-top: 10px;
+}
+.evidenceSubmit input {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.035);
+  color: #fff;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 8px;
+  outline: 0;
+}
+.evidenceSubmit input:focus { border-color: rgba(216,255,114,.42); }
+.evidenceSubmit button {
+  border: 0;
+  border-radius: 8px;
+  background: #d8ff72;
+  color: #111;
+  padding: 0 10px;
+  font-size: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.evidenceSubmit button:disabled { opacity: .35; cursor: default; }
+.autoEvidence {
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 9px;
+  background: rgba(255,179,106,.06);
+  color: #ffcc91;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+@keyframes nextStagePulse {
+  0%,100% { opacity: .58; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 1100px) {
+  .gameProgressHud { width: 232px; }
+  .cellProgressDock button { min-width: 145px; }
+}
+@media (max-width: 820px) {
+  .gameProgressHud {
+    top: 70px;
+    right: 10px;
+    width: 220px;
+  }
+  .cellProgressDock { bottom: 72px; left: 10px; right: 10px; }
+  .cellProgressDock button { min-width: 135px; }
+}

@@ -57,7 +57,7 @@ export default function Home() {
 
       <footer>
         <span>MICELIO · conectado</span>
-        <span>Google Maps · conectado</span>
+        <span>Google Maps · configurado</span>
         <span>Supabase · siguiente capa</span>
       </footer>
     </main>

@@ -1,8 +1,4 @@
-const nodes = [
-  { name: "LAMA", type: "Turismo", status: "Activo", x: "31%", y: "42%" },
-  { name: "Hotel Experience", type: "Hotelería", status: "Activo", x: "59%", y: "35%" },
-  { name: "Caracol", type: "Gastronomía", status: "Activo", x: "49%", y: "64%" }
-];
+import TerritoryMap from "../components/TerritoryMap";
 
 export default function Home() {
   return (
@@ -22,32 +18,7 @@ export default function Home() {
       </header>
 
       <section className="stage">
-        <div className="mapPlaceholder">
-          <div className="mapGrid" />
-          <div className="mapLabel">
-            <span>BASE TERRITORIAL</span>
-            <strong>Google Maps se conecta aquí</strong>
-            <small>El mapa real será el suelo; LINK será la capa jugable.</small>
-          </div>
-
-          <div className="route routeOne" />
-          <div className="route routeTwo" />
-
-          {nodes.map((node) => (
-            <article
-              className="node"
-              key={node.name}
-              style={{ left: node.x, top: node.y }}
-            >
-              <span className="pulse" />
-              <div className="nodeCard">
-                <b>{node.name}</b>
-                <small>{node.type}</small>
-                <em>{node.status}</em>
-              </div>
-            </article>
-          ))}
-        </div>
+        <TerritoryMap />
 
         <aside className="sidePanel">
           <div className="panelHead">
@@ -65,9 +36,15 @@ export default function Home() {
           <div className="mission">
             <span>MISIÓN 001</span>
             <h2>Activar territorio real</h2>
-            <p>Conectar Google Maps y ubicar el primer negocio LINK sobre su coordenada real.</p>
+            <p>Usar Google Maps como suelo del juego y montar encima la capa LINK: negocios, asociaciones, eventos y crecimiento.</p>
             <div className="progress"><i /></div>
-            <small>Fase 1 · infraestructura</small>
+            <small>Fase 1 · territorio conectado</small>
+          </div>
+
+          <div className="nextLayer">
+            <span>SIGUIENTE CAPA</span>
+            <strong>Reconocer negocios reales</strong>
+            <p>Tomaremos los lugares del ecosistema y los vincularemos por Place ID, sin inventar ubicaciones.</p>
           </div>
 
           <div className="legend">
@@ -80,7 +57,7 @@ export default function Home() {
 
       <footer>
         <span>MICELIO · conectado</span>
-        <span>Google Maps · pendiente</span>
+        <span>Google Maps · conectado</span>
         <span>Supabase · siguiente capa</span>
       </footer>
     </main>

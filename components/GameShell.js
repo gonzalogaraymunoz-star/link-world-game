@@ -175,7 +175,7 @@ export default function GameShell() {
   const [loading, setLoading] = useState(true);
   const [privateData, setPrivateData] = useState({
     missions: [], workspaces: [], integrations: [], events: [], activity: [],
-    gameStates: [], rrss: [], fin: [], cron: [], alerts: [], memoryCounts: null
+    gameStates: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null
   });
   const [notice, setNotice] = useState("");
 
@@ -217,9 +217,13 @@ export default function GameShell() {
       supabase.from("link_world_activity").select("id,action,target_type,target_id,origin,note,created_at").order("created_at", { ascending: false }).limit(80),
       supabase.from("link_game_state_snapshots").select("business_id,temperature,conversion_percent,state,next_action_due_at,reason,captured_at").order("captured_at", { ascending: false }).limit(80),
       supabase.from("link_rrss_profiles").select("id,business_id,name,slug,status,metadata").order("name"),
-      supabase.from("fin_businesses").select("business_key,display_name,default_currency,active,sort_order").order("sort_order"),
-      supabase.from("link_cron_registry").select("id,slug,name,status,schedule,timezone,last_run_at,next_run_at,metadata").order("name"),
-      supabase.from("work_alerts").select("id,title,severity,status,source,created_at,metadata").order("created_at", { ascending: false }).limit(50),
+      Promise.all([
+        supabase.from("link_financial_policies").select("id,business_id,policy_key,collection_model,payment_provider,default_currency,settlement_model,status,sandbox_enabled,production_enabled,updated_at").order("updated_at", { ascending: false }),
+        supabase.from("link_world_transactions").select("id,business_id,business_global_id,direction,transaction_type,status,amount,currency,payment_method,occurred_at,due_at,paid_at").order("occurred_at", { ascending: false }).limit(80),
+        supabase.from("link_payment_provider_accounts").select("id,business_id,provider,environment,status,webhook_status,verified_at,last_webhook_at,last_error,owner_scope,owner_global_id").order("updated_at", { ascending: false })
+      ]),
+      supabase.from("link_cron_registry").select("id,cron_key,name,description,cycle_label,schedule_config,status,source_system,updated_at,metadata").order("name"),
+      supabase.from("link_rrss_notifications").select("id,business_id,notification_type,title,body,is_read,created_at,metadata").eq("is_read", false).order("created_at", { ascending: false }).limit(60),
       Promise.all([
         supabase.from("deep_memories").select("*", { count: "exact", head: true }),
         supabase.from("link_cortex_documents").select("*", { count: "exact", head: true }),
@@ -228,7 +232,15 @@ export default function GameShell() {
       ])
     ]);
 
+    const finance = queries[7];
     const memory = queries[10];
+    const failures = queries
+      .slice(0, 10)
+      .flatMap((result, index) => Array.isArray(result) ? result.map((part, partIndex) => ({ result: part, label: `q${index}.${partIndex}` })) : [{ result, label: `q${index}` }])
+      .filter(item => item.result?.error);
+    if (failures.length) {
+      console.warn("LINK WORLD GAME · protected reads with errors", failures.map(item => [item.label, item.result.error?.message]));
+    }
     setPrivateData({
       missions: safeRows(queries[0]),
       workspaces: safeRows(queries[1]),
@@ -237,7 +249,9 @@ export default function GameShell() {
       activity: safeRows(queries[4]),
       gameStates: safeRows(queries[5]),
       rrss: safeRows(queries[6]),
-      fin: safeRows(queries[7]),
+      financialPolicies: safeRows(finance[0]),
+      transactions: safeRows(finance[1]),
+      paymentProviders: safeRows(finance[2]),
       cron: safeRows(queries[8]),
       alerts: safeRows(queries[9]),
       memoryCounts: {
@@ -272,7 +286,7 @@ export default function GameShell() {
       setSession(next);
       if (!next) {
         setMember(false);
-        setPrivateData(prev => ({ ...prev, missions: [], workspaces: [], integrations: [], events: [], activity: [], gameStates: [], rrss: [], fin: [], cron: [], alerts: [], memoryCounts: null }));
+        setPrivateData(prev => ({ ...prev, missions: [], workspaces: [], integrations: [], events: [], activity: [], gameStates: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null }));
         return;
       }
       const check = await supabase.rpc("link_world_is_member");
@@ -307,7 +321,7 @@ export default function GameShell() {
   };
 
   const openCount = privateData.missions.filter(row => !["verified", "cancelled", "closed"].includes(row.status)).length;
-  const alertCount = privateData.alerts.filter(row => !["closed", "resolved", "done"].includes(row.status)).length;
+  const alertCount = privateData.alerts.filter(row => row.is_read !== true).length;
 
   return (
     <main className="gameApp">
@@ -428,7 +442,19 @@ export default function GameShell() {
               <section className="contentView">
                 <div className="viewHead"><div><span className="sectionKicker">FIN</span><h1>Economía del ecosistema</h1></div><a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer">Abrir Control Central ↗</a></div>
                 <div className="economyGrid">
-                  {privateData.fin.map(row => <article className="economyCard" key={row.business_key}><span className="sectionKicker">{row.default_currency}</span><h3>{row.display_name}</h3><p>{row.active ? "Célula financiera activa" : "Inactiva"}</p><StatusPill tone={row.active ? "good" : "warn"}>{row.active ? "activa" : "inactiva"}</StatusPill></article>)}
+                  {businesses.map(business => {
+                    const policies = privateData.financialPolicies.filter(row => row.business_id === business.id);
+                    const providers = privateData.paymentProviders.filter(row => row.business_id === business.id);
+                    const tx = privateData.transactions.filter(row => row.business_id === business.id);
+                    const activePolicy = policies.find(row => row.status === "active" || row.production_enabled) || policies[0];
+                    return <article className="economyCard" key={business.id}>
+                      <span className="sectionKicker">{activePolicy?.default_currency || tx[0]?.currency || "CLP"}</span>
+                      <h3>{business.name}</h3>
+                      <p>{activePolicy ? `${activePolicy.collection_model || "cobro"} · ${activePolicy.payment_provider || "proveedor por definir"}` : "Política financiera no expuesta en esta capa."}</p>
+                      <div className="miniMeta"><span>{tx.length} movimientos</span><span>{providers.length} proveedor(es)</span></div>
+                      <StatusPill tone={activePolicy?.production_enabled ? "good" : activePolicy ? "neutral" : "warn"}>{activePolicy?.production_enabled ? "producción" : activePolicy?.status || "sin ruta"}</StatusPill>
+                    </article>;
+                  })}
                 </div>
                 <div className="gameStateTable">
                   <h3>Estado jugable por negocio</h3>
@@ -443,12 +469,12 @@ export default function GameShell() {
           ) : null}
 
           {!loading && view === "cron" ? (
-            member ? <section className="contentView"><div className="viewHead"><div><span className="sectionKicker">CRON</span><h1>Ritmos del organismo</h1></div><span>{privateData.cron.length} rutinas</span></div><div className="timelineList">{privateData.cron.map(row => <article className="timelineRow" key={row.id || row.slug}><i className="eventDot"/><div><span>{row.status}</span><h3>{row.name || row.slug}</h3><small>{row.schedule || row.timezone || "programado"}</small></div><div className="rowEnd"><small>{fmtDate(row.next_run_at)}</small></div></article>)}</div></section>
+            member ? <section className="contentView"><div className="viewHead"><div><span className="sectionKicker">CRON</span><h1>Ritmos del organismo</h1></div><span>{privateData.cron.length} rutinas</span></div><div className="timelineList">{privateData.cron.map(row => <article className="timelineRow" key={row.id || row.cron_key}><i className="eventDot"/><div><span>{row.status} · {row.source_system || "LINK"}</span><h3>{row.name || row.cron_key}</h3><small>{row.cycle_label || row.description || "ciclo persistente"}</small></div><div className="rowEnd"><small>{fmtDate(row.updated_at)}</small></div></article>)}</div></section>
             : <LockPanel title="Cron del ecosistema" onOpenLogin={() => setLoginOpen(true)} />
           ) : null}
 
           {!loading && view === "alertas" ? (
-            member ? <section className="contentView"><div className="viewHead"><div><span className="sectionKicker">SEÑALES</span><h1>Alertas y bloqueos</h1></div><span>{alertCount} abiertas</span></div><div className="timelineList">{privateData.alerts.length ? privateData.alerts.map(row => <article className="timelineRow" key={row.id}><i className="priorityDot priority-high"/><div><span>{row.source || "LINK"}</span><h3>{row.title}</h3><small>{row.severity}</small></div><div className="rowEnd"><StatusPill tone="warn">{row.status}</StatusPill><small>{fmtDate(row.created_at)}</small></div></article>) : <div className="emptyState">No hay alertas visibles en esta capa.</div>}</div></section>
+            member ? <section className="contentView"><div className="viewHead"><div><span className="sectionKicker">SEÑALES</span><h1>Alertas y conversaciones que requieren atención</h1></div><span>{alertCount} sin leer</span></div><div className="timelineList">{privateData.alerts.length ? privateData.alerts.map(row => <article className="timelineRow" key={row.id}><i className="priorityDot priority-high"/><div><span>{row.notification_type || "LINKRRSS"}</span><h3>{row.title}</h3><small>{row.body || "Señal pendiente"}</small></div><div className="rowEnd"><StatusPill tone="warn">{row.is_read ? "leída" : "pendiente"}</StatusPill><small>{fmtDate(row.created_at)}</small></div></article>) : <div className="emptyState">No hay notificaciones pendientes en la capa autorizada.</div>}</div></section>
             : <LockPanel title="Alertas del organismo" onOpenLogin={() => setLoginOpen(true)} />
           ) : null}
 

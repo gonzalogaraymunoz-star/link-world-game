@@ -284,3 +284,87 @@ footer {
     right: 18px;
   }
 }
+
+
+.apiDiagnostics {
+  position: absolute;
+  z-index: 4;
+  left: 24px;
+  top: 112px;
+  width: min(520px, calc(100% - 48px));
+  padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  background: rgba(9,11,11,.80);
+  backdrop-filter: blur(16px);
+  display: grid;
+  gap: 8px;
+}
+
+.apiBadgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.apiBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 9px;
+  color: var(--muted);
+  background: rgba(255,255,255,.03);
+}
+
+.apiBadge b {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  font-size: 9px;
+}
+
+.api-ok {
+  color: #d8ff72;
+}
+
+.api-ok b {
+  color: #111;
+  background: #d8ff72;
+}
+
+.api-error {
+  color: #ffb36a;
+}
+
+.api-error b {
+  color: #111;
+  background: #ffb36a;
+}
+
+.api-pending b {
+  color: var(--muted);
+  border: 1px solid rgba(255,255,255,.24);
+}
+
+.apiDiagnostics small {
+  color: #ffb36a;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.mapStatus.isError {
+  color: #ffb36a;
+}
+
+@media (max-width: 900px) {
+  .apiDiagnostics {
+    left: 18px;
+    top: 166px;
+    width: calc(100% - 36px);
+  }
+}

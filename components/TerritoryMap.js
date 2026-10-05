@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const SAN_PEDRO = { lat: -22.9087, lng: -68.1997 };
 
@@ -11,8 +11,20 @@ export default function TerritoryMap() {
   const [status, setStatus] = useState("loading");
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
+  useEffect(() => {
+    window.gm_authFailure = () => {
+      setStatus("auth-error");
+    };
+
+    return () => {
+      delete window.gm_authFailure;
+    };
+  }, []);
+
   const initMap = useCallback(() => {
     if (!mapRef.current || !window.google?.maps || mapInstanceRef.current) return;
+
+    setStatus("checking");
 
     const map = new window.google.maps.Map(mapRef.current, {
       center: SAN_PEDRO,
@@ -24,12 +36,7 @@ export default function TerritoryMap() {
       fullscreenControl: false,
       clickableIcons: true,
       zoomControl: true,
-      backgroundColor: "#101312",
-      styles: [
-        { featureType: "poi.business", stylers: [{ visibility: "on" }] },
-        { featureType: "transit", stylers: [{ visibility: "simplified" }] },
-        { elementType: "labels.icon", stylers: [{ visibility: "on" }] }
-      ]
+      backgroundColor: "#101312"
     });
 
     mapInstanceRef.current = map;
@@ -51,7 +58,9 @@ export default function TerritoryMap() {
       fillOpacity: 0.04
     });
 
-    setStatus("ready");
+    window.google.maps.event.addListenerOnce(map, "tilesloaded", () => {
+      setStatus("ready");
+    });
   }, []);
 
   if (!apiKey) {
@@ -64,6 +73,15 @@ export default function TerritoryMap() {
     );
   }
 
+  const statusLabel =
+    status === "ready"
+      ? "Google Maps conectado"
+      : status === "auth-error"
+        ? "Google Maps · autorización pendiente"
+        : status === "checking"
+          ? "Verificando autorización…"
+          : "Cargando territorio…";
+
   return (
     <div className="territoryMapShell">
       <Script
@@ -72,6 +90,7 @@ export default function TerritoryMap() {
         strategy="afterInteractive"
         onLoad={initMap}
         onReady={initMap}
+        onError={() => setStatus("load-error")}
       />
 
       <div ref={mapRef} className="googleMapCanvas" />
@@ -93,8 +112,8 @@ export default function TerritoryMap() {
           <span className="mapHudEyebrow">CAPA ACTIVA</span>
           <strong>Mapa real + interfaz LINK</strong>
         </div>
-        <span className={`mapStatus ${status === "ready" ? "isReady" : ""}`}>
-          {status === "ready" ? "Google Maps conectado" : "Cargando territorio…"}
+        <span className={`mapStatus ${status === "ready" ? "isReady" : ""} ${status === "auth-error" ? "isError" : ""}`}>
+          {statusLabel}
         </span>
       </div>
     </div>

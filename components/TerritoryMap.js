@@ -10,7 +10,7 @@ function ApiBadge({ label, state }) {
   return <span className={`apiBadge api-${state}`}><b>{mark}</b>{label}</span>;
 }
 
-export default function TerritoryMap({ businesses = [], selectedBusiness = null, onSelectBusiness }) {
+export default function TerritoryMap({ businesses = [], selectedBusiness = null, onSelectBusiness, progressByBusiness = new Map() }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const infoWindowRef = useRef(null);
@@ -28,7 +28,7 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const clearLinkedMarkers = useCallback(() => {
-    for (const marker of linkedMarkersRef.current) marker.setMap?.(null);
+    for (const marker of linkedMarkersRef.current) { marker.__aura?.setMap?.(null); marker.setMap?.(null); }
     linkedMarkersRef.current = [];
   }, []);
 
@@ -97,24 +97,40 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
           const place = new Place({ id: business.google_place_id, requestedLanguage: "es", requestedRegion: "CL" });
           await place.fetchFields({ fields: ["displayName", "location", "formattedAddress", "googleMapsURI"] });
           if (!place.location) continue;
+          const progress = progressByBusiness.get(business.id);
+          const level = progress?.level || 0;
+          const scale = 10 + level * 2.2;
           const marker = new window.google.maps.Marker({
             map,
             position: place.location,
-            title: business.name,
-            label: { text: "L", color: "#111111", fontWeight: "700" },
+            title: `${business.name} · ${progress?.percent || 0}% desarrollo`,
+            label: { text: String(Math.max(1, level)), color: "#111111", fontWeight: "800", fontSize: "10px" },
             icon: {
               path: window.google.maps.SymbolPath.CIRCLE,
               fillColor: "#d8ff72",
-              fillOpacity: 1,
+              fillOpacity: 0.72 + level * 0.055,
               strokeColor: "#111111",
               strokeWeight: 2,
-              scale: 12
-            }
+              scale
+            },
+            zIndex: 100 + level
           });
+          const aura = new window.google.maps.Circle({
+            map,
+            center: place.location,
+            radius: 70 + level * 45,
+            strokeColor: "#d8ff72",
+            strokeOpacity: 0.18 + level * 0.05,
+            strokeWeight: 1,
+            fillColor: "#d8ff72",
+            fillOpacity: 0.008 + level * 0.006,
+            clickable: false
+          });
+          marker.__aura = aura;
           marker.addListener("click", () => {
             onSelectBusiness?.(business.id);
             infoWindowRef.current?.setContent(
-              `<div style="font-family:Arial,sans-serif;max-width:220px;padding:4px 2px"><b>${business.name}</b><br><small>${place.formattedAddress || business.city || ""}</small><br><span style="display:inline-block;margin-top:8px;font-size:11px">Negocio LINK · ubicación Google vinculada</span></div>`
+              `<div style="font-family:Arial,sans-serif;max-width:240px;padding:4px 2px"><b>${business.name}</b><br><small>${place.formattedAddress || business.city || ""}</small><br><span style="display:inline-block;margin-top:8px;font-size:11px">Nivel ${level} · ${progress?.percent || 0}% desarrollo LINK</span></div>`
             );
             infoWindowRef.current?.open({ map, anchor: marker });
           });
@@ -128,7 +144,7 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
     } catch {
       // El panel de privilegios ya expone el estado de Places.
     }
-  }, [businesses, clearLinkedMarkers, onSelectBusiness]);
+  }, [businesses, clearLinkedMarkers, onSelectBusiness, progressByBusiness]);
 
   const focusBusiness = useCallback(async business => {
     const map = mapInstanceRef.current;

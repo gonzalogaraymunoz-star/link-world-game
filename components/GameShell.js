@@ -437,7 +437,7 @@ export default function GameShell() {
     });
   }, [member]);
 
-  useEffect(() => {  useEffect(() => {
+  useEffect(() => {
     if (!supabase) {
       setLoading(false);
       setNotice("Falta la conexión Supabase.");

@@ -1802,3 +1802,231 @@ button, input { font: inherit; }
   .dossierColumns { grid-template-columns: 1fr; }
   .businessGridCompact { grid-template-columns: 1fr; }
 }
+
+
+/* Concha Eterna · célula económica como unidad principal */
+.viewIntro {
+  max-width: 900px;
+  margin: -4px 0 18px;
+  color: rgba(255,255,255,.48);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.modelLibrary {
+  display: grid;
+  gap: 12px;
+}
+.modelCellCard {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  background: rgba(255,255,255,.015);
+  padding: 18px;
+}
+.modelCellHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.modelCellHead h3 {
+  margin: 6px 0 0;
+  font-size: 19px;
+  font-weight: 500;
+}
+.modelFlow {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 24px minmax(0,1fr) 24px minmax(0,1fr);
+  align-items: stretch;
+  gap: 8px;
+  margin: 16px 0 12px;
+}
+.modelFlow > div {
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 11px;
+  padding: 11px;
+  min-height: 88px;
+  background: rgba(255,255,255,.012);
+}
+.modelFlow > div span,
+.cellTruthStrip span {
+  display: block;
+  margin-bottom: 7px;
+  color: rgba(255,255,255,.30);
+  font-size: 7px;
+  letter-spacing: .08em;
+}
+.modelFlow p {
+  margin: 0;
+  color: rgba(255,255,255,.68);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.modelFlow > i {
+  display: grid;
+  place-items: center;
+  color: rgba(216,255,114,.46);
+  font-style: normal;
+}
+.modelNumbers {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 11px;
+  overflow: hidden;
+}
+.modelNumbers > div {
+  padding: 10px;
+  border-right: 1px solid rgba(255,255,255,.06);
+}
+.modelNumbers > div:last-child { border-right: 0; }
+.modelNumbers b {
+  display: block;
+  color: #d8ff72;
+  font-size: 13px;
+  font-weight: 500;
+}
+.modelNumbers span {
+  display: block;
+  margin-top: 3px;
+  color: rgba(255,255,255,.34);
+  font-size: 7px;
+}
+.conchaMini {
+  display: grid;
+  grid-template-columns: repeat(6,1fr);
+  gap: 5px;
+  margin: 12px 0;
+}
+.conchaMini span {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 8px;
+  color: rgba(255,255,255,.32);
+  font-size: 7px;
+}
+.conchaMini span.live {
+  border-color: rgba(216,255,114,.23);
+  background: rgba(216,255,114,.04);
+  color: #d8ff72;
+}
+.modelNextGate {
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding-top: 11px;
+}
+.modelNextGate p {
+  margin: 5px 0 0;
+  color: rgba(255,255,255,.55);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.modelActions {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modelActions span {
+  color: rgba(255,255,255,.28);
+  font-size: 8px;
+}
+
+.cellTruthStrip {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr .7fr .7fr;
+  margin-top: 10px;
+  border: 1px solid rgba(216,255,114,.11);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(216,255,114,.018);
+}
+.cellTruthStrip > div {
+  padding: 12px;
+  border-right: 1px solid rgba(255,255,255,.06);
+}
+.cellTruthStrip > div:last-child { border-right: 0; }
+.cellTruthStrip strong {
+  display: block;
+  color: rgba(255,255,255,.72);
+  font-size: 9px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+.conchaBoard {
+  margin-top: 10px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 12px;
+  padding: 13px;
+}
+.conchaBoardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.conchaBoardHead b {
+  color: rgba(255,255,255,.38);
+  font-size: 8px;
+  font-weight: 500;
+}
+.conchaStageGrid {
+  display: grid;
+  grid-template-columns: repeat(6,minmax(0,1fr));
+  gap: 6px;
+  margin-top: 11px;
+}
+.conchaStageGrid > div {
+  min-height: 118px;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 9px;
+  padding: 9px;
+  background: rgba(255,255,255,.01);
+}
+.conchaStageGrid > div.active {
+  border-color: rgba(216,255,114,.19);
+  background: rgba(216,255,114,.025);
+}
+.conchaStageGrid > div > span {
+  color: rgba(255,255,255,.24);
+  font-size: 7px;
+}
+.conchaStageGrid b {
+  color: rgba(255,255,255,.78);
+  font-size: 9px;
+  font-weight: 500;
+}
+.conchaStageGrid small {
+  color: rgba(255,255,255,.35);
+  font-size: 7px;
+  line-height: 1.4;
+}
+.conchaStageGrid em {
+  margin-top: auto;
+  color: rgba(216,255,114,.65);
+  font-style: normal;
+  font-size: 7px;
+}
+
+@media (max-width: 980px) {
+  .modelFlow { grid-template-columns: 1fr; }
+  .modelFlow > i { display: none; }
+  .modelNumbers { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .modelNumbers > div:nth-child(2) { border-right: 0; }
+  .cellTruthStrip { grid-template-columns: 1fr 1fr; }
+  .cellTruthStrip > div:nth-child(2) { border-right: 0; }
+  .conchaStageGrid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+  .modelNumbers,
+  .cellTruthStrip,
+  .conchaStageGrid,
+  .conchaMini { grid-template-columns: 1fr; }
+  .modelCellHead { flex-direction: column; }
+  .modelNumbers > div,
+  .cellTruthStrip > div { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+}

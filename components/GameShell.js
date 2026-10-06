@@ -375,6 +375,266 @@ function BusinessInspector({ business, gameState, rrssProfile, progress, actions
   );
 }
 
+
+function moneyCLP(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return null;
+  return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(Number(value));
+}
+
+function businessModelLabel(business) {
+  const facts = business?.owned_facts || {};
+  return facts.house_model?.label || facts.business_type || facts.ecosystem_role || business?.sector || "Modelo por describir";
+}
+
+function BusinessFichaContent({ business, onOpenFullBusiness }) {
+  if (!business) return <div className="dockEmpty">Selecciona una célula LINK en el mapa.</div>;
+  const facts = business.owned_facts || {};
+  const contract = facts.active_contract || facts.sold_product || null;
+  const surfaces = Object.entries(facts.surfaces || {}).filter(([, value]) => typeof value === "string" && /^https?:\/\//.test(value));
+  const capabilities = Array.isArray(facts.capabilities) ? facts.capabilities.slice(0, 4) : [];
+  const status = facts.status || business.verification_status;
+  const monthly = contract?.monthly_fee_clp || (contract?.billing_model === "monthly" ? contract?.agreed_price_clp : null);
+
+  return (
+    <div className="dockPanelBody businessFichaBody">
+      <div className="dockTitleRow">
+        <div>
+          <span className="sectionKicker">FICHA LINK</span>
+          <h2>{business.name}</h2>
+          <p>{facts.tagline || business.sector}</p>
+        </div>
+        <StatusPill tone={business.verification_status === "verified" ? "good" : "warn"}>{business.verification_status}</StatusPill>
+      </div>
+
+      <p className="businessSummary">{business.summary || "Esta célula todavía no tiene una descripción consolidada."}</p>
+
+      <div className="businessFactsGrid">
+        <div><span>Modelo</span><b>{businessModelLabel(business)}</b></div>
+        <div><span>Estado</span><b>{String(status || "sin estado").replaceAll("_", " ")}</b></div>
+        <div><span>Territorio</span><b>{business.city || "Digital"}{business.country ? ` · ${business.country}` : ""}</b></div>
+        <div><span>Ingreso recurrente</span><b>{monthly ? moneyCLP(monthly) : "no consolidado"}</b></div>
+      </div>
+
+      {contract ? (
+        <section className="dockInfoBlock">
+          <span className="sectionKicker">MODELO ACTIVO</span>
+          <strong>{contract.stage || contract.name || contract.code || "Contrato activo"}</strong>
+          <p>{contract.billing_model ? `${contract.billing_model} · ` : ""}{contract.status || "activo"}</p>
+        </section>
+      ) : null}
+
+      {capabilities.length ? (
+        <section className="dockInfoBlock">
+          <span className="sectionKicker">CAPACIDADES</span>
+          <div className="capabilityList">{capabilities.map(item => <span key={item}>{item}</span>)}</div>
+        </section>
+      ) : null}
+
+      {surfaces.length ? (
+        <section className="dockInfoBlock">
+          <span className="sectionKicker">SUPERFICIES</span>
+          <div className="surfaceLinks">
+            {surfaces.map(([key, url]) => <a key={key} href={url} target="_blank" rel="noreferrer">{key.replaceAll("_", " ")} ↗</a>)}
+          </div>
+        </section>
+      ) : null}
+
+      <div className="dockActions">
+        <button className="primaryButton" onClick={() => onOpenFullBusiness(business)}>Ver ficha completa →</button>
+        {business.website ? <a className="secondaryButton" href={business.website} target="_blank" rel="noreferrer">Abrir sitio ↗</a> : null}
+      </div>
+    </div>
+  );
+}
+
+function ExternalBusinessFicha({ place, onResearchPlace }) {
+  if (!place) return <div className="dockEmpty">Haz clic sobre un negocio del mapa para abrir su ficha.</div>;
+  return (
+    <div className="dockPanelBody businessFichaBody">
+      <div className="dockTitleRow">
+        <div>
+          <span className="sectionKicker">NEGOCIO EXTERNO</span>
+          <h2>{place.displayName}</h2>
+          <p>{place.primaryTypeDisplayName || "Google Maps"}</p>
+        </div>
+        <StatusPill tone="neutral">fuera de LINK</StatusPill>
+      </div>
+
+      <p className="businessSummary">{place.formattedAddress || "Sin dirección disponible."}</p>
+
+      <div className="businessFactsGrid">
+        <div><span>Rating</span><b>{place.rating ? `${place.rating} / 5` : "—"}</b></div>
+        <div><span>Reseñas</span><b>{place.userRatingCount ?? "—"}</b></div>
+        <div><span>Teléfono</span><b>{place.internationalPhoneNumber || place.nationalPhoneNumber || "—"}</b></div>
+        <div><span>Estado</span><b>{place.businessStatus ? String(place.businessStatus).replaceAll("_", " ") : "sin investigar"}</b></div>
+      </div>
+
+      {place.researched ? (
+        <section className="dockInfoBlock">
+          <span className="sectionKicker">INVESTIGACIÓN GOOGLE</span>
+          <strong>{place.websiteURI ? "Tiene sitio web identificado" : "Sin sitio web identificado"}</strong>
+          <p>{place.openNow === true ? "Abierto ahora" : place.openNow === false ? "Cerrado ahora" : "Horario no disponible"}{place.weekdayText?.length ? ` · ${place.weekdayText[0]}` : ""}</p>
+        </section>
+      ) : (
+        <section className="dockInfoBlock researchHint">
+          <span className="sectionKicker">NO LO CONOCEMOS TODAVÍA</span>
+          <strong>Investígalo antes de convertirlo en oportunidad LINK.</strong>
+          <p>El botón completa la ficha con los datos disponibles en Google Places sin guardar nada en LINK.</p>
+        </section>
+      )}
+
+      <div className="dockActions">
+        <button className="primaryButton" onClick={() => onResearchPlace(place)}>{place.researched ? "Actualizar investigación" : "Investigar negocio →"}</button>
+        {place.googleMapsURI ? <a className="secondaryButton" href={place.googleMapsURI} target="_blank" rel="noreferrer">Ver en Google Maps ↗</a> : null}
+        {place.websiteURI ? <a className="secondaryButton" href={place.websiteURI} target="_blank" rel="noreferrer">Abrir web ↗</a> : null}
+      </div>
+    </div>
+  );
+}
+
+function MapMissionPanel({ business, actions = [], evidence = [], onStartAction, onSubmitEvidence }) {
+  const [evidenceRef, setEvidenceRef] = useState("");
+  if (!business) return <div className="dockEmpty">Selecciona un negocio LINK para ver su misión.</div>;
+  const ordered = [...actions].sort((a,b) => {
+    const order = { in_progress: 0, awaiting_evidence: 1, planned: 2, verified: 3, rejected: 4, expired: 5, cancelled: 6 };
+    return (order[a.status] ?? 9) - (order[b.status] ?? 9) || Number(a.metadata?.sequence || 999) - Number(b.metadata?.sequence || 999);
+  });
+  const action = ordered.find(item => ["in_progress","awaiting_evidence","planned"].includes(item.status)) || ordered[0];
+  if (!action) return <div className="dockEmpty">Esta célula todavía no tiene una misión jugable.</div>;
+  const relatedEvidence = evidence.filter(row => row.action_id === action.id);
+
+  async function submit() {
+    if (!evidenceRef.trim()) return;
+    await onSubmitEvidence(action, evidenceRef.trim());
+    setEvidenceRef("");
+  }
+
+  return (
+    <div className="dockPanelBody">
+      <div className="dockTitleRow">
+        <div><span className="sectionKicker">MISIÓN DE {business.name}</span><h2>{action.title}</h2></div>
+        <StatusPill tone={action.status === "verified" ? "good" : action.status === "planned" ? "neutral" : "warn"}>{action.status}</StatusPill>
+      </div>
+      <p className="businessSummary">{action.description}</p>
+      <section className="dockInfoBlock">
+        <span className="sectionKicker">CONDICIÓN</span>
+        <strong>{action.evidence_requirement === "automatic" ? "El sistema debe producir evidencia automáticamente." : "Necesita evidencia verificable."}</strong>
+        <p>{Number(action.base_heat || 0) > 0 ? `Recompensa potencial: +${Math.round(Number(action.base_heat))} calor` : "El progreso se libera cuando exista evidencia válida."}</p>
+      </section>
+      {action.status === "planned" ? <button className="primaryButton" onClick={() => onStartAction(action)}>Iniciar misión →</button> : null}
+      {action.status === "in_progress" && action.evidence_requirement !== "automatic" ? (
+        <div className="dockEvidence">
+          <input value={evidenceRef} onChange={e => setEvidenceRef(e.target.value)} placeholder="URL, comprobante, commit o referencia" />
+          <button onClick={submit} disabled={!evidenceRef.trim()}>Enviar</button>
+        </div>
+      ) : null}
+      {action.status === "in_progress" && action.evidence_requirement === "automatic" ? <div className="autoEvidence">Esperando una señal automática real…</div> : null}
+      {action.status === "awaiting_evidence" ? <div className="autoEvidence">{relatedEvidence.length} evidencia(s) · esperando validación</div> : null}
+    </div>
+  );
+}
+
+function MapProgressPanel({ business, progress, gameState, globalGame }) {
+  if (!business) return <div className="dockEmpty">Selecciona un negocio para ver su desarrollo.</div>;
+  const stages = progress?.stages || [];
+  return (
+    <div className="dockPanelBody">
+      <div className="dockTitleRow"><div><span className="sectionKicker">DESARROLLO</span><h2>{phaseLabel(progress?.level || 0)}</h2><p>{business.name}</p></div><b className="dockPercent">{progress?.percent || 0}%</b></div>
+      <div className="evolutionTrack">{stages.map((row,index) => <span key={row.key} className={row.complete ? "done" : index === progress?.level ? "next" : ""}><i /></span>)}</div>
+      <div className="evolutionLabels">{stages.map(row => <span key={row.key} className={row.complete ? "done" : ""}>{row.label}</span>)}</div>
+      <section className="dockInfoBlock">
+        <span className="sectionKicker">SIGUIENTE EVOLUCIÓN</span>
+        <strong>{progress?.next ? progress.next.label : "Expansión"}</strong>
+        <p>{progress?.next?.hint || "La célula completó el ciclo base."}</p>
+      </section>
+      <div className="businessFactsGrid">
+        <div><span>Nivel global</span><b>{globalGame?.level || 1}</b></div>
+        <div><span>XP LINK</span><b>{globalGame?.xp || 0}</b></div>
+        <div><span>Temperatura</span><b>{Math.round(Number(gameState?.temperature || 0))}°</b></div>
+        <div><span>Hitos</span><b>{progress?.verifiedActions || 0}</b></div>
+      </div>
+    </div>
+  );
+}
+
+function MapToolsPanel({ business, rrssProfile, onOpenFullBusiness }) {
+  return (
+    <div className="dockPanelBody">
+      <div className="dockTitleRow"><div><span className="sectionKicker">HERRAMIENTAS</span><h2>Superficies conectadas</h2></div></div>
+      <p className="businessSummary">Aquí iremos agregando módulos útiles para actuar sobre la misión sin llenar el mapa de ventanas permanentes.</p>
+      <div className="toolModuleList">
+        {business ? <button onClick={() => onOpenFullBusiness(business)}><b>Ficha completa</b><span>Identidad, modelo y contexto del negocio</span></button> : null}
+        {business?.website ? <a href={business.website} target="_blank" rel="noreferrer"><b>Sitio / sistema</b><span>{business.website}</span></a> : null}
+        {rrssProfile ? <a href="https://linkrrss.vercel.app" target="_blank" rel="noreferrer"><b>LINKRRSS</b><span>Conversaciones, publicaciones y señales</span></a> : null}
+        <a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer"><b>Control Central</b><span>Fuente viva y coordinación LINK</span></a>
+      </div>
+    </div>
+  );
+}
+
+function MapPanelDock({
+  collapsed, activePanel, onToggleCollapse, onSelectPanel,
+  business, externalPlace, progress, gameState, globalGame, rrssProfile,
+  actions, evidence, onStartAction, onSubmitEvidence, onOpenFullBusiness, onResearchPlace
+}) {
+  const panels = [
+    ["ficha", "□", "Ficha"],
+    ["mision", "◇", "Misión"],
+    ["progreso", "↗", "Progreso"],
+    ["herramientas", "+", "Herramientas"]
+  ];
+  const showingExternal = externalPlace?.kind === "external";
+
+  return (
+    <aside className={`mapPanelDock ${collapsed ? "collapsed" : ""}`}>
+      <div className="mapPanelRail">
+        <button className="dockCollapseButton" onClick={onToggleCollapse} title={collapsed ? "Abrir panel" : "Plegar panel"}>{collapsed ? "‹" : "›"}</button>
+        {panels.map(([id, icon, label]) => (
+          <button key={id} className={activePanel === id && !collapsed ? "active" : ""} onClick={() => { onSelectPanel(id); if (collapsed) onToggleCollapse(); }} title={label}>
+            <i>{icon}</i><span>{label}</span>
+          </button>
+        ))}
+      </div>
+      {!collapsed ? (
+        <div className="mapPanelContent">
+          {activePanel === "ficha" ? (
+            showingExternal
+              ? <ExternalBusinessFicha place={externalPlace} onResearchPlace={onResearchPlace} />
+              : <BusinessFichaContent business={business} onOpenFullBusiness={onOpenFullBusiness} />
+          ) : null}
+          {activePanel === "mision" ? <MapMissionPanel business={business} actions={actions} evidence={evidence} onStartAction={onStartAction} onSubmitEvidence={onSubmitEvidence} /> : null}
+          {activePanel === "progreso" ? <MapProgressPanel business={business} progress={progress} gameState={gameState} globalGame={globalGame} /> : null}
+          {activePanel === "herramientas" ? <MapToolsPanel business={business} rrssProfile={rrssProfile} onOpenFullBusiness={onOpenFullBusiness} /> : null}
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
+function BusinessDossier({ business, progress, onShowMap }) {
+  if (!business) return null;
+  const facts = business.owned_facts || {};
+  const contract = facts.active_contract || facts.sold_product;
+  const capabilities = Array.isArray(facts.capabilities) ? facts.capabilities : [];
+  const productBranches = Array.isArray(facts.product_branches) ? facts.product_branches : [];
+  return (
+    <article className="fullBusinessDossier">
+      <div className="dossierHead">
+        <div><span className="sectionKicker">FICHA COMPLETA</span><h2>{business.name}</h2><p>{facts.tagline || business.sector}</p></div>
+        <div className="dossierScore"><b>{progress?.percent || 0}%</b><span>{phaseLabel(progress?.level || 0)}</span></div>
+      </div>
+      <p className="dossierSummary">{business.summary || "Sin descripción consolidada."}</p>
+      <div className="dossierColumns">
+        <section><span className="sectionKicker">IDENTIDAD</span><dl><dt>Modelo</dt><dd>{businessModelLabel(business)}</dd><dt>Territorio</dt><dd>{business.city} · {business.country}</dd><dt>Estado</dt><dd>{String(facts.status || business.verification_status).replaceAll("_"," ")}</dd><dt>LINK ID</dt><dd>{business.global_id}</dd></dl></section>
+        <section><span className="sectionKicker">NEGOCIO</span><dl><dt>Producto / contrato</dt><dd>{contract?.stage || contract?.name || contract?.code || "por consolidar"}</dd><dt>Modelo de cobro</dt><dd>{contract?.billing_model || "por consolidar"}</dd><dt>Valor</dt><dd>{moneyCLP(contract?.monthly_fee_clp || contract?.agreed_price_clp || contract?.price_clp) || "por consolidar"}</dd><dt>Google</dt><dd>{business.google_place_id ? "vinculado" : "sin Place ID"}</dd></dl></section>
+      </div>
+      {capabilities.length ? <section className="dossierList"><span className="sectionKicker">CAPACIDADES</span>{capabilities.map(item => <p key={item}>{item}</p>)}</section> : null}
+      {productBranches.length ? <section className="dossierList"><span className="sectionKicker">LÍNEAS ACTIVAS</span>{productBranches.map(item => <p key={item.product_code || item.name}><b>{item.name}</b> · {item.status} · {moneyCLP(item.price_clp) || "sin precio"}</p>)}</section> : null}
+      <div className="dockActions"><button className="primaryButton" onClick={() => onShowMap(business)}>Volver al mapa →</button>{business.website ? <a className="secondaryButton" href={business.website} target="_blank" rel="noreferrer">Abrir sistema ↗</a> : null}</div>
+    </article>
+  );
+}
+
 export default function GameShell() {
   const [view, setView] = useState("mundo");
   const [businesses, setBusinesses] = useState([]);
@@ -388,6 +648,9 @@ export default function GameShell() {
     gameStates: [], gameActions: [], gameEvidence: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null
   });
   const [notice, setNotice] = useState("");
+  const [mapDockCollapsed, setMapDockCollapsed] = useState(false);
+  const [mapDockPanel, setMapDockPanel] = useState("ficha");
+  const [externalPlace, setExternalPlace] = useState(null);
 
   const selected = useMemo(
     () => businesses.find(row => row.id === selectedId) || businesses[0] || null,
@@ -477,7 +740,7 @@ export default function GameShell() {
     if (!supabase) return;
     const { data, error } = await supabase
       .from("link_world_businesses")
-      .select("id,global_id,slug,name,sector,city,country,google_place_id,website,summary,verification_status,public_workspace,updated_at")
+      .select("id,global_id,slug,name,sector,city,country,google_place_id,website,summary,owned_facts,evidence,created_from,verification_status,public_workspace,updated_at")
       .eq("public_workspace", true)
       .order("name");
     if (error) {
@@ -634,6 +897,63 @@ export default function GameShell() {
     await loadPrivate();
   }
 
+  async function researchExternalPlace(place) {
+    if (!place?.placeId || !window.google?.maps) return;
+    setNotice("");
+    try {
+      const { Place } = await window.google.maps.importLibrary("places");
+      const googlePlace = new Place({ id: place.placeId, requestedLanguage: "es", requestedRegion: "CL" });
+      await googlePlace.fetchFields({
+        fields: ["id", "displayName", "formattedAddress", "primaryTypeDisplayName", "websiteURI", "nationalPhoneNumber", "internationalPhoneNumber", "rating", "userRatingCount", "googleMapsURI", "businessStatus", "regularOpeningHours"]
+      });
+      setExternalPlace({
+        ...place,
+        displayName: googlePlace.displayName || place.displayName,
+        formattedAddress: googlePlace.formattedAddress || place.formattedAddress,
+        primaryTypeDisplayName: googlePlace.primaryTypeDisplayName || place.primaryTypeDisplayName,
+        websiteURI: googlePlace.websiteURI || place.websiteURI,
+        nationalPhoneNumber: googlePlace.nationalPhoneNumber || place.nationalPhoneNumber,
+        internationalPhoneNumber: googlePlace.internationalPhoneNumber || "",
+        rating: googlePlace.rating ?? place.rating,
+        userRatingCount: googlePlace.userRatingCount ?? place.userRatingCount,
+        googleMapsURI: googlePlace.googleMapsURI || place.googleMapsURI,
+        businessStatus: googlePlace.businessStatus || "",
+        openNow: googlePlace.regularOpeningHours?.openNow ?? null,
+        weekdayText: googlePlace.regularOpeningHours?.weekdayDescriptions || [],
+        researched: true
+      });
+      setMapDockPanel("ficha");
+      setMapDockCollapsed(false);
+      setNotice("Ficha Google actualizada · todavía no se guardó como negocio LINK.");
+    } catch (error) {
+      setNotice("No pude ampliar esta ficha desde Google Places: " + (error?.message || "error desconocido"));
+    }
+  }
+
+  function handleExplorePlace(place) {
+    if (place?.kind === "linked" && place.businessId) {
+      setSelectedId(place.businessId);
+      setExternalPlace(null);
+    } else if (place?.kind === "external") {
+      setExternalPlace(place);
+    }
+    setMapDockPanel("ficha");
+    setMapDockCollapsed(false);
+  }
+
+  function handleSelectBusiness(id) {
+    setSelectedId(id);
+    setExternalPlace(null);
+    setMapDockPanel("ficha");
+  }
+
+  function openFullBusiness(business) {
+    if (!business?.id) return;
+    setSelectedId(business.id);
+    setExternalPlace(null);
+    setView("negocios");
+  }
+
   async function signOut() {
     if (!supabase) return;
     await supabase.auth.signOut();
@@ -642,6 +962,9 @@ export default function GameShell() {
 
   const showMap = business => {
     setSelectedId(business.id);
+    setExternalPlace(null);
+    setMapDockPanel("ficha");
+    setMapDockCollapsed(false);
     setView("mundo");
   };
 
@@ -689,36 +1012,49 @@ export default function GameShell() {
           {loading ? <div className="loadingScreen">Sincronizando LINK WORLD…</div> : null}
 
           {!loading && view === "mundo" ? (
-            <div className="worldLayout">
+            <div className={`worldLayout mapDockLayout ${mapDockCollapsed ? "dockIsCollapsed" : ""}`}>
               <div className="mapGameStage">
-                <TerritoryMap businesses={businesses} selectedBusiness={selected} onSelectBusiness={setSelectedId} progressByBusiness={progressByBusiness} />
-                {member ? <GameProgressHUD game={globalGame} /> : null}
-                <CellProgressDock businesses={businesses} progressByBusiness={progressByBusiness} selectedId={selected?.id} onSelect={setSelectedId} />
+                <TerritoryMap
+                  businesses={businesses}
+                  selectedBusiness={selected}
+                  onSelectBusiness={handleSelectBusiness}
+                  progressByBusiness={progressByBusiness}
+                  onExplorePlace={handleExplorePlace}
+                />
+                <CellProgressDock businesses={businesses} progressByBusiness={progressByBusiness} selectedId={selected?.id} onSelect={handleSelectBusiness} />
               </div>
-              <BusinessInspector
-                business={selected}
-                gameState={gameByBusiness.get(selected?.id)}
-                rrssProfile={rrssByBusiness.get(selected?.id)}
+              <MapPanelDock
+                collapsed={mapDockCollapsed}
+                activePanel={mapDockPanel}
+                onToggleCollapse={() => setMapDockCollapsed(value => !value)}
+                onSelectPanel={setMapDockPanel}
+                business={externalPlace?.kind === "external" ? null : selected}
+                externalPlace={externalPlace}
                 progress={progressByBusiness.get(selected?.id)}
+                gameState={gameByBusiness.get(selected?.id)}
+                globalGame={globalGame}
+                rrssProfile={rrssByBusiness.get(selected?.id)}
                 actions={actionsByBusiness.get(selected?.id) || []}
                 evidence={privateData.gameEvidence}
-                onShowMap={showMap}
                 onStartAction={startGameAction}
                 onSubmitEvidence={submitGameEvidence}
+                onOpenFullBusiness={openFullBusiness}
+                onResearchPlace={researchExternalPlace}
               />
             </div>
           ) : null}
 
           {!loading && view === "negocios" ? (
             <section className="contentView">
-              <div className="viewHead"><div><span className="sectionKicker">CÉLULAS LINK</span><h1>Negocios del ecosistema</h1></div><span>{businesses.length} visibles</span></div>
-              <div className="businessGrid">
+              <div className="viewHead"><div><span className="sectionKicker">CÉLULAS LINK</span><h1>Fichas de negocios</h1></div><span>{businesses.length} visibles</span></div>
+              <BusinessDossier business={selected} progress={progressByBusiness.get(selected?.id)} onShowMap={showMap} />
+              <div className="businessGrid businessGridCompact">
                 {businesses.map(b => (
-                  <article key={b.id} className="businessCard">
+                  <article key={b.id} className={`businessCard ${selected?.id === b.id ? "selectedBusinessCard" : ""}`}>
                     <div className="cardTop"><StatusPill tone={b.verification_status === "verified" ? "good" : "warn"}>{b.verification_status}</StatusPill><small>{b.city}</small></div>
-                    <h3>{b.name}</h3><p>{b.sector}</p>
-                    <div className="miniMeta"><span>{b.google_place_id ? "Google ✓" : "Google por vincular"}</span><span>{gameByBusiness.get(b.id)?.state || "sin capa juego"}</span></div>
-                    <div className="cardActions"><button onClick={() => showMap(b)}>Mapa</button>{b.website ? <a href={b.website} target="_blank" rel="noreferrer">Sistema ↗</a> : null}</div>
+                    <h3>{b.name}</h3><p>{b.summary || b.sector}</p>
+                    <div className="miniMeta"><span>{businessModelLabel(b)}</span><span>{progressByBusiness.get(b.id)?.percent || 0}% desarrollo</span></div>
+                    <div className="cardActions"><button onClick={() => setSelectedId(b.id)}>Ver ficha</button><button onClick={() => showMap(b)}>Mapa</button>{b.website ? <a href={b.website} target="_blank" rel="noreferrer">Sistema ↗</a> : null}</div>
                   </article>
                 ))}
               </div>

@@ -1317,3 +1317,488 @@ button, input { font: inherit; }
     justify-content: start;
   }
 }
+
+
+/* Map workspace v2 · mapa limpio + dock lateral plegable */
+.mapDockLayout {
+  grid-template-columns: minmax(0, 1fr) 390px;
+  transition: grid-template-columns .24s ease;
+}
+.mapDockLayout.dockIsCollapsed {
+  grid-template-columns: minmax(0, 1fr) 54px;
+}
+.mapDockLayout .territoryMapShell {
+  min-height: calc(100vh - 70px);
+}
+.mapCompactLabel {
+  position: absolute;
+  z-index: 5;
+  left: 14px;
+  top: 14px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  background: rgba(8,11,10,.80);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.14);
+}
+.mapCompactLabel span {
+  color: rgba(255,255,255,.76);
+  font-size: 9px;
+}
+.mapCompactLabel b {
+  color: #d8ff72;
+  font-size: 8px;
+  font-weight: 600;
+}
+.mapConnectionChip {
+  position: absolute;
+  z-index: 5;
+  left: 14px;
+  top: 56px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255,179,106,.22);
+  border-radius: 999px;
+  background: rgba(8,11,10,.86);
+  backdrop-filter: blur(12px);
+}
+
+.mapPanelDock {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 58px minmax(0,1fr);
+  border-left: 1px solid rgba(255,255,255,.09);
+  background: #0b0e0d;
+  overflow: hidden;
+}
+.mapPanelDock.collapsed {
+  grid-template-columns: 54px;
+}
+.mapPanelRail {
+  width: 58px;
+  border-right: 1px solid rgba(255,255,255,.075);
+  background: #0a0d0c;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mapPanelDock.collapsed .mapPanelRail {
+  width: 54px;
+  border-right: 0;
+}
+.mapPanelRail button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(255,255,255,.42);
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  padding: 5px 2px;
+  cursor: pointer;
+}
+.mapPanelRail button:hover {
+  background: rgba(255,255,255,.045);
+  color: rgba(255,255,255,.82);
+}
+.mapPanelRail button.active {
+  background: rgba(216,255,114,.09);
+  color: #d8ff72;
+}
+.mapPanelRail button i {
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1;
+}
+.mapPanelRail button span {
+  font-size: 6px;
+  letter-spacing: .02em;
+}
+.mapPanelRail .dockCollapseButton {
+  min-height: 31px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(255,255,255,.08);
+  font-size: 17px;
+  color: rgba(255,255,255,.58);
+}
+.mapPanelContent {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #0d100f;
+}
+.dockPanelBody {
+  min-height: 100%;
+  padding: 18px 16px 22px;
+}
+.dockEmpty {
+  min-height: 260px;
+  display: grid;
+  place-content: center;
+  padding: 24px;
+  text-align: center;
+  color: rgba(255,255,255,.38);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.dockTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.dockTitleRow h2 {
+  margin: 5px 0 4px;
+  font-size: 22px;
+  line-height: 1.08;
+  font-weight: 500;
+}
+.dockTitleRow p {
+  margin: 0;
+  color: rgba(255,255,255,.42);
+  font-size: 9px;
+  line-height: 1.45;
+}
+.businessSummary {
+  margin: 0 0 15px;
+  color: rgba(255,255,255,.58);
+  font-size: 10px;
+  line-height: 1.6;
+}
+.businessFactsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 13px;
+}
+.businessFactsGrid > div {
+  min-height: 70px;
+  padding: 10px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.businessFactsGrid > div:nth-child(odd) {
+  border-right: 1px solid rgba(255,255,255,.07);
+}
+.businessFactsGrid > div:nth-child(n+3) {
+  border-bottom: 0;
+}
+.businessFactsGrid span {
+  color: rgba(255,255,255,.32);
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.businessFactsGrid b {
+  color: rgba(255,255,255,.82);
+  font-size: 10px;
+  line-height: 1.35;
+  font-weight: 500;
+}
+.dockInfoBlock {
+  border-top: 1px solid rgba(255,255,255,.075);
+  padding: 12px 0 2px;
+  display: grid;
+  gap: 6px;
+}
+.dockInfoBlock strong {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+.dockInfoBlock p {
+  margin: 0;
+  color: rgba(255,255,255,.4);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.researchHint {
+  border: 1px solid rgba(216,255,114,.12);
+  border-radius: 11px;
+  padding: 12px;
+  background: rgba(216,255,114,.025);
+}
+.capabilityList {
+  display: grid;
+  gap: 5px;
+}
+.capabilityList span {
+  padding-left: 10px;
+  position: relative;
+  color: rgba(255,255,255,.54);
+  font-size: 8px;
+  line-height: 1.45;
+}
+.capabilityList span::before {
+  content: "·";
+  position: absolute;
+  left: 0;
+  color: #d8ff72;
+}
+.surfaceLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.surfaceLinks a {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  padding: 6px 8px;
+  color: rgba(255,255,255,.62);
+  text-decoration: none;
+  font-size: 7px;
+}
+.dockActions {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+}
+.dockEvidence {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+.dockEvidence input {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 8px;
+  background: rgba(255,255,255,.03);
+  color: #fff;
+  padding: 9px 10px;
+  font-size: 8px;
+}
+.dockEvidence button {
+  border: 0;
+  border-radius: 8px;
+  background: #d8ff72;
+  color: #10110d;
+  font-size: 8px;
+  font-weight: 600;
+  padding: 0 10px;
+  cursor: pointer;
+}
+.dockEvidence button:disabled {
+  opacity: .35;
+}
+.dockPercent {
+  color: #d8ff72;
+  font-size: 25px;
+  font-weight: 500;
+}
+.toolModuleList,
+.dockBusinessList {
+  display: grid;
+  gap: 7px;
+}
+.toolModuleList button,
+.toolModuleList a,
+.dockBusinessList button {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  background: rgba(255,255,255,.018);
+  color: #fff;
+  padding: 10px;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+}
+.toolModuleList button,
+.toolModuleList a {
+  display: grid;
+  gap: 3px;
+}
+.toolModuleList b {
+  font-size: 10px;
+  font-weight: 500;
+}
+.toolModuleList span {
+  color: rgba(255,255,255,.35);
+  font-size: 7px;
+  overflow-wrap: anywhere;
+}
+.dockBusinessList button {
+  display: grid;
+  grid-template-columns: 16px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+.dockBusinessList button.active {
+  border-color: rgba(216,255,114,.28);
+  background: rgba(216,255,114,.055);
+}
+.dockBusinessList button > span:nth-child(2) {
+  display: grid;
+  gap: 2px;
+}
+.dockBusinessList b {
+  font-size: 9px;
+  font-weight: 500;
+}
+.dockBusinessList small {
+  color: rgba(255,255,255,.34);
+  font-size: 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dockBusinessList em {
+  color: rgba(255,255,255,.32);
+  font-style: normal;
+  font-size: 14px;
+}
+
+.fullBusinessDossier {
+  border: 1px solid rgba(216,255,114,.13);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(216,255,114,.035), rgba(255,255,255,.015));
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.dossierHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+.dossierHead h2 {
+  margin: 6px 0 4px;
+  font-size: 28px;
+  font-weight: 500;
+}
+.dossierHead p {
+  margin: 0;
+  color: rgba(255,255,255,.45);
+  font-size: 10px;
+}
+.dossierScore {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+.dossierScore b {
+  color: #d8ff72;
+  font-size: 30px;
+  font-weight: 500;
+}
+.dossierScore span {
+  color: rgba(255,255,255,.38);
+  font-size: 8px;
+}
+.dossierSummary {
+  max-width: 860px;
+  color: rgba(255,255,255,.62);
+  font-size: 11px;
+  line-height: 1.65;
+  margin: 16px 0 18px;
+}
+.dossierColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.dossierColumns section,
+.dossierList {
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 12px;
+  padding: 13px;
+  background: rgba(255,255,255,.012);
+}
+.dossierColumns dl {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 7px 10px;
+  margin: 11px 0 0;
+}
+.dossierColumns dt {
+  color: rgba(255,255,255,.32);
+  font-size: 8px;
+}
+.dossierColumns dd {
+  margin: 0;
+  color: rgba(255,255,255,.72);
+  font-size: 9px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.dossierList {
+  margin-top: 10px;
+}
+.dossierList p {
+  margin: 8px 0 0;
+  color: rgba(255,255,255,.54);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.businessGridCompact {
+  grid-template-columns: repeat(3,minmax(0,1fr));
+}
+.businessGridCompact .businessCard {
+  min-height: 210px;
+}
+.businessGridCompact .businessCard p {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.selectedBusinessCard {
+  border-color: rgba(216,255,114,.32);
+  background: rgba(216,255,114,.035);
+}
+
+@media (max-width: 1100px) {
+  .mapDockLayout { grid-template-columns: minmax(0,1fr) 330px; }
+  .mapDockLayout.dockIsCollapsed { grid-template-columns: minmax(0,1fr) 52px; }
+  .mapPanelDock { grid-template-columns: 52px minmax(0,1fr); }
+  .mapPanelRail { width: 52px; }
+  .businessGridCompact { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 820px) {
+  .mapDockLayout,
+  .mapDockLayout.dockIsCollapsed {
+    grid-template-columns: 1fr;
+  }
+  .mapPanelDock,
+  .mapPanelDock.collapsed {
+    grid-template-columns: 1fr;
+    border-left: 0;
+    border-top: 1px solid rgba(255,255,255,.09);
+  }
+  .mapPanelDock.collapsed .mapPanelContent {
+    display: none;
+  }
+  .mapPanelRail,
+  .mapPanelDock.collapsed .mapPanelRail {
+    width: 100%;
+    height: 52px;
+    flex-direction: row;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,255,255,.075);
+    overflow-x: auto;
+  }
+  .mapPanelRail button {
+    min-width: 58px;
+    min-height: 38px;
+  }
+  .mapPanelRail .dockCollapseButton {
+    min-width: 38px;
+    margin: 0 3px 0 0;
+  }
+  .dossierColumns { grid-template-columns: 1fr; }
+  .businessGridCompact { grid-template-columns: 1fr; }
+}

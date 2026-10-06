@@ -557,6 +557,26 @@ function MapProgressPanel({ business, progress, gameState, globalGame }) {
   );
 }
 
+function BusinessListPanel({ businesses, selectedId, progressByBusiness, onSelectBusiness }) {
+  return (
+    <div className="dockPanelBody">
+      <div className="dockTitleRow"><div><span className="sectionKicker">CÉLULAS DEL TERRITORIO</span><h2>Negocios</h2><p>{businesses.length} visibles en LINK</p></div></div>
+      <div className="dockBusinessList">
+        {businesses.map(business => {
+          const progress = progressByBusiness.get(business.id);
+          return (
+            <button key={business.id} className={selectedId === business.id ? "active" : ""} onClick={() => onSelectBusiness(business.id)}>
+              <span className="cellDot" data-level={progress?.level || 0} />
+              <span><b>{business.name}</b><small>{businessModelLabel(business)} · {progress?.percent || 0}%</small></span>
+              <em>›</em>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function MapToolsPanel({ business, rrssProfile, onOpenFullBusiness }) {
   return (
     <div className="dockPanelBody">
@@ -575,12 +595,14 @@ function MapToolsPanel({ business, rrssProfile, onOpenFullBusiness }) {
 function MapPanelDock({
   collapsed, activePanel, onToggleCollapse, onSelectPanel,
   business, externalPlace, progress, gameState, globalGame, rrssProfile,
-  actions, evidence, onStartAction, onSubmitEvidence, onOpenFullBusiness, onResearchPlace
+  actions, evidence, onStartAction, onSubmitEvidence, onOpenFullBusiness, onResearchPlace,
+  businesses, progressByBusiness, selectedId, onSelectBusiness
 }) {
   const panels = [
     ["ficha", "□", "Ficha"],
     ["mision", "◇", "Misión"],
     ["progreso", "↗", "Progreso"],
+    ["negocios", "▦", "Negocios"],
     ["herramientas", "+", "Herramientas"]
   ];
   const showingExternal = externalPlace?.kind === "external";
@@ -604,6 +626,7 @@ function MapPanelDock({
           ) : null}
           {activePanel === "mision" ? <MapMissionPanel business={business} actions={actions} evidence={evidence} onStartAction={onStartAction} onSubmitEvidence={onSubmitEvidence} /> : null}
           {activePanel === "progreso" ? <MapProgressPanel business={business} progress={progress} gameState={gameState} globalGame={globalGame} /> : null}
+          {activePanel === "negocios" ? <BusinessListPanel businesses={businesses} selectedId={selectedId} progressByBusiness={progressByBusiness} onSelectBusiness={onSelectBusiness} /> : null}
           {activePanel === "herramientas" ? <MapToolsPanel business={business} rrssProfile={rrssProfile} onOpenFullBusiness={onOpenFullBusiness} /> : null}
         </div>
       ) : null}
@@ -1021,7 +1044,6 @@ export default function GameShell() {
                   progressByBusiness={progressByBusiness}
                   onExplorePlace={handleExplorePlace}
                 />
-                <CellProgressDock businesses={businesses} progressByBusiness={progressByBusiness} selectedId={selected?.id} onSelect={handleSelectBusiness} />
               </div>
               <MapPanelDock
                 collapsed={mapDockCollapsed}
@@ -1040,6 +1062,10 @@ export default function GameShell() {
                 onSubmitEvidence={submitGameEvidence}
                 onOpenFullBusiness={openFullBusiness}
                 onResearchPlace={researchExternalPlace}
+                businesses={businesses}
+                progressByBusiness={progressByBusiness}
+                selectedId={selected?.id}
+                onSelectBusiness={handleSelectBusiness}
               />
             </div>
           ) : null}

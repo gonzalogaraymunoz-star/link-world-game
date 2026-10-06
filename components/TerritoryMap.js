@@ -10,7 +10,7 @@ function ApiBadge({ label, state }) {
   return <span className={`apiBadge api-${state}`}><b>{mark}</b>{label}</span>;
 }
 
-export default function TerritoryMap({ businesses = [], selectedBusiness = null, onSelectBusiness, progressByBusiness = new Map() }) {
+export default function TerritoryMap({ businesses = [], selectedBusiness = null, onSelectBusiness, progressByBusiness = new Map(), onExplorePlace }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const infoWindowRef = useRef(null);
@@ -129,6 +129,14 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
           marker.__aura = aura;
           marker.addListener("click", () => {
             onSelectBusiness?.(business.id);
+            onExplorePlace?.({
+              kind: "linked",
+              businessId: business.id,
+              placeId: business.google_place_id,
+              displayName: place.displayName || business.name,
+              formattedAddress: place.formattedAddress || "",
+              googleMapsURI: place.googleMapsURI || ""
+            });
             infoWindowRef.current?.setContent(
               `<div style="font-family:Arial,sans-serif;max-width:240px;padding:4px 2px"><b>${business.name}</b><br><small>${place.formattedAddress || business.city || ""}</small><br><span style="display:inline-block;margin-top:8px;font-size:11px">Nivel ${level} · ${progress?.percent || 0}% desarrollo LINK</span></div>`
             );
@@ -144,7 +152,7 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
     } catch {
       // El panel de privilegios ya expone el estado de Places.
     }
-  }, [businesses, clearLinkedMarkers, onSelectBusiness, progressByBusiness]);
+  }, [businesses, clearLinkedMarkers, onSelectBusiness, onExplorePlace, progressByBusiness]);
 
   const focusBusiness = useCallback(async business => {
     const map = mapInstanceRef.current;
@@ -218,6 +226,52 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
     mapInstanceRef.current = map;
     infoWindowRef.current = new window.google.maps.InfoWindow();
 
+    map.addListener("click", async event => {
+      if (!event.placeId) return;
+      event.stop?.();
+      try {
+        const { Place } = await window.google.maps.importLibrary("places");
+        const place = new Place({ id: event.placeId, requestedLanguage: "es", requestedRegion: "CL" });
+        await place.fetchFields({
+          fields: ["id", "displayName", "location", "formattedAddress", "primaryTypeDisplayName", "websiteURI", "nationalPhoneNumber", "rating", "userRatingCount", "googleMapsURI"]
+        });
+        const linkedBusiness = businesses.find(business => business.google_place_id === event.placeId);
+        if (linkedBusiness) {
+          onSelectBusiness?.(linkedBusiness.id);
+          onExplorePlace?.({
+            kind: "linked",
+            businessId: linkedBusiness.id,
+            placeId: event.placeId,
+            displayName: place.displayName || linkedBusiness.name,
+            formattedAddress: place.formattedAddress || "",
+            primaryTypeDisplayName: place.primaryTypeDisplayName || "",
+            websiteURI: place.websiteURI || "",
+            nationalPhoneNumber: place.nationalPhoneNumber || "",
+            rating: place.rating ?? null,
+            userRatingCount: place.userRatingCount ?? null,
+            googleMapsURI: place.googleMapsURI || ""
+          });
+          return;
+        }
+        onExplorePlace?.({
+          kind: "external",
+          placeId: event.placeId,
+          displayName: place.displayName || "Negocio sin identificar",
+          formattedAddress: place.formattedAddress || "",
+          primaryTypeDisplayName: place.primaryTypeDisplayName || "",
+          websiteURI: place.websiteURI || "",
+          nationalPhoneNumber: place.nationalPhoneNumber || "",
+          rating: place.rating ?? null,
+          userRatingCount: place.userRatingCount ?? null,
+          googleMapsURI: place.googleMapsURI || "",
+          location: place.location ? { lat: place.location.lat(), lng: place.location.lng() } : null,
+          researched: false
+        });
+      } catch (error) {
+        setDiagnostic(prev => prev || `Ficha Google: ${error?.message || "no disponible"}`);
+      }
+    });
+
     new window.google.maps.Circle({
       map,
       center: SAN_PEDRO,
@@ -230,7 +284,7 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
     });
 
     void runApiChecks(map).then(() => renderBusinesses());
-  }, [renderBusinesses, runApiChecks]);
+  }, [businesses, onExplorePlace, onSelectBusiness, renderBusinesses, runApiChecks]);
 
   useEffect(() => {
     if (status === "ready" || status === "checking") void renderBusinesses();
@@ -258,32 +312,16 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
       />
       <div ref={mapRef} className="googleMapCanvas" />
 
-      <div className="mapHud mapHudTopLeft">
-        <span className="mapHudEyebrow">TERRITORIO 01</span>
-        <strong>San Pedro de Atacama</strong>
-        <small>{businesses.length} células LINK visibles · laboratorio de asociaciones</small>
+      <div className="mapCompactLabel">
+        <span>San Pedro de Atacama</span>
+        <b>{businesses.length} LINK</b>
       </div>
 
-      <div className="apiDiagnostics compactDiagnostics">
-        <span className="mapHudEyebrow">PRIVILEGIOS GOOGLE</span>
-        <div className="apiBadgeRow">
-          <ApiBadge label="Maps" state={apiChecks.maps} />
-          <ApiBadge label="Places" state={apiChecks.places} />
-          <ApiBadge label="UI Kit" state={apiChecks.uiKit} />
-          <ApiBadge label="Geo" state={apiChecks.geocoding} />
+      {status !== "ready" ? (
+        <div className="mapConnectionChip">
+          <span className={`mapStatus ${status === "auth-error" ? "isError" : ""}`}>{statusLabel}</span>
         </div>
-        {diagnostic ? <small>{diagnostic}</small> : null}
-      </div>
-
-      <div className="mapHud mapHudTopRight">
-        <span><i className="dot activeDot" /> LINK vinculado</span>
-        <span><i className="dot opportunityDot" /> candidato</span>
-      </div>
-
-      <div className="mapHud mapHudBottom">
-        <div><span className="mapHudEyebrow">CAPA ACTIVA</span><strong>{selectedBusiness ? selectedBusiness.name : "Mapa real + interfaz LINK"}</strong></div>
-        <span className={`mapStatus ${status === "ready" ? "isReady" : ""} ${status === "auth-error" ? "isError" : ""}`}>{placeMode || statusLabel}</span>
-      </div>
+      ) : null}
     </div>
   );
 }

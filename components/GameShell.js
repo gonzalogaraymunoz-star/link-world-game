@@ -56,6 +56,119 @@ function StatusPill({ children, tone = "neutral" }) {
   return <span className={`statusPill tone-${tone}`}>{children}</span>;
 }
 
+
+const MISSION_STAGE_ACTIONS = {
+  ventas: "Abrir la señal u oportunidad más reciente, definir el siguiente movimiento comercial verificable, ejecutarlo y registrar el resultado real.",
+  marketing: "Comparar plan versus ejecución, elegir la brecha prioritaria, ejecutar la corrección mínima y medir la señal resultante.",
+  cierre: "Identificar la condición de cierre que falta, conseguir la confirmación o evidencia correspondiente y preparar el handoff verificable.",
+  onboarding: "Completar el dato, documento o checklist bloqueante y dejar el caso listo para el siguiente responsable.",
+  entrega: "Comprobar que la promesa o servicio ocurrió realmente, registrar evidencia de cumplimiento y escalar cualquier quiebre.",
+  postventa: "Capturar feedback, review, referido o recompra verificable y devolver el aprendizaje a Marketing y Operaciones.",
+  transversal: "Tomar el bloqueo más antiguo o de mayor impacto, asignar responsable, ejecutar la siguiente acción segura y exigir evidencia antes de cerrar."
+};
+
+function missionActionSuggestion(row) {
+  if (!row) return "";
+  if (["verified", "closed", "cancelled"].includes(row.status)) return "No requiere acción: la misión ya está cerrada o verificada.";
+  if (row.metadata?.next_move) return row.metadata.next_move;
+  if (row.metadata?.handoff_blocker) return `Destrabar “${String(row.metadata.handoff_blocker).replaceAll("_", " ")}” y registrar la evidencia que permita continuar el handoff.`;
+  return MISSION_STAGE_ACTIONS[row.stage_key] || "Identificar el bloqueo real, ejecutar la siguiente acción mínima verificable y registrar evidencia antes de avanzar.";
+}
+
+function buildMissionHelpPrompt(row, businessName) {
+  const action = missionActionSuggestion(row);
+  return `Trabajemos este pendiente real de LINK ahora.
+
+MISIÓN
+Título: ${row.title}
+Código: ${row.mission_code}
+Negocio: ${businessName || row.business_global_id || "LINK transversal"}
+Etapa: ${row.stage_key || "sin etapa"}
+Estado: ${row.status}
+Prioridad: ${row.priority || "normal"}
+Responsable: ${row.assigned_agent_slug || "sin asignar"}
+
+CONTEXTO
+Problema: ${row.problem_statement || "No hay problema persistido."}
+Diagnóstico: ${row.diagnosis || "No hay diagnóstico persistido todavía."}
+Resultado esperado: ${row.expected_outcome || "No hay resultado esperado persistido."}
+
+ACCIÓN PROPUESTA POR LINK
+${action}
+
+Quiero que me ayudes a destrabar esta misión dentro del ecosistema LINK.
+
+1. Revisa primero las fuentes, apps y herramientas conectadas que correspondan a esta misión. No inventes información ni evidencia.
+2. Dime cuál es el bloqueo real y cuál es la siguiente acción mínima que produce avance verificable.
+3. Si la acción es interna, reversible y segura, ejecútala usando las herramientas disponibles.
+4. Si requiere una decisión humana, pago, publicación externa, mensaje a un tercero, cambio irreversible o falta una conexión, no lo simules: dime exactamente qué debo decidir o habilitar.
+5. Usa el responsable y la etapa correctos; no absorbas trabajo que corresponde a otro LINKDOT.
+6. Al terminar, entrégame: acción realizada, evidencia encontrada o generada, estado actualizado y siguiente movimiento.
+7. Mantén el foco sólo en esta misión hasta dejarla avanzada, resuelta o claramente bloqueada.
+
+Empieza por revisar el estado real actual y propón el primer movimiento.`;
+}
+
+function MissionCard({ row, businessName }) {
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const done = ["verified", "closed", "cancelled"].includes(row.status);
+  const action = missionActionSuggestion(row);
+  const prompt = buildMissionHelpPrompt(row, businessName);
+
+  async function copyPrompt() {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setShowPrompt(true);
+    }
+  }
+
+  return (
+    <article className={`missionCard ${done ? "missionDone" : "missionOpen"}`}>
+      <div className="missionMain">
+        <i className={`priorityDot priority-${row.priority}`} />
+        <div className="missionCopy">
+          <span>{row.stage_key} · {row.assigned_agent_slug || "sin asignar"}</span>
+          <h3>{row.title}</h3>
+          <small>{row.mission_code}</small>
+        </div>
+        <div className="rowEnd">
+          <StatusPill tone={row.status === "active" ? "good" : done ? "neutral" : "warn"}>{row.status}</StatusPill>
+          <small>{fmtDate(row.updated_at)}</small>
+        </div>
+      </div>
+
+      {!done ? (
+        <div className="missionActionZone">
+          <div className="missionActionText">
+            <span className="sectionKicker">ACCIÓN PROPUESTA</span>
+            <strong>{action}</strong>
+          </div>
+          <div className="missionButtons">
+            <button className="missionHelpButton" onClick={() => setShowPrompt(value => !value)}>
+              {showPrompt ? "Ocultar prompt" : "Pedir ayuda a ChatGPT"}
+            </button>
+            <button className={`missionCopyButton ${copied ? "copied" : ""}`} onClick={copyPrompt}>
+              {copied ? "Copiado ✓" : "Copiar prompt"}
+            </button>
+          </div>
+          {showPrompt ? (
+            <div className="missionPromptBox">
+              <div><span className="sectionKicker">PROMPT DE SOLUCIÓN</span><button onClick={copyPrompt}>{copied ? "Copiado ✓" : "Copiar"}</button></div>
+              <pre>{prompt}</pre>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="missionVerifiedNote">Misión verificada · no propone nueva acción hasta que exista una señal o dependencia pendiente.</div>
+      )}
+    </article>
+  );
+}
+
 function LockPanel({ onOpenLogin, title = "Capa privada de LINK" }) {
   return (
     <section className="lockedPanel">
@@ -382,7 +495,7 @@ export default function GameShell() {
       gameStatesRead, gameActionsRead, gameEvidenceRead, rrssRead, financeReads,
       cronRead, alertsRead, memoryReads
     ] = await Promise.all([
-      supabase.from("agent_missions").select("id,mission_code,business_global_id,stage_key,title,status,priority,assigned_agent_slug,updated_at").order("updated_at", { ascending: false }).limit(60),
+      supabase.from("agent_missions").select("id,mission_code,business_global_id,stage_key,title,problem_statement,diagnosis,expected_outcome,created_by_agent,status,priority,assigned_agent_slug,metadata,updated_at").order("updated_at", { ascending: false }).limit(60),
       supabase.from("link_dot_workspaces").select("workspace_key,app_key,name,description,owner_linkdot_slug,owner_director_slug,route,status,metadata").order("name"),
       supabase.from("integration_connections").select("provider,connection_key,mode,status,last_seen_at,last_error,metadata").order("provider"),
       supabase.from("event_bus").select("id,source_provider,event_type,entity_type,global_id,occurred_at,received_at").order("received_at", { ascending: false }).limit(160),
@@ -634,12 +747,11 @@ export default function GameShell() {
             member ? (
               <section className="contentView">
                 <div className="viewHead"><div><span className="sectionKicker">DIRECTOR / DOTs</span><h1>Misiones vivas</h1></div><span>{openCount} activas</span></div>
-                <div className="timelineList">
-                  {privateData.missions.map(row => <article key={row.mission_code} className="timelineRow">
-                    <i className={`priorityDot priority-${row.priority}`} />
-                    <div><span>{row.stage_key} · {row.assigned_agent_slug || "sin asignar"}</span><h3>{row.title}</h3><small>{row.mission_code}</small></div>
-                    <div className="rowEnd"><StatusPill tone={row.status === "active" ? "good" : "neutral"}>{row.status}</StatusPill><small>{fmtDate(row.updated_at)}</small></div>
-                  </article>)}
+                <div className="missionList">
+                  {privateData.missions.map(row => {
+                    const businessName = businesses.find(business => business.global_id === row.business_global_id)?.name;
+                    return <MissionCard key={row.mission_code} row={row} businessName={businessName} />;
+                  })}
                 </div>
               </section>
             ) : <LockPanel title="Misiones del Director y LINKDOTs" onOpenLogin={() => setLoginOpen(true)} />

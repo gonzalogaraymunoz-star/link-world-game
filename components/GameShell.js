@@ -15,10 +15,11 @@ const APP_BASES = {
 
 const NAV = [
   ["mundo", "◎", "Mundo"],
-  ["misiones", "◇", "Misiones"],
-  ["tableros", "▦", "Tableros"],
-  ["cron", "◷", "Cron"],
-  ["negocios", "□", "Negocios"],
+  ["modelos", "◈", "Modelos"],
+  ["negocios", "□", "Células"],
+  ["misiones", "◇", "Pendientes"],
+  ["tableros", "▦", "Mesas"],
+  ["cron", "◷", "Ritmos"],
   ["alertas", "!", "Alertas"],
   ["memoria", "≋", "Memoria"],
   ["configuracion", "⚙", "Configuración"]
@@ -77,7 +78,7 @@ function missionActionSuggestion(row) {
 
 function buildMissionHelpPrompt(row, businessName) {
   const action = missionActionSuggestion(row);
-  return `Trabajemos este pendiente real de LINK ahora.
+  return `Esta misión salió de LINK WORLD. Trabajémosla aquí en ChatGPT, en modo Dios, usando las fuentes conectadas y sin inventar evidencia.
 
 MISIÓN
 Título: ${row.title}
@@ -105,6 +106,7 @@ Quiero que me ayudes a destrabar esta misión dentro del ecosistema LINK.
 5. Usa el responsable y la etapa correctos; no absorbas trabajo que corresponde a otro LINKDOT.
 6. Al terminar, entrégame: acción realizada, evidencia encontrada o generada, estado actualizado y siguiente movimiento.
 7. Mantén el foco sólo en esta misión hasta dejarla avanzada, resuelta o claramente bloqueada.
+8. LINK WORLD no contiene un “Director IA”: la inteligencia se resuelve aquí y LINK WORLD conserva estado, evidencia, artefactos y próximos movimientos.
 
 Empieza por revisar el estado real actual y propón el primer movimiento.`;
 }
@@ -230,7 +232,7 @@ function LoginPanel({ onClose }) {
 }
 
 function phaseLabel(level) {
-  return ["Dormido", "Semilla", "Visible", "Conectado", "Operando", "Expansión"][Math.max(0, Math.min(5, level))];
+  return ["Oportunidad", "Activado", "Recurrente", "Sistematizado", "Delegado", "Autónomo", "Expansión"][Math.max(0, Math.min(6, level))];
 }
 
 function GameProgressHUD({ game }) {
@@ -634,7 +636,7 @@ function MapPanelDock({
   );
 }
 
-function BusinessDossier({ business, progress, onShowMap }) {
+function BusinessDossier({ business, progress, onShowMap, models = [], stagesByModel, evidenceByModel, transactions = [] }) {
   if (!business) return null;
   const facts = business.owned_facts || {};
   const contract = facts.active_contract || facts.sold_product;
@@ -653,8 +655,100 @@ function BusinessDossier({ business, progress, onShowMap }) {
       </div>
       {capabilities.length ? <section className="dossierList"><span className="sectionKicker">CAPACIDADES</span>{capabilities.map(item => <p key={item}>{item}</p>)}</section> : null}
       {productBranches.length ? <section className="dossierList"><span className="sectionKicker">LÍNEAS ACTIVAS</span>{productBranches.map(item => <p key={item.product_code || item.name}><b>{item.name}</b> · {item.status} · {moneyCLP(item.price_clp) || "sin precio"}</p>)}</section> : null}
+      <CellConcha models={models} stagesByModel={stagesByModel} evidenceByModel={evidenceByModel} transactions={transactions} />
       <div className="dockActions"><button className="primaryButton" onClick={() => onShowMap(business)}>Volver al mapa →</button>{business.website ? <a className="secondaryButton" href={business.website} target="_blank" rel="noreferrer">Abrir sistema ↗</a> : null}</div>
     </article>
+  );
+}
+
+
+function ModelLibrary({ models, links, stages, evidence, artifacts, businesses, onOpenBusiness }) {
+  const businessById = new Map(businesses.map(row => [row.id, row]));
+  return (
+    <div className="modelLibrary">
+      {models.map(model => {
+        const modelLinks = links.filter(row => row.model_id === model.id && ["active","proposed"].includes(row.status));
+        const modelStages = stages.filter(row => row.model_id === model.id).sort((a,b) => Number(a.stage_number || 99) - Number(b.stage_number || 99));
+        const modelEvidence = evidence.filter(row => row.model_id === model.id);
+        const modelArtifacts = artifacts.filter(row => row.model_id === model.id);
+        const verified = modelEvidence.filter(row => row.verified === true);
+        const economic = verified.filter(row => Number(row.amount_clp || 0) > 0);
+        const origin = modelLinks.find(row => row.role === "origin");
+        const originBusiness = origin ? businessById.get(origin.business_id) : null;
+        const isBusiness = economic.length > 0 || ["business","evidenced","productizable","replicable"].includes(String(model.maturity_stage || ""));
+        return (
+          <article className="modelCellCard" key={model.id}>
+            <div className="modelCellHead">
+              <div><span className="sectionKicker">{model.model_kind} · {model.economic_role}</span><h3>{model.name}</h3></div>
+              <StatusPill tone={isBusiness ? "good" : "warn"}>{isBusiness ? "negocio / probado" : "modelo / hobby"}</StatusPill>
+            </div>
+            <div className="modelFlow">
+              <div><span>Dolor</span><p>{model.pain_statement || "sin dolor consolidado"}</p></div>
+              <i>→</i>
+              <div><span>Tratamiento</span><p>{model.solution_statement || "sin tratamiento consolidado"}</p></div>
+              <i>→</i>
+              <div><span>Negocio</span><p>{originBusiness?.name || "todavía sin célula origen"}</p></div>
+            </div>
+            <div className="modelNumbers">
+              <div><b>{moneyCLP(model.estimated_monthly_revenue_clp) || "—"}</b><span>ingreso modelo</span></div>
+              <div><b>{economic.length}</b><span>evidencias económicas</span></div>
+              <div><b>{modelStages.length}/6</b><span>Concha registrada</span></div>
+              <div><b>{modelArtifacts.length}</b><span>artefactos ligados</span></div>
+            </div>
+            <div className="conchaMini">
+              {["marketing","ventas","cierre","onboarding","entrega","postventa"].map((key,index) => {
+                const row=modelStages.find(stage => stage.stage_key === key);
+                const label=row?.metadata?.canonical_label || ["MAR","Ventas","Cierre","Boarding","Opera","Postventa"][index];
+                return <span key={key} className={row && row.status !== "not_started" ? "live" : ""} title={row?.objective || label}>{label}</span>;
+              })}
+            </div>
+            <div className="modelNextGate"><span className="sectionKicker">SIGUIENTE GATE</span><p>{model.next_gate || "Definir siguiente validación económica."}</p></div>
+            <div className="modelActions">
+              {originBusiness ? <button className="primaryButton" onClick={() => onOpenBusiness(originBusiness)}>Desarrollar célula →</button> : null}
+              <span>{modelLinks.length} negocio(s) conectados</span>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function CellConcha({ models = [], stagesByModel, evidenceByModel, transactions = [] }) {
+  const primary = models.find(model => model.link_role === "origin") || models[0] || null;
+  if (!primary) return <section className="dossierList"><span className="sectionKicker">CONCHA</span><p>No hay un modelo canónico ligado todavía a esta célula.</p></section>;
+  const stages = stagesByModel.get(primary.id) || [];
+  const evidence = evidenceByModel.get(primary.id) || [];
+  const economic = evidence.filter(row => row.verified === true && Number(row.amount_clp || 0) > 0);
+  return (
+    <>
+      <section className="cellTruthStrip">
+        <div><span>DOLOR</span><strong>{primary.pain_statement || "—"}</strong></div>
+        <div><span>MODELO</span><strong>{primary.name}</strong></div>
+        <div><span>NEGOCIO</span><strong>{economic.length || transactions.length ? "comprobado" : "sin evidencia económica"}</strong></div>
+        <div><span>FIN</span><strong>{economic.length} evidencia(s) + {transactions.length} movimiento(s)</strong></div>
+      </section>
+      <section className="conchaBoard">
+        <div className="conchaBoardHead"><span className="sectionKicker">CONCHA · 6 ETAPAS</span><b>{primary.maturity_stage}</b></div>
+        <div className="conchaStageGrid">
+          {["marketing","ventas","cierre","onboarding","entrega","postventa"].map((key,index) => {
+            const row=stages.find(stage => stage.stage_key === key);
+            const label=row?.metadata?.canonical_label || ["MAR","Ventas","Cierre","Boarding","Opera","Postventa"][index];
+            return (
+              <div key={key} className={row && row.status !== "not_started" ? "active" : ""}>
+                <span>{index+1}</span><b>{label}</b>
+                <small>{row?.objective || "Sin objetivo persistido"}</small>
+                <em>{row?.status || "sin registrar"}</em>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+      <section className="dossierList">
+        <span className="sectionKicker">MODELO → SIGUIENTE MOVIMIENTO</span>
+        <p>{primary.next_gate || "Definir siguiente gate."}</p>
+      </section>
+    </>
   );
 }
 
@@ -668,7 +762,9 @@ export default function GameShell() {
   const [loading, setLoading] = useState(true);
   const [privateData, setPrivateData] = useState({
     missions: [], workspaces: [], integrations: [], events: [], activity: [],
-    gameStates: [], gameActions: [], gameEvidence: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null
+    gameStates: [], gameActions: [], gameEvidence: [],
+    models: [], modelLinks: [], modelStages: [], modelEvidence: [], modelArtifacts: [],
+    rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null
   });
   const [notice, setNotice] = useState("");
   const [mapDockCollapsed, setMapDockCollapsed] = useState(false);
@@ -697,46 +793,88 @@ export default function GameShell() {
     return map;
   }, [privateData.gameActions]);
 
+  const modelsByBusiness = useMemo(() => {
+    const byId = new Map(privateData.models.map(model => [model.id, model]));
+    const map = new Map();
+    for (const link of privateData.modelLinks) {
+      const model = byId.get(link.model_id);
+      if (!model) continue;
+      if (!map.has(link.business_id)) map.set(link.business_id, []);
+      map.get(link.business_id).push({ ...model, link_role: link.role, link_status: link.status, link_metadata: link.metadata });
+    }
+    return map;
+  }, [privateData.models, privateData.modelLinks]);
+
+  const stagesByModel = useMemo(() => {
+    const map = new Map();
+    for (const row of privateData.modelStages) {
+      if (!map.has(row.model_id)) map.set(row.model_id, []);
+      map.get(row.model_id).push(row);
+    }
+    for (const rows of map.values()) rows.sort((a,b) => Number(a.stage_number || 99) - Number(b.stage_number || 99));
+    return map;
+  }, [privateData.modelStages]);
+
+  const evidenceByModel = useMemo(() => {
+    const map = new Map();
+    for (const row of privateData.modelEvidence) {
+      if (!map.has(row.model_id)) map.set(row.model_id, []);
+      map.get(row.model_id).push(row);
+    }
+    return map;
+  }, [privateData.modelEvidence]);
+
   const progressByBusiness = useMemo(() => {
     const map = new Map();
     for (const business of businesses) {
       const actions = actionsByBusiness.get(business.id) || [];
       const verifiedActions = actions.filter(action => action.status === "verified");
-      const rrss = rrssByBusiness.get(business.id);
-      const connections = privateData.integrations.filter(row =>
-        row.status === "active" && (
-          row.connection_key === business.global_id ||
-          String(row.connection_key || "").includes(business.global_id || "__none__") ||
-          row.metadata?.business_id === business.id
-        )
-      );
-      const events = privateData.events.filter(row => row.global_id === business.global_id);
+      const linkedModels = modelsByBusiness.get(business.id) || [];
+      const primaryModel = linkedModels.find(model => model.link_role === "origin") || linkedModels[0] || null;
+      const modelEvidence = primaryModel ? (evidenceByModel.get(primaryModel.id) || []) : [];
+      const concha = primaryModel ? (stagesByModel.get(primaryModel.id) || []) : [];
       const transactions = privateData.transactions.filter(row => row.business_id === business.id || row.business_global_id === business.global_id);
-      const hasSale = transactions.some(row => ["paid","settled","confirmed","completed"].includes(String(row.status || "").toLowerCase())) ||
-        events.some(row => ["sale.confirmed","reservation.completed","payment.recorded","operation.completed"].includes(row.event_type));
+      const paidTransactions = transactions.filter(row => ["paid","settled","confirmed","completed"].includes(String(row.status || "").toLowerCase()));
+      const verifiedEconomicEvidence = modelEvidence.filter(row => row.verified === true && Number(row.amount_clp || 0) > 0);
+      const branchEvidence = Array.isArray(business.owned_facts?.product_branches)
+        ? business.owned_facts.product_branches.some(row => String(row.financial_state?.payment_status || "").includes("paid"))
+        : false;
+      const activated = paidTransactions.length > 0 || verifiedEconomicEvidence.length > 0 || branchEvidence;
+      const recurringSignal = activated && linkedModels.some(model =>
+        ["evidenced","productizable","replicable","business"].includes(String(model.maturity_stage || "")) &&
+        ["monthly","per_session","recurring"].includes(String(model.model_definition?.billing || ""))
+      );
+      const conchaStarted = concha.length >= 6 && concha.filter(row => row.status && row.status !== "not_started").length >= 4;
+      const delegated = business.owned_facts?.cell_state?.delegated === true;
+      const autonomous = business.owned_facts?.cell_state?.autonomous === true;
+      const expansion = business.owned_facts?.cell_state?.expansion === true || linkedModels.some(model => model.maturity_stage === "replicable");
+
       const stages = [
-        { key: "identity", label: "Identidad", complete: business.verification_status === "verified", hint: "verificar la célula" },
-        { key: "surface", label: "Superficie", complete: Boolean(business.website || business.google_place_id), hint: "conectar una superficie real: web o territorio" },
-        { key: "channel", label: "Canal", complete: rrss?.status === "active" || connections.length > 0, hint: "conectar RRSS, bridge o canal operacional" },
-        { key: "operation", label: "Operación", complete: events.length > 0 || verifiedActions.length > 0, hint: "producir una acción o evento verificable" },
-        { key: "conversion", label: "Conversión", complete: hasSale, hint: "cerrar una venta, pago u operación real" }
+        { key: "opportunity", label: "Oportunidad", complete: linkedModels.length > 0 || business.verification_status === "verified", hint: "definir dolor, tratamiento y modelo" },
+        { key: "activated", label: "Activado", complete: activated, hint: "conseguir una transacción económica verificable" },
+        { key: "recurrent", label: "Recurrente", complete: recurringSignal, hint: "demostrar repetición del ingreso o servicio" },
+        { key: "systematized", label: "Sistematizado", complete: conchaStarted, hint: "dejar las seis etapas operando con artefactos y evidencia" },
+        { key: "delegated", label: "Delegado", complete: delegated, hint: "transferir ejecución sin perder control ni evidencia" },
+        { key: "autonomous", label: "Autónomo", complete: autonomous, hint: "operar sin intervención habitual del Director" },
+        { key: "expansion", label: "Expansión", complete: expansion && autonomous, hint: "replicar por mitosis o recombinar por meiosis" }
       ];
-      let level = 0;
-      for (const stage of stages) {
-        if (!stage.complete) break;
-        level += 1;
-      }
-      const percent = Math.round((stages.filter(stage => stage.complete).length / stages.length) * 100);
+      const completeCount = stages.filter(stage => stage.complete).length;
+      const level = Math.max(0, Math.min(6, completeCount - 1));
+      const percent = Math.round((completeCount / stages.length) * 100);
       map.set(business.id, {
-        level, percent, stages, next: stages[level] || null,
+        level, percent, stages, next: stages.find(stage => !stage.complete) || null,
         verifiedActions: verifiedActions.length,
-        connectionCount: connections.length,
-        eventCount: events.length,
-        transactionCount: transactions.length
+        transactionCount: transactions.length,
+        paidTransactionCount: paidTransactions.length,
+        linkedModelCount: linkedModels.length,
+        conchaStageCount: concha.length,
+        economicEvidenceCount: verifiedEconomicEvidence.length,
+        activated,
+        primaryModelId: primaryModel?.id || null
       });
     }
     return map;
-  }, [businesses, actionsByBusiness, rrssByBusiness, privateData.integrations, privateData.events, privateData.transactions]);
+  }, [businesses, actionsByBusiness, modelsByBusiness, evidenceByModel, stagesByModel, privateData.transactions]);
 
   const globalGame = useMemo(() => {
     const verifiedActions = privateData.gameActions.filter(action => action.status === "verified");
@@ -778,7 +916,7 @@ export default function GameShell() {
     if (!supabase || !member) return;
     const [
       missionsRead, workspacesRead, integrationsRead, eventsRead, activityRead,
-      gameStatesRead, gameActionsRead, gameEvidenceRead, rrssRead, financeReads,
+      gameStatesRead, gameActionsRead, gameEvidenceRead, modelReads, rrssRead, financeReads,
       cronRead, alertsRead, memoryReads
     ] = await Promise.all([
       supabase.from("agent_missions").select("id,mission_code,business_global_id,stage_key,title,problem_statement,diagnosis,expected_outcome,created_by_agent,status,priority,assigned_agent_slug,metadata,updated_at").order("updated_at", { ascending: false }).limit(60),
@@ -789,6 +927,13 @@ export default function GameShell() {
       supabase.from("link_game_state_snapshots").select("business_id,temperature,conversion_percent,state,last_verified_action_at,next_action_due_at,reason,captured_at").order("captured_at", { ascending: false }).limit(100),
       supabase.from("link_game_actions").select("id,business_id,mission_request_id,category,title,description,executor_type,evidence_requirement,status,base_heat,heat_awarded,conversion_before,conversion_after,prompt,next_prompt,occurred_at,verified_at,expires_at,metadata,created_at,updated_at").order("updated_at", { ascending: false }).limit(160),
       supabase.from("link_game_evidence").select("id,action_id,evidence_type,evidence_ref,summary,verification_status,submitted_by_type,verified_at,created_at").order("created_at", { ascending: false }).limit(200),
+      Promise.all([
+        supabase.from("link_world_models").select("id,model_key,name,pain_statement,solution_statement,model_kind,maturity_stage,economic_role,estimated_monthly_revenue_clp,estimated_monthly_cost_clp,director_hours_monthly,next_gate,model_definition,metrics,status,metadata").eq("status","active").order("updated_at",{ascending:false}),
+        supabase.from("link_world_model_business_links").select("id,model_id,business_id,role,status,evidence,metadata,updated_at").in("status",["active","proposed"]).order("updated_at",{ascending:false}),
+        supabase.from("link_world_model_stage_state").select("id,model_id,business_id,stage_key,stage_number,status,objective,strategy,next_action,evidence_required,metadata,updated_at").order("stage_number"),
+        supabase.from("link_world_model_evidence").select("id,model_id,business_id,evidence_type,source_system,source_ref,result,amount_clp,verified,confidence,occurred_at,metadata,created_at").order("created_at",{ascending:false}),
+        supabase.from("link_world_model_stage_artifacts").select("id,model_id,stage_key,artifact_id,role,status,metadata,created_at").order("created_at",{ascending:false})
+      ]),
       supabase.from("link_rrss_profiles").select("id,business_id,name,slug,status,metadata").order("name"),
       Promise.all([
         supabase.from("link_financial_policies").select("id,business_id,policy_key,collection_model,payment_provider,default_currency,settlement_model,status,sandbox_enabled,production_enabled,updated_at").order("updated_at", { ascending: false }),
@@ -808,7 +953,7 @@ export default function GameShell() {
     const failures = [
       missionsRead, workspacesRead, integrationsRead, eventsRead, activityRead,
       gameStatesRead, gameActionsRead, gameEvidenceRead, rrssRead, cronRead, alertsRead,
-      ...financeReads, ...memoryReads
+      ...modelReads, ...financeReads, ...memoryReads
     ].filter(result => result?.error);
     if (failures.length) console.warn("LINK WORLD GAME · protected read errors", failures.map(result => result.error?.message));
 
@@ -821,6 +966,11 @@ export default function GameShell() {
       gameStates: safeRows(gameStatesRead),
       gameActions: safeRows(gameActionsRead),
       gameEvidence: safeRows(gameEvidenceRead),
+      models: safeRows(modelReads[0]),
+      modelLinks: safeRows(modelReads[1]),
+      modelStages: safeRows(modelReads[2]),
+      modelEvidence: safeRows(modelReads[3]),
+      modelArtifacts: safeRows(modelReads[4]),
       rrss: safeRows(rrssRead),
       financialPolicies: safeRows(financeReads[0]),
       transactions: safeRows(financeReads[1]),
@@ -993,6 +1143,8 @@ export default function GameShell() {
 
   const openCount = privateData.missions.filter(row => !["verified", "cancelled", "closed"].includes(row.status)).length;
   const alertCount = privateData.alerts.filter(row => row.is_read !== true).length;
+  const selectedModels = selected ? (modelsByBusiness.get(selected.id) || []) : [];
+  const selectedTransactions = selected ? privateData.transactions.filter(row => row.business_id === selected.id || row.business_global_id === selected.global_id) : [];
 
   return (
     <main className="gameApp">
@@ -1070,10 +1222,20 @@ export default function GameShell() {
             </div>
           ) : null}
 
+          {!loading && view === "modelos" ? (
+            member ? (
+              <section className="contentView">
+                <div className="viewHead"><div><span className="sectionKicker">DOLOR → MODELO → NEGOCIO</span><h1>Modelos económicos de LINK</h1></div><span>{privateData.models.length} modelos activos</span></div>
+                <p className="viewIntro">Aquí no se premian tareas. Cada modelo debe demostrar dolor, tratamiento, evidencia económica y una célula capaz de recorrer la Concha. Los modelos sin evidencia permanecen como hobby o experimento.</p>
+                <ModelLibrary models={privateData.models} links={privateData.modelLinks} stages={privateData.modelStages} evidence={privateData.modelEvidence} artifacts={privateData.modelArtifacts} businesses={businesses} onOpenBusiness={openFullBusiness} />
+              </section>
+            ) : <LockPanel title="Modelos económicos de LINK" onOpenLogin={() => setLoginOpen(true)} />
+          ) : null}
+
           {!loading && view === "negocios" ? (
             <section className="contentView">
               <div className="viewHead"><div><span className="sectionKicker">CÉLULAS LINK</span><h1>Fichas de negocios</h1></div><span>{businesses.length} visibles</span></div>
-              <BusinessDossier business={selected} progress={progressByBusiness.get(selected?.id)} onShowMap={showMap} />
+              <BusinessDossier business={selected} progress={progressByBusiness.get(selected?.id)} onShowMap={showMap} models={selectedModels} stagesByModel={stagesByModel} evidenceByModel={evidenceByModel} transactions={selectedTransactions} />
               <div className="businessGrid businessGridCompact">
                 {businesses.map(b => (
                   <article key={b.id} className={`businessCard ${selected?.id === b.id ? "selectedBusinessCard" : ""}`}>
@@ -1108,7 +1270,7 @@ export default function GameShell() {
           {!loading && view === "misiones" ? (
             member ? (
               <section className="contentView">
-                <div className="viewHead"><div><span className="sectionKicker">DIRECTOR / DOTs</span><h1>Misiones vivas</h1></div><span>{openCount} activas</span></div>
+                <div className="viewHead"><div><span className="sectionKicker">MODO DIOS · CHATGPT</span><h1>Pendientes reales</h1></div><span>{openCount} activos</span></div>
                 <div className="missionList">
                   {privateData.missions.map(row => {
                     const businessName = businesses.find(business => business.global_id === row.business_global_id)?.name;
@@ -1116,7 +1278,7 @@ export default function GameShell() {
                   })}
                 </div>
               </section>
-            ) : <LockPanel title="Misiones del Director y LINKDOTs" onOpenLogin={() => setLoginOpen(true)} />
+            ) : <LockPanel title="Pendientes y LINKDOTs" onOpenLogin={() => setLoginOpen(true)} />
           ) : null}
 
           {!loading && (view === "eventos" || view === "red") ? (
@@ -1140,7 +1302,7 @@ export default function GameShell() {
           {!loading && view === "economia" ? (
             member ? (
               <section className="contentView">
-                <div className="viewHead"><div><span className="sectionKicker">FIN</span><h1>Economía del ecosistema</h1></div><a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer">Abrir Control Central ↗</a></div>
+                <div className="viewHead"><div><span className="sectionKicker">FIN · TRANSVERSAL</span><h1>Verdad económica por célula</h1></div><a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer">Abrir Control Central ↗</a></div>
                 <div className="economyGrid">
                   {businesses.map(business => {
                     const policies = privateData.financialPolicies.filter(row => row.business_id === business.id);
@@ -1179,7 +1341,7 @@ export default function GameShell() {
           ) : null}
 
           {!loading && view === "memoria" ? (
-            member ? <section className="contentView"><div className="viewHead"><div><span className="sectionKicker">HIPOCAMPO + CORTEX</span><h1>Memoria del organismo</h1></div><a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer">Abrir Control Central ↗</a></div><div className="memoryGrid"><article><b>{privateData.memoryCounts?.memories ?? 0}</b><span>recuerdos profundos</span></article><article><b>{privateData.memoryCounts?.cortex ?? 0}</b><span>documentos Cortex</span></article><article><b>{privateData.memoryCounts?.learnings ?? 0}</b><span>aprendizajes</span></article><article><b>{privateData.memoryCounts?.reports ?? 0}</b><span>informes diarios</span></article></div><div className="contextBlock"><span className="sectionKicker">CONTRATO</span><strong>Cortex encuentra · Hipocampo contextualiza · Director decide · LINKDOTs ejecutan.</strong></div></section>
+            member ? <section className="contentView"><div className="viewHead"><div><span className="sectionKicker">HIPOCAMPO + CORTEX</span><h1>Memoria del organismo</h1></div><a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer">Abrir Control Central ↗</a></div><div className="memoryGrid"><article><b>{privateData.memoryCounts?.memories ?? 0}</b><span>recuerdos profundos</span></article><article><b>{privateData.memoryCounts?.cortex ?? 0}</b><span>documentos Cortex</span></article><article><b>{privateData.memoryCounts?.learnings ?? 0}</b><span>aprendizajes</span></article><article><b>{privateData.memoryCounts?.reports ?? 0}</b><span>informes diarios</span></article></div><div className="contextBlock"><span className="sectionKicker">CONTRATO</span><strong>Cortex encuentra · Hipocampo contextualiza · ChatGPT ayuda a decidir · LINKDOTs ejecutan · LINK WORLD conserva evidencia.</strong></div></section>
             : <LockPanel title="Hipocampo y Cortex" onOpenLogin={() => setLoginOpen(true)} />
           ) : null}
 

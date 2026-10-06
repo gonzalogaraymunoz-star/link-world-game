@@ -2030,3 +2030,224 @@ button, input { font: inherit; }
   .modelNumbers > div,
   .cellTruthStrip > div { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.06); }
 }
+
+
+/* Ficha económica · embudo comprobable */
+.businessFunnel {
+  margin-top: 12px;
+  border: 1px solid rgba(216,255,114,.12);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(216,255,114,.018);
+}
+.businessFunnelHead,
+.funnelCellHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.businessFunnelHead h3,
+.funnelCellHead h4 {
+  margin: 5px 0 0;
+  font-weight: 500;
+}
+.businessFunnelHead h3 { font-size: 17px; }
+.funnelCellHead h4 { font-size: 15px; }
+.businessFunnelHead small,
+.funnelCellHead p {
+  color: rgba(255,255,255,.38);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.funnelCell {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+.proofCounter {
+  min-width: 150px;
+  display: grid;
+  justify-items: end;
+}
+.proofCounter b {
+  color: #d8ff72;
+  font-size: 24px;
+  font-weight: 500;
+}
+.proofCounter span,
+.proofCounter small {
+  color: rgba(255,255,255,.35);
+  font-size: 7px;
+}
+.proofCounter small { margin-top: 4px; max-width: 160px; text-align: right; }
+.funnelTrack {
+  display: grid;
+  grid-template-columns: repeat(6,minmax(0,1fr));
+  gap: 5px;
+  margin: 12px 0;
+}
+.funnelTrack span {
+  min-height: 31px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 8px;
+  color: rgba(255,255,255,.3);
+  font-size: 7px;
+}
+.funnelTrack span.done {
+  border-color: rgba(216,255,114,.25);
+  color: #d8ff72;
+  background: rgba(216,255,114,.04);
+}
+.stageActionGrid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 8px;
+}
+.stageActionCard {
+  min-height: 270px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 11px;
+  padding: 11px;
+  background: rgba(255,255,255,.012);
+}
+.stageActionCard.checked {
+  border-color: rgba(216,255,114,.20);
+}
+.stageActionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.stageActionHead > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.stageActionHead i {
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.10);
+  color: rgba(255,255,255,.45);
+  font-style: normal;
+  font-size: 7px;
+}
+.stageActionHead b {
+  font-size: 9px;
+  font-weight: 500;
+}
+.stageActionCard > p {
+  min-height: 42px;
+  color: rgba(255,255,255,.48);
+  font-size: 8px;
+  line-height: 1.45;
+}
+.stageRule,
+.stageRecommendation {
+  margin-top: 9px;
+  display: grid;
+  gap: 4px;
+}
+.stageRule span,
+.stageRecommendation span,
+.funnelGate span {
+  color: rgba(255,255,255,.28);
+  font-size: 6px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.stageRule strong,
+.stageRecommendation strong,
+.funnelGate strong {
+  color: rgba(255,255,255,.66);
+  font-size: 8px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+.executorRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 9px 0;
+}
+.executorRow span {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  padding: 4px 6px;
+  color: rgba(255,255,255,.52);
+  font-size: 6px;
+}
+.proofList {
+  display: grid;
+  gap: 4px;
+  margin: 7px 0;
+}
+.proofList small {
+  color: rgba(216,255,114,.72);
+  font-size: 7px;
+  line-height: 1.35;
+}
+.proofMissing {
+  display: block;
+  margin: 7px 0;
+  color: rgba(255,179,106,.58);
+  font-size: 7px;
+}
+.stageButtons {
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+}
+.stageButtons button {
+  flex: 1;
+  min-height: 30px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 7px;
+  background: rgba(255,255,255,.02);
+  color: rgba(255,255,255,.68);
+  font-size: 7px;
+  cursor: pointer;
+}
+.stageButtons button:first-child {
+  border-color: rgba(216,255,114,.20);
+  color: #d8ff72;
+}
+.stagePromptBox {
+  max-height: 170px;
+  overflow: auto;
+  margin: 8px 0 0;
+  padding: 9px;
+  border: 1px solid rgba(216,255,114,.10);
+  border-radius: 8px;
+  background: rgba(0,0,0,.18);
+  color: rgba(255,255,255,.62);
+  white-space: pre-wrap;
+  font-size: 7px;
+  line-height: 1.45;
+}
+.funnelGate {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+@media (max-width: 1050px) {
+  .stageActionGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .funnelTrack { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (max-width: 680px) {
+  .businessFunnelHead,
+  .funnelCellHead { flex-direction: column; }
+  .proofCounter { justify-items: start; }
+  .proofCounter small { text-align: left; }
+  .stageActionGrid,
+  .funnelTrack { grid-template-columns: 1fr; }
+}

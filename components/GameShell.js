@@ -383,6 +383,18 @@ function moneyCLP(value) {
   return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(Number(value));
 }
 
+function isVerifiedEconomicProof(row) {
+  if (!row || row.verified !== true || Number(row.amount_clp || 0) <= 0) return false;
+  if (row.metadata?.payment_verified === false || row.metadata?.economic_payment_proof === false) return false;
+  return ["payment","paid","settled","recurrent_delivery","revenue","invoice_paid","receipt_paid"].includes(String(row.evidence_type || "").toLowerCase()) ||
+    row.metadata?.economic_payment_proof === true ||
+    row.metadata?.proof_scope === "operation_and_revenue_signal";
+}
+
+function stageProofRows(evidence = [], stageKey) {
+  return evidence.filter(row => row.verified === true && row.metadata?.stage_key === stageKey);
+}
+
 function businessModelLabel(business) {
   const facts = business?.owned_facts || {};
   return facts.house_model?.label || facts.business_type || facts.ecosystem_role || business?.sector || "Modelo por describir";
@@ -655,7 +667,7 @@ function BusinessDossier({ business, progress, onShowMap, models = [], stagesByM
       </div>
       {capabilities.length ? <section className="dossierList"><span className="sectionKicker">CAPACIDADES</span>{capabilities.map(item => <p key={item}>{item}</p>)}</section> : null}
       {productBranches.length ? <section className="dossierList"><span className="sectionKicker">LÍNEAS ACTIVAS</span>{productBranches.map(item => <p key={item.product_code || item.name}><b>{item.name}</b> · {item.status} · {moneyCLP(item.price_clp) || "sin precio"}</p>)}</section> : null}
-      <CellConcha models={models} stagesByModel={stagesByModel} evidenceByModel={evidenceByModel} transactions={transactions} />
+      <BusinessFunnel models={models} stagesByModel={stagesByModel} evidenceByModel={evidenceByModel} businessName={business.name} />
       <div className="dockActions"><button className="primaryButton" onClick={() => onShowMap(business)}>Volver al mapa →</button>{business.website ? <a className="secondaryButton" href={business.website} target="_blank" rel="noreferrer">Abrir sistema ↗</a> : null}</div>
     </article>
   );
@@ -672,15 +684,16 @@ function ModelLibrary({ models, links, stages, evidence, artifacts, businesses, 
         const modelEvidence = evidence.filter(row => row.model_id === model.id);
         const modelArtifacts = artifacts.filter(row => row.model_id === model.id);
         const verified = modelEvidence.filter(row => row.verified === true);
-        const economic = verified.filter(row => Number(row.amount_clp || 0) > 0);
+        const economic = verified.filter(isVerifiedEconomicProof);
         const origin = modelLinks.find(row => row.role === "origin");
         const originBusiness = origin ? businessById.get(origin.business_id) : null;
-        const isBusiness = economic.length > 0 || ["business","evidenced","productizable","replicable"].includes(String(model.maturity_stage || ""));
+        const hasEconomicProof = economic.length > 0;
+        const isMatureModel = ["evidenced","repeatable","productizable","business","replicable"].includes(String(model.maturity_stage || ""));
         return (
           <article className="modelCellCard" key={model.id}>
             <div className="modelCellHead">
               <div><span className="sectionKicker">{model.model_kind} · {model.economic_role}</span><h3>{model.name}</h3></div>
-              <StatusPill tone={isBusiness ? "good" : "warn"}>{isBusiness ? "negocio / probado" : "modelo / hobby"}</StatusPill>
+              <StatusPill tone={hasEconomicProof ? "good" : isMatureModel ? "neutral" : "warn"}>{hasEconomicProof ? "negocio comprobado" : isMatureModel ? "modelo evidenciado" : "modelo / hobby"}</StatusPill>
             </div>
             <div className="modelFlow">
               <div><span>Dolor</span><p>{model.pain_statement || "sin dolor consolidado"}</p></div>
@@ -714,43 +727,76 @@ function ModelLibrary({ models, links, stages, evidence, artifacts, businesses, 
   );
 }
 
-function CellConcha({ models = [], stagesByModel, evidenceByModel, transactions = [] }) {
-  const primary = models.find(model => model.link_role === "origin") || models[0] || null;
-  if (!primary) return <section className="dossierList"><span className="sectionKicker">CONCHA</span><p>No hay un modelo canónico ligado todavía a esta célula.</p></section>;
-  const stages = stagesByModel.get(primary.id) || [];
-  const evidence = evidenceByModel.get(primary.id) || [];
-  const economic = evidence.filter(row => row.verified === true && Number(row.amount_clp || 0) > 0);
+
+function StageActionCard({ stage, evidence = [], model, businessName }) {
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const proofs = stageProofRows(evidence, stage.stage_key);
+  const checked = proofs.length > 0;
+  const label = stage.metadata?.canonical_label || stage.stage_key;
+  const prompt = stage.metadata?.prompt_template || `Revisa ${label} de ${model.name} en ${businessName}. Usa sólo evidencia real. Dime qué está comprobado, qué falta, qué puede hacer ChatGPT y qué debe hacer una persona. Propón una sola acción verificable.`;
+  async function copyPrompt() {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1400);
+    } catch { setShowPrompt(true); }
+  }
+  const executors = stage.metadata?.executor_options || ["chatgpt","human"];
+  const executorLabels = { chatgpt:"ChatGPT", human:"Humano", hybrid:"ChatGPT + humano" };
   return (
-    <>
-      <section className="cellTruthStrip">
-        <div><span>DOLOR</span><strong>{primary.pain_statement || "—"}</strong></div>
-        <div><span>MODELO</span><strong>{primary.name}</strong></div>
-        <div><span>NEGOCIO</span><strong>{economic.length || transactions.length ? "comprobado" : "sin evidencia económica"}</strong></div>
-        <div><span>FIN</span><strong>{economic.length} evidencia(s) + {transactions.length} movimiento(s)</strong></div>
-      </section>
-      <section className="conchaBoard">
-        <div className="conchaBoardHead"><span className="sectionKicker">CONCHA · 6 ETAPAS</span><b>{primary.maturity_stage}</b></div>
-        <div className="conchaStageGrid">
-          {["marketing","ventas","cierre","onboarding","entrega","postventa"].map((key,index) => {
-            const row=stages.find(stage => stage.stage_key === key);
-            const label=row?.metadata?.canonical_label || ["MAR","Ventas","Cierre","Boarding","Opera","Postventa"][index];
-            return (
-              <div key={key} className={row && row.status !== "not_started" ? "active" : ""}>
-                <span>{index+1}</span><b>{label}</b>
-                <small>{row?.objective || "Sin objetivo persistido"}</small>
-                <em>{row?.status || "sin registrar"}</em>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-      <section className="dossierList">
-        <span className="sectionKicker">MODELO → SIGUIENTE MOVIMIENTO</span>
-        <p>{primary.next_gate || "Definir siguiente gate."}</p>
-      </section>
-    </>
+    <article className={`stageActionCard ${checked ? "checked" : "pending"}`}>
+      <div className="stageActionHead">
+        <div><i>{stage.stage_number}</i><b>{label}</b></div>
+        <StatusPill tone={checked ? "good" : "warn"}>{checked ? "comprobado" : "sin evidencia"}</StatusPill>
+      </div>
+      <p>{stage.objective}</p>
+      <div className="stageRule"><span>Evidencia</span><strong>{stage.evidence_required}</strong></div>
+      <div className="stageRecommendation"><span>Recomendación</span><strong>{stage.metadata?.recommendation || stage.next_action}</strong></div>
+      <div className="executorRow">{executors.map(x => <span key={x}>{executorLabels[x] || x}</span>)}</div>
+      {checked ? <div className="proofList">{proofs.slice(0,2).map(row => <small key={row.id}>✓ {row.result || row.evidence_type}</small>)}</div> : <small className="proofMissing">No avanza hasta tener prueba dentro de la célula.</small>}
+      <div className="stageButtons">
+        <button onClick={() => setShowPrompt(v => !v)}>{showPrompt ? "Ocultar" : "Trabajar en ChatGPT"}</button>
+        <button onClick={copyPrompt}>{copied ? "Copiado ✓" : "Copiar prompt"}</button>
+      </div>
+      {showPrompt ? <pre className="stagePromptBox">{prompt}</pre> : null}
+    </article>
   );
 }
+
+function BusinessFunnel({ models = [], stagesByModel, evidenceByModel, businessName }) {
+  if (!models.length) return <section className="dossierList"><span className="sectionKicker">EMBUDO DE DESARROLLO</span><p>Esta ficha aún no tiene modelos ligados.</p></section>;
+  return (
+    <section className="businessFunnel">
+      <div className="businessFunnelHead">
+        <div><span className="sectionKicker">EMBUDO DEL NEGOCIO</span><h3>Lo esencial que debe funcionar</h3></div>
+        <small>Comprobado dentro de la célula · no por intención.</small>
+      </div>
+      {models.map(model => {
+        const stages=stagesByModel.get(model.id)||[];
+        const evidence=evidenceByModel.get(model.id)||[];
+        const economic=evidence.filter(isVerifiedEconomicProof);
+        const contractual=evidence.filter(row => row.verified===true && Number(row.amount_clp||0)>0 && !isVerifiedEconomicProof(row));
+        return (
+          <div className="funnelCell" key={model.id}>
+            <div className="funnelCellHead">
+              <div><span className="sectionKicker">{model.link_metadata?.cell_label || "CÉLULA"}</span><h4>{model.name}</h4><p>{model.pain_statement}</p></div>
+              <div className="proofCounter"><b>{economic.length}</b><span>prueba económica</span>{contractual.length ? <small>{contractual.length} señal contractual sin pago verificado</small> : null}</div>
+            </div>
+            <div className="funnelTrack">
+              {stages.map(stage => <span key={stage.id} className={stageProofRows(evidence,stage.stage_key).length ? "done" : ""}>{stage.metadata?.canonical_label || stage.stage_key}</span>)}
+            </div>
+            <div className="stageActionGrid">
+              {stages.map(stage => <StageActionCard key={stage.id} stage={stage} evidence={evidence} model={model} businessName={businessName} />)}
+            </div>
+            <div className="funnelGate"><span>Siguiente gate</span><strong>{model.next_gate || "Definir siguiente validación."}</strong></div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 
 export default function GameShell() {
   const [view, setView] = useState("mundo");
@@ -835,7 +881,7 @@ export default function GameShell() {
       const concha = primaryModel ? (stagesByModel.get(primaryModel.id) || []) : [];
       const transactions = privateData.transactions.filter(row => row.business_id === business.id || row.business_global_id === business.global_id);
       const paidTransactions = transactions.filter(row => ["paid","settled","confirmed","completed"].includes(String(row.status || "").toLowerCase()));
-      const verifiedEconomicEvidence = modelEvidence.filter(row => row.verified === true && Number(row.amount_clp || 0) > 0);
+      const verifiedEconomicEvidence = modelEvidence.filter(isVerifiedEconomicProof);
       const branchEvidence = Array.isArray(business.owned_facts?.product_branches)
         ? business.owned_facts.product_branches.some(row => String(row.financial_state?.payment_status || "").includes("paid"))
         : false;

@@ -383,6 +383,18 @@ function moneyCLP(value) {
   return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(Number(value));
 }
 
+function isVerifiedEconomicProof(row) {
+  if (!row || row.verified !== true || Number(row.amount_clp || 0) <= 0) return false;
+  if (row.metadata?.payment_verified === false || row.metadata?.economic_payment_proof === false) return false;
+  return ["payment","paid","settled","recurrent_delivery","revenue","invoice_paid","receipt_paid"].includes(String(row.evidence_type || "").toLowerCase()) ||
+    row.metadata?.economic_payment_proof === true ||
+    row.metadata?.proof_scope === "operation_and_revenue_signal";
+}
+
+function stageProofRows(evidence = [], stageKey) {
+  return evidence.filter(row => row.verified === true && row.metadata?.stage_key === stageKey);
+}
+
 function businessModelLabel(business) {
   const facts = business?.owned_facts || {};
   return facts.house_model?.label || facts.business_type || facts.ecosystem_role || business?.sector || "Modelo por describir";
@@ -672,15 +684,16 @@ function ModelLibrary({ models, links, stages, evidence, artifacts, businesses, 
         const modelEvidence = evidence.filter(row => row.model_id === model.id);
         const modelArtifacts = artifacts.filter(row => row.model_id === model.id);
         const verified = modelEvidence.filter(row => row.verified === true);
-        const economic = verified.filter(row => Number(row.amount_clp || 0) > 0);
+        const economic = verified.filter(isVerifiedEconomicProof);
         const origin = modelLinks.find(row => row.role === "origin");
         const originBusiness = origin ? businessById.get(origin.business_id) : null;
-        const isBusiness = economic.length > 0 || ["business","evidenced","productizable","replicable"].includes(String(model.maturity_stage || ""));
+        const hasEconomicProof = economic.length > 0;
+        const isMatureModel = ["evidenced","repeatable","productizable","business","replicable"].includes(String(model.maturity_stage || ""));
         return (
           <article className="modelCellCard" key={model.id}>
             <div className="modelCellHead">
               <div><span className="sectionKicker">{model.model_kind} · {model.economic_role}</span><h3>{model.name}</h3></div>
-              <StatusPill tone={isBusiness ? "good" : "warn"}>{isBusiness ? "negocio / probado" : "modelo / hobby"}</StatusPill>
+              <StatusPill tone={hasEconomicProof ? "good" : isMatureModel ? "neutral" : "warn"}>{hasEconomicProof ? "negocio comprobado" : isMatureModel ? "modelo evidenciado" : "modelo / hobby"}</StatusPill>
             </div>
             <div className="modelFlow">
               <div><span>Dolor</span><p>{model.pain_statement || "sin dolor consolidado"}</p></div>
@@ -835,7 +848,7 @@ export default function GameShell() {
       const concha = primaryModel ? (stagesByModel.get(primaryModel.id) || []) : [];
       const transactions = privateData.transactions.filter(row => row.business_id === business.id || row.business_global_id === business.global_id);
       const paidTransactions = transactions.filter(row => ["paid","settled","confirmed","completed"].includes(String(row.status || "").toLowerCase()));
-      const verifiedEconomicEvidence = modelEvidence.filter(row => row.verified === true && Number(row.amount_clp || 0) > 0);
+      const verifiedEconomicEvidence = modelEvidence.filter(isVerifiedEconomicProof);
       const branchEvidence = Array.isArray(business.owned_facts?.product_branches)
         ? business.owned_facts.product_branches.some(row => String(row.financial_state?.payment_status || "").includes("paid"))
         : false;

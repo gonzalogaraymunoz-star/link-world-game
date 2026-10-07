@@ -1,0 +1,168 @@
+/* DESIGN LINK — Architectural Ledger. Diagram paths represent relations,
+   while layout surfaces use tonal separation instead of divider borders. */
+:root {color-scheme:light;--bg:#fbf9f9;--panel:#ffffff;--text:#1b1c1c;--muted:#4c4546;--line:#efeded;--accent:#7c5546;}
+body{font-family:'Inter',sans-serif;background:#fbf9f9;color:#1b1c1c;}
+.ledgerApp{--surface:#fbf9f9;--ledger-card:#fff;--card:var(--ledger-card);--low:#efeded;--ledger-ink:#1b1c1c;--ink:var(--ledger-ink);--ledger-subtle:#4c4546;--subtle:var(--ledger-subtle);--earth:#7c5546;--primary:#000;--text:var(--ink);--muted:var(--subtle);--line:var(--low);--accent:var(--earth);background:var(--surface);color:var(--ink);color-scheme:light;}
+.ledgerApp.theme-night{--surface:#151515;--ledger-card:#1b1b1b;--low:#282525;--ledger-ink:#fbf9f9;--ledger-subtle:#bab1ae;--earth:#cca28d;--primary:#fbf9f9;color-scheme:dark;}
+.ledgerApp h1,.ledgerApp h2,.ledgerApp h3,.ledgerApp .brandButton b{font-family:'Space Grotesk',sans-serif;font-weight:500;letter-spacing:-.045em;}
+.ledgerApp button,.ledgerApp input,.ledgerApp select,.ledgerApp textarea{font-family:'Inter',sans-serif;color:var(--ink);}
+.ledgerApp button,.ledgerApp a{touch-action:manipulation;}
+.ledgerApp button{cursor:pointer;}
+.ledgerApp button:focus-visible,.ledgerApp a:focus-visible,.ledgerApp select:focus-visible{outline:2px solid var(--earth);outline-offset:4px;}
+.ledgerApp .gameTopbar{background:var(--card);color:var(--ink);border:0;padding:0 28px;grid-template-columns:260px 1fr auto;}
+.ledgerApp .brandButton{color:var(--ink);gap:15px;}
+.ledgerApp .brandButton b{font-size:18px;letter-spacing:-.04em;}
+.ledgerApp .brandButton small{color:var(--subtle);font-size:9px;letter-spacing:.08em;text-transform:uppercase;}
+.ledgerApp .brandMark{color:var(--primary);background:transparent;font-size:22px;line-height:10px;letter-spacing:3px;}
+.ledgerApp .topTabs{justify-content:center;gap:4px;}
+.ledgerApp .topTabs button{border:0;border-radius:2px;color:var(--subtle);background:transparent;font-size:11px;padding:11px 17px;}
+.ledgerApp .topTabs button.active{background:var(--low);color:var(--ink);}
+.ledgerApp .topSession{color:var(--subtle);font-size:10px;gap:9px;}
+.ledgerApp .topSession button{border:0;border-radius:2px;color:var(--card);background:var(--primary);padding:10px 17px;font-size:10px;}
+.ledgerApp .liveDot{width:5px;height:5px;background:var(--subtle);}
+.ledgerApp .liveDot.on{background:var(--earth);box-shadow:none;}
+.ledgerApp .gameBody{display:flex;min-height:0;}
+.ledgerApp .mainSurface{flex:1;min-width:0;background:var(--surface);container-type:inline-size;}
+.worldNavigation{flex:0 0 208px;width:208px;background:var(--card);padding:22px 13px 18px;display:flex;flex-direction:column;overflow:auto;transition:width .3s,flex-basis .3s;}
+.worldNavigation.isFolded{flex-basis:62px;width:62px;padding-inline:9px;}
+.navFold,.contextFold{display:flex;align-items:center;gap:12px;width:100%;height:40px;border:0;background:transparent;font-size:10px;font-weight:500;}
+.navFold{margin-bottom:24px;}
+.linkIcon{flex-shrink:0;}
+.navGroup{margin-bottom:12px;}
+.navGroupToggle{display:flex;align-items:center;gap:12px;width:100%;padding:11px 8px;font-size:10px;color:var(--subtle)!important;background:none;border:0;border-radius:4px;text-align:left;}
+.navGroupToggle:hover,.navGroupToggle.groupActive{background:var(--surface);color:var(--ink)!important;}
+.worldNavigation.isFolded .navGroupToggle span{display:none;}
+.navGroupItems{padding:8px 0 5px 32px;}
+.navGroupItems button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:10px 7px;margin:2px 0;border:0;border-radius:4px;background:none;text-align:left;font-size:10px;color:var(--subtle)!important;}
+.navGroupItems button.active,.navGroupItems button:hover{background:var(--low);color:var(--ink)!important;}
+.navGroupItems button.active i{width:4px;height:4px;background:var(--earth);border-radius:50%;}
+.navFoot{margin-top:auto;padding:36px 8px 0;color:var(--subtle);font-size:9px;line-height:1.8;}
+.worldScopeBar{display:flex;align-items:center;gap:11px;min-height:58px;padding:12px 30px;font-size:10px;color:var(--subtle);background:var(--surface);}
+.worldScopeBar button,.worldScopeBar select{font-size:10px;border:0;background:none;padding:7px 0;}
+.worldScopeBar>button:first-child{font-weight:600;letter-spacing:.13em;}
+.worldScopeBar select{max-width:200px;}
+.worldScopeBar b{font-weight:500;color:var(--ink);}
+.worldScopeBar .scopeBack{margin-left:auto;color:var(--earth);}
+.worldContextDock{background:var(--card);flex:0 0 320px;width:320px;min-height:0;display:flex;flex-direction:column;padding:22px 18px;overflow:auto;transition:width .3s,flex-basis .3s;}
+.worldContextDock.isFolded{flex-basis:52px;width:52px;padding-inline:6px;}
+.contextFold{margin-bottom:24px;}
+.contextTabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:24px;}
+.contextTabs button{display:flex;flex-direction:column;align-items:center;gap:7px;border:0;background:transparent;border-radius:4px;padding:12px 4px;color:var(--subtle);font-size:8px;}
+.contextTabs button.active,.contextTabs button:hover{background:var(--low);color:var(--ink);}
+.worldContextDock.isFolded .contextTabs{display:flex;flex-direction:column;gap:12px;}
+.contextContent h2{font-size:25px;line-height:1.1;margin:14px 0 20px;overflow-wrap:anywhere;}
+.contextContent p{font-size:11px;line-height:1.8;color:var(--subtle);}
+.contextContent>button{display:block;width:100%;border:0;border-radius:4px;background:var(--surface);padding:13px;text-align:left;font-size:10px;margin-top:12px;}
+.contextContent .ledgerModel{display:block;margin-top:24px;}
+.contextContent .ledgerModel select{width:100%;margin-top:10px;}
+.contextContent .ledgerRecord{padding:18px 10px;flex-direction:column;gap:8px;}
+.contextContent .ledgerRecord h3{font-size:16px;}
+.contextContent .ledgerRecord p{font-size:10px;}
+.contextJourney button,.contextCells button,.contextHistory button{display:flex;gap:12px;align-items:center;border:0;border-radius:4px;background:transparent;width:100%;padding:15px 12px;margin-bottom:8px;text-align:left;font-size:10px;}
+.contextJourney button.active,.contextCells button.active,.contextCells button:hover,.contextHistory button:hover{background:var(--low);}
+.contextJourney button span{font-size:9px;color:var(--earth);}
+.contextJourney button svg{margin-left:auto;width:14px;}
+.contextCells button,.contextHistory button{flex-direction:column;align-items:flex-start;gap:7px;}
+.contextCells button small,.contextHistory button small{color:var(--subtle);font-size:9px;}
+.contextContent input,.dimensionWorkspace textarea{width:100%;background:transparent;border:0;border-bottom:1px solid var(--subtle);border-radius:0;padding:12px 0;font-size:11px;}
+.contextContent input:focus,.dimensionWorkspace textarea:focus{outline:0;border-bottom:2px solid var(--earth);}
+.dimensionWorkspace{padding:28px 48px 64px;max-width:1280px;margin:0 auto;animation:dimensionArrive .4s cubic-bezier(.2,.7,.2,1);}
+.ledgerHero{max-width:740px;padding:24px 0 44px;}
+.ledgerApp .sectionKicker{color:var(--earth);font-size:9px;font-weight:500;letter-spacing:.16em;}
+.ledgerHero h1{font-size:56px;line-height:1.03;letter-spacing:-.06em;margin:20px 0 22px;color:var(--primary);}
+.ledgerHero p{font-size:13px;color:var(--subtle);line-height:1.9;max-width:560px;}
+.ledgerSection{margin-top:38px;}
+.ledgerSection>h2{font-size:23px;margin:0 0 24px;}
+.ledgerRecords{display:flex;flex-direction:column;gap:24px;}
+.ledgerRecord{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;padding:24px;background:var(--card);border-radius:4px;}
+.ledgerRecord:hover{background:var(--low);}
+.ledgerIndex{display:block;font-size:9px;color:var(--earth);margin-bottom:12px;font-variant-numeric:tabular-nums;}
+.ledgerRecord h3{font-size:21px;margin:0 0 10px;overflow-wrap:anywhere;}
+.ledgerRecord p{font-size:11px;color:var(--subtle);line-height:1.9;margin:0;overflow-wrap:anywhere;max-width:650px;}
+.ledgerRecordEnd{display:flex;align-items:flex-end;flex-direction:column;gap:14px;flex-shrink:0;font-size:10px;}
+.ledgerBadge{background:var(--low);padding:7px 10px;border-radius:2px;font-size:9px;color:var(--subtle);}
+.ledgerRecordEnd a{color:var(--earth);font-size:10px;}
+.ledgerEmpty{padding:28px;background:var(--low);font-size:11px;line-height:1.9;color:var(--subtle);border-radius:4px;}
+.ledgerAccess{background:var(--card);padding:40px;max-width:720px;border-radius:4px;}
+.ledgerAccess>span{font-size:9px;letter-spacing:.14em;color:var(--earth);}
+.ledgerAccess h2{font-size:29px;max-width:430px;line-height:1.25;margin:20px 0;}
+.ledgerAccess p{font-size:12px;line-height:1.9;max-width:470px;color:var(--subtle);margin:0 0 28px;}
+.ledgerPrimary{background:linear-gradient(135deg,#000,#1b1b1b)!important;color:#fff!important;border:0;border-radius:2px;padding:14px 20px;font-size:11px;}
+.ledgerModel{display:flex;align-items:center;gap:18px;font-size:10px;color:var(--subtle);margin:4px 0 36px;}
+.ledgerModel select{max-width:100%;border:0;background:var(--card);border-radius:4px;padding:12px 15px;font-size:11px;}
+.ledgerScopeNote{font-size:11px;line-height:1.9;color:var(--subtle);padding:20px 0;}
+.ledgerReadError{background:var(--low);padding:18px;font-size:11px;color:var(--earth);}
+.reproductionRules{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.reproductionRules article{background:var(--card);padding:28px;border-radius:4px;}
+.reproductionRules span{font-size:9px;letter-spacing:.12em;color:var(--earth);}
+.reproductionRules h2{font-size:26px;}
+.reproductionRules p{font-size:12px;color:var(--subtle);line-height:1.9;}
+.ledgerMetrics{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
+.ledgerMetrics article{padding:28px;background:var(--card);}
+.ledgerMetrics b{display:block;font:42px 'Space Grotesk',sans-serif;letter-spacing:-.05em;}
+.ledgerMetrics span{display:block;font-size:10px;margin-top:15px;color:var(--subtle);}
+.nervousGrid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.nervousGrid article{background:var(--card);padding:28px;border-radius:4px;}
+.nervousGrid span{font-size:8px;letter-spacing:.13em;color:var(--earth);}
+.nervousGrid h3{font-size:25px;margin:18px 0;}
+.nervousGrid p{font-size:11px;line-height:1.9;color:var(--subtle);}
+.dimensionWorkspace textarea{min-height:180px;line-height:1.9;margin-bottom:24px;resize:vertical;}
+.ledgerApp .missionCard{background:var(--card);border:0;border-radius:4px;color:var(--ink);padding:24px;}
+.ledgerMissions{display:grid;gap:24px;}
+.ledgerApp .missionCard p,.ledgerApp .missionCard small{color:var(--subtle);}
+.ledgerApp .missionCard h3{font-size:22px;}
+.ledgerApp .missionCard button{background:var(--low);color:var(--ink);border:0;border-radius:2px;}
+.ledgerApp .statusPill{background:var(--low);color:var(--subtle);border:0;border-radius:2px;}
+.ledgerApp .conchaWorld{--paper:var(--surface);--card:var(--ledger-card);--ink:var(--ledger-ink);--subtle:var(--ledger-subtle);--edge:color-mix(in srgb,var(--subtle) 15%,transparent);--cell-tint:var(--earth);--green:var(--earth);min-height:calc(100vh - 128px);}
+.ledgerApp .conchaWorld.theme-night{--paper:var(--surface);--edge:#393333;--cell-tint:var(--earth);--green:var(--earth);}
+.ledgerApp .conchaToolbar{border:0;padding:4px 30px 12px;background:var(--surface);}
+.ledgerApp .conchaBreadcrumb{display:none;}
+.ledgerApp .conchaControls{margin-left:auto;}
+.ledgerApp .conchaControls button{border:0;background:var(--card);border-radius:4px;font-size:9px;}
+.ledgerApp .conchaBody,.ledgerApp .inspectorFolded .conchaBody{display:block;}
+.ledgerApp .organismViewport{background:none;container-type:inline-size;overflow:auto;}
+.ledgerApp .organismHeading{padding:26px 38px 0;}
+.ledgerApp .organismHeading h1{font:500 45px 'Space Grotesk',sans-serif;letter-spacing:-.065em;margin:12px 0;}
+.ledgerApp .organismHeading p{font-size:11px;line-height:1.8;}
+.ledgerApp .organismHeading>span,.ledgerApp .microLabel{color:var(--subtle);font-size:8px;letter-spacing:.16em;}
+.ledgerApp .organismCanvas{zoom:calc(var(--zoom)*.88);margin-top:-28px;}
+.ledgerApp .linkHeart{border:0;outline:9px solid var(--low);}
+.ledgerApp .linkHeart b{font:500 26px 'Space Grotesk',sans-serif;letter-spacing:.13em;}
+.ledgerApp .governanceNodes i{border-color:var(--earth);}
+.ledgerApp .conchaStage{--stage-color:var(--earth)!important;border:0;background:var(--card);border-radius:6px;min-height:88px;padding:15px 8px;}
+.ledgerApp .conchaStage:hover{background:var(--low);box-shadow:0 20px 50px rgba(27,28,28,.06);}
+.ledgerApp .stageWire{stroke:var(--earth);}
+.ledgerApp .conchaOrbit{stroke:var(--earth);stroke-opacity:.06;stroke-width:20;}
+.ledgerApp .conchaNucleus{border:0;background:var(--card);outline:8px solid var(--low);}
+.ledgerApp .conchaNucleus b{font:500 23px 'Space Grotesk',sans-serif;letter-spacing:-.05em;}
+.ledgerApp .cellEntered{background:var(--card);outline-color:color-mix(in srgb,var(--earth) 12%,var(--surface));}
+.ledgerApp .businessSatellites button{border:0;background:var(--card);border-radius:4px;}
+.ledgerApp .businessSatellites button.selected{background:var(--low);}
+.ledgerApp .businessSatellites button.selected i,.ledgerApp .businessSatellites button.related i{background:var(--earth);}
+.ledgerApp .capacityNodes button{border:0;border-radius:4px;background:var(--card);}
+.ledgerApp .organismFooter{font-size:8px;line-height:1.8;gap:24px;}
+.ledgerApp .worldLayout{min-height:calc(100vh - 128px);}
+.ledgerApp .ledgerMapLayout{display:block;}
+.contextContent .dockPanelBody{padding:0;}
+.contextContent .dockInfoBlock,.contextContent .businessFactsGrid>div,.contextContent .dockMission{background:var(--surface);border:0;border-radius:4px;color:var(--ink);}
+.contextContent .businessSummary,.contextContent .dockInfoBlock p,.contextContent .dockMission p{color:var(--subtle);}
+.ledgerApp .primaryButton{background:linear-gradient(135deg,#000,#1b1b1b);color:#fff;border:0;border-radius:2px;}
+.ledgerApp .secondaryButton,.contextContent .dockInfoBlock button{background:var(--low);color:var(--ink);border:0;border-radius:2px;}
+.ledgerApp .dockInfoBlock,.ledgerApp .dossierColumns section,.ledgerApp .dossierList,.ledgerApp .businessFunnel,.ledgerApp .funnelStage,.ledgerApp .businessFactsGrid>div{background:var(--card);border:0;border-radius:4px;color:var(--ink);}
+.ledgerApp .dossierSummary,.ledgerApp .fullBusinessDossier p,.ledgerApp .fullBusinessDossier dd,.ledgerApp .funnelStage p{color:var(--subtle);}
+.ledgerApp .worldLayout .territoryMapShell{min-height:calc(100vh - 128px);}
+.ledgerApp .contentView{padding:38px 44px;background:var(--surface);}
+.ledgerApp .viewHead h1{font-size:42px;color:var(--ink);}
+.ledgerApp .businessCard,.ledgerApp .fullBusinessDossier,.ledgerApp .businessDossier,.ledgerApp .mapPanelDock,.ledgerApp .dockPanel,.ledgerApp .mapDockRail{background:var(--card);color:var(--ink);border:0;border-radius:4px;}
+.ledgerApp .businessCard p,.ledgerApp .dossierDescription,.ledgerApp .thinText{color:var(--subtle);}
+.ledgerApp .businessCard button,.ledgerApp .cardActions a{background:var(--low);border:0;border-radius:2px;color:var(--ink);}
+.ledgerApp .globalNotice{background:var(--low);color:var(--ink);border:0;font-size:11px;}
+@keyframes dimensionArrive{from{opacity:0;transform:translateY(14px) scale(.985);}to{opacity:1;transform:none;}}
+@container (max-width:1060px){.ledgerApp .organismCanvas{zoom:calc(var(--zoom)*.75);margin-top:-8px;}.ledgerApp .organismHeading h1{font-size:38px;}}
+@container (max-width:870px){.ledgerApp .organismCanvas{zoom:calc(var(--zoom)*.66);margin-top:10px;}}
+@container (max-width:750px){.ledgerApp .organismCanvas{zoom:calc(var(--zoom)*.57);}.ledgerApp .organismHeading h1{font-size:34px;}}
+@media(max-width:1100px){.ledgerApp .gameTopbar{grid-template-columns:210px 1fr auto;padding:0 18px;}.ledgerApp .topSession>span:not(.liveDot){display:none;}.dimensionWorkspace{padding:20px 28px 48px;}.worldContextDock{flex-basis:280px;width:280px;}.ledgerMetrics{grid-template-columns:1fr 1fr;}.ledgerRecord{flex-direction:column;}.ledgerRecordEnd{align-items:flex-start;}}
+@media(max-width:820px){.ledgerApp{height:100dvh;}.ledgerApp .gameTopbar{grid-template-columns:1fr auto;min-height:64px;}.ledgerApp .topTabs{display:none;}.ledgerApp .gameBody{display:flex;flex-direction:row;}.worldNavigation{flex-basis:190px;width:190px;padding-top:12px;}.worldNavigation.isFolded{flex-basis:46px;width:46px;padding-inline:3px;}.worldContextDock.isFolded{flex-basis:40px;width:40px;padding-inline:0;}.worldContextDock:not(.isFolded){position:absolute;right:0;top:70px;bottom:0;width:min(340px,calc(100vw - 46px));z-index:40;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(20px);box-shadow:0 20px 50px rgba(27,28,28,.06);}.worldNavigation:not(.isFolded){position:absolute;left:0;top:70px;bottom:0;z-index:41;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(20px);box-shadow:0 20px 50px rgba(27,28,28,.06);}.worldScopeBar{padding:12px 16px;gap:7px;font-size:9px;flex-wrap:wrap;}.worldScopeBar .scopeBack{display:none;}.worldScopeBar select{max-width:140px;}.ledgerApp .conchaToolbar{padding:4px 16px 12px;}.ledgerApp .conchaControls{flex-wrap:wrap;}.ledgerApp .organismHeading{padding:20px 20px 0;}.ledgerApp .organismCanvas{width:730px;height:610px;zoom:calc(var(--zoom)*.7);margin:18px 0 0;}.ledgerApp .organismWires{translate:-195px -60px;}.ledgerApp .conchaBody,.ledgerApp .inspectorFolded .conchaBody{display:block;}.ledgerApp .conchaMobileCells button{border:0;border-radius:4px;}.ledgerApp .conchaMobileCells button[aria-pressed=true]{background:var(--low);}.dimensionWorkspace{padding:14px 20px 42px;}.ledgerHero{padding-bottom:24px;}.ledgerHero h1{font-size:42px;}.ledgerAccess{padding:26px;}.ledgerAccess h2{font-size:25px;}.reproductionRules{grid-template-columns:1fr;}.ledgerApp .contentView{padding:24px 20px;}.ledgerApp .worldLayout{display:block;}.ledgerApp .mapPanelDock{max-height:40vh;}}
+@media(max-width:520px){.ledgerApp .organismCanvas{zoom:calc(var(--zoom)*.43);}.ledgerApp .organismHeading h1{font-size:32px;}.ledgerApp .conchaControls button{padding:5px 7px;font-size:8px;}.ledgerHero h1{font-size:36px;}.ledgerApp .brandButton b{font-size:16px;}.ledgerApp .brandButton small{font-size:7px;}.ledgerMetrics{grid-template-columns:1fr 1fr;gap:12px;}.ledgerMetrics article{padding:20px;}.ledgerMetrics b{font-size:32px;}}
+@media(max-width:600px){.nervousGrid{grid-template-columns:1fr;}}
+@media(prefers-reduced-motion:reduce){.dimensionWorkspace{animation:none;}.worldNavigation,.worldContextDock{transition:none;}}

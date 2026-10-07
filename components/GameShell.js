@@ -1,7 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TerritoryMap from "./TerritoryMap";
+import ConchaWorld from "./ConchaWorld";
+import WorldNavigation from "./WorldNavigation";
+import WorldContextDock from "./WorldContextDock";
+import DimensionWorkspace from "./DimensionWorkspace";
+import { DIMENSIONS, canonicalDimension, readWorldRoute, writeWorldRoute } from "../lib/world-navigation.mjs";
 import { hasSupabaseConfig, supabase } from "../lib/supabase";
 
 const APP_BASES = {
@@ -13,24 +18,7 @@ const APP_BASES = {
   "link-world": "https://link-world-delta.vercel.app"
 };
 
-const NAV = [
-  ["mundo", "◎", "Mundo"],
-  ["modelos", "◈", "Modelos"],
-  ["negocios", "□", "Células"],
-  ["misiones", "◇", "Pendientes"],
-  ["tableros", "▦", "Mesas"],
-  ["cron", "◷", "Ritmos"],
-  ["alertas", "!", "Alertas"],
-  ["memoria", "≋", "Memoria"],
-  ["configuracion", "⚙", "Configuración"]
-];
-
-const TOP = [
-  ["mundo", "Mapa"],
-  ["red", "Red"],
-  ["eventos", "Eventos"],
-  ["economia", "Economía"]
-];
+const TOP = [['concha','Organismo'],['mundo','Mapa'],['mesas','Mesas'],['director','Atención']];
 
 const fmtDate = value => {
   if (!value) return "—";
@@ -799,7 +787,42 @@ function BusinessFunnel({ models = [], stagesByModel, evidenceByModel, businessN
 
 
 export default function GameShell() {
-  const [view, setView] = useState("mundo");
+  const [view, setViewState] = useState("concha");
+  const [businessContext, setBusinessContext] = useState(null);
+  const [modelContext, setModelContext] = useState(null);
+  const [routeReady, setRouteReady] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [theme, setTheme] = useState('paper');
+  const surfaceRef = useRef(null);
+  const scrollPositions = useRef({});
+  const routeRef = useRef({dimension:'concha',business:null,model:null});
+  function setView(next, business = businessContext, model = modelContext) {
+    const dimension = canonicalDimension(next);
+    setViewState(dimension); setBusinessContext(business); setModelContext(model);
+    if(business) setSelectedId(business);
+    if(typeof window !== 'undefined') window.history.pushState({},'',writeWorldRoute(window.location.search,{dimension,business,model}));
+  }
+  useEffect(()=>{
+    const restore = ()=>{const r=readWorldRoute(window.location.search);setViewState(r.dimension);setBusinessContext(r.business);setModelContext(r.model);if(r.business)setSelectedId(r.business);};
+    restore();setRouteReady(true);
+    window.addEventListener('popstate',restore);
+    return()=>window.removeEventListener('popstate',restore);
+  },[]);
+  useEffect(()=>{
+    if(!routeReady)return;
+    const route={dimension:view,business:businessContext,model:modelContext};
+    routeRef.current=route;
+    window.history.replaceState({},'',writeWorldRoute(window.location.search,route));
+    setHistory(rows=>{const last=rows.at(-1);return last&&JSON.stringify(last)===JSON.stringify(route)?rows:[...rows.slice(-19),route];});
+  },[view,businessContext,modelContext,routeReady]);
+  useEffect(()=>{
+    const key=view+':'+(businessContext||'all');
+    const surface=surfaceRef.current;
+    if(surface)surface.scrollTop=scrollPositions.current[key]||0;
+    return()=>{if(surface)scrollPositions.current[key]=surface.scrollTop;};
+  },[view,businessContext]);
+  useEffect(()=>{const escape=e=>{if(e.key==='Escape'&&!e.target.closest('input,textarea,select'))setView('concha',routeRef.current.business,routeRef.current.model);};window.addEventListener('keydown',escape);return()=>window.removeEventListener('keydown',escape);},[]);
+  const [railCollapsed, setRailCollapsed] = useState(true);
   const [businesses, setBusinesses] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [session, setSession] = useState(null);
@@ -877,15 +900,12 @@ export default function GameShell() {
       const verifiedActions = actions.filter(action => action.status === "verified");
       const linkedModels = modelsByBusiness.get(business.id) || [];
       const primaryModel = linkedModels.find(model => model.link_role === "origin") || linkedModels[0] || null;
-      const modelEvidence = primaryModel ? (evidenceByModel.get(primaryModel.id) || []) : [];
-      const concha = primaryModel ? (stagesByModel.get(primaryModel.id) || []) : [];
+      const modelEvidence = primaryModel ? (evidenceByModel.get(primaryModel.id) || []).filter(row=>row.business_id===business.id) : [];
+      const concha = primaryModel ? (stagesByModel.get(primaryModel.id) || []).filter(row=>row.business_id===business.id) : [];
       const transactions = privateData.transactions.filter(row => row.business_id === business.id || row.business_global_id === business.global_id);
-      const paidTransactions = transactions.filter(row => ["paid","settled","confirmed","completed"].includes(String(row.status || "").toLowerCase()));
+      const paidTransactions = transactions.filter(row => ["paid","settled"].includes(String(row.status || "").toLowerCase()));
       const verifiedEconomicEvidence = modelEvidence.filter(isVerifiedEconomicProof);
-      const branchEvidence = Array.isArray(business.owned_facts?.product_branches)
-        ? business.owned_facts.product_branches.some(row => String(row.financial_state?.payment_status || "").includes("paid"))
-        : false;
-      const activated = paidTransactions.length > 0 || verifiedEconomicEvidence.length > 0 || branchEvidence;
+      const activated = paidTransactions.length > 0 || verifiedEconomicEvidence.length > 0;
       const recurringSignal = activated && linkedModels.some(model =>
         ["evidenced","productizable","replicable","business"].includes(String(model.maturity_stage || "")) &&
         ["monthly","per_session","recurring"].includes(String(model.model_definition?.billing || ""))
@@ -1001,7 +1021,7 @@ export default function GameShell() {
       gameStatesRead, gameActionsRead, gameEvidenceRead, rrssRead, cronRead, alertsRead,
       ...modelReads, ...financeReads, ...memoryReads
     ].filter(result => result?.error);
-    if (failures.length) console.warn("LINK WORLD GAME · protected read errors", failures.map(result => result.error?.message));
+    if (failures.length) setNotice("Algunas fuentes operativas no pudieron leerse. Los registros visibles pueden estar incompletos.");
 
     setPrivateData({
       missions: safeRows(missionsRead),
@@ -1055,7 +1075,7 @@ export default function GameShell() {
       setSession(next);
       if (!next) {
         setMember(false);
-        setPrivateData(prev => ({ ...prev, missions: [], workspaces: [], integrations: [], events: [], activity: [], gameStates: [], gameActions: [], gameEvidence: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null }));
+        setPrivateData(prev => ({ ...prev, missions: [], workspaces: [], integrations: [], events: [], activity: [], gameStates: [], gameActions: [], gameEvidence: [], models: [], modelLinks: [], modelStages: [], modelEvidence: [], modelArtifacts: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null }));
         return;
       }
       const check = await supabase.rpc("link_world_is_member");
@@ -1152,6 +1172,8 @@ export default function GameShell() {
   function handleExplorePlace(place) {
     if (place?.kind === "linked" && place.businessId) {
       setSelectedId(place.businessId);
+      setBusinessContext(place.businessId);
+      setModelContext(null);
       setExternalPlace(null);
     } else if (place?.kind === "external") {
       setExternalPlace(place);
@@ -1162,6 +1184,8 @@ export default function GameShell() {
 
   function handleSelectBusiness(id) {
     setSelectedId(id);
+    setBusinessContext(id);
+    setModelContext(null);
     setExternalPlace(null);
     setMapDockPanel("ficha");
   }
@@ -1169,8 +1193,9 @@ export default function GameShell() {
   function openFullBusiness(business) {
     if (!business?.id) return;
     setSelectedId(business.id);
+    setBusinessContext(business.id);
     setExternalPlace(null);
-    setView("negocios");
+    setView("negocios",business.id);
   }
 
   async function signOut() {
@@ -1181,10 +1206,11 @@ export default function GameShell() {
 
   const showMap = business => {
     setSelectedId(business.id);
+    setBusinessContext(business.id);
     setExternalPlace(null);
     setMapDockPanel("ficha");
     setMapDockCollapsed(false);
-    setView("mundo");
+    setView("mundo",business.id);
   };
 
   const openCount = privateData.missions.filter(row => !["verified", "cancelled", "closed"].includes(row.status)).length;
@@ -1192,10 +1218,12 @@ export default function GameShell() {
   const selectedModels = selected ? (modelsByBusiness.get(selected.id) || []) : [];
   const selectedTransactions = selected ? privateData.transactions.filter(row => row.business_id === selected.id || row.business_global_id === selected.global_id) : [];
 
+  const contextBusiness = businesses.find(row=>row.id===businessContext) || null;
+  const centralDimension = DIMENSIONS[view] && !['concha','mundo','negocios'].includes(view);
   return (
-    <main className="gameApp">
+    <main className={`gameApp ledgerApp theme-${theme}`}>
       <header className="gameTopbar">
-        <button className="brandButton" onClick={() => setView("mundo")}>
+        <button className="brandButton" onClick={() => setView("concha")}>
           <span className="brandMark">••<br/>••</span>
           <span><b>LINK WORLD</b><small>Control central jugable</small></span>
         </button>
@@ -1209,31 +1237,21 @@ export default function GameShell() {
         </div>
       </header>
 
-      <div className="gameBody">
-        <aside className="leftRail">
-          <div className="railStatus">
-            <b>{businesses.length}</b><span>células visibles</span>
-          </div>
-          <nav className="railNav">
-            {NAV.map(([id, icon, label]) => (
-              <button key={id} className={view === id ? "active" : ""} onClick={() => setView(id)}>
-                <i>{icon}</i><span>{label}</span>
-                {id === "misiones" && member && openCount ? <em>{openCount}</em> : null}
-                {id === "alertas" && member && alertCount ? <em>{alertCount}</em> : null}
-              </button>
-            ))}
-          </nav>
-          <div className="railFooter">
-            <span>Supabase</span><b className={hasSupabaseConfig ? "okText" : "warnText"}>{hasSupabaseConfig ? "conectado" : "pendiente"}</b>
-          </div>
-        </aside>
+      <div className={`gameBody ${railCollapsed ? "railIsCollapsed" : ""}`}>
+        <WorldNavigation view={view} collapsed={railCollapsed} onToggle={()=>setRailCollapsed(v=>!v)} onNavigate={setView}/>
 
-        <section className="mainSurface">
+        <section className="mainSurface" ref={surfaceRef}>
+          <div className="worldScopeBar"><button onClick={()=>setView('concha',null,null)}>LINK</button><span>/</span><select aria-label="Perspectiva del negocio" value={contextBusiness?.id||''} onChange={e=>{setBusinessContext(e.target.value||null);setModelContext(null);if(e.target.value)setSelectedId(e.target.value);}}><option value="">Todo LINK</option>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><span>/</span><b>{DIMENSIONS[view]?.label}</b><button className="scopeBack" onClick={()=>setView('concha')}>Volver al organismo ↗</button></div>
+          {!loading&&centralDimension?<DimensionWorkspace view={view} business={contextBusiness} businesses={businesses} data={privateData} member={member} onLogin={()=>setLoginOpen(true)} onNavigate={setView} modelId={modelContext} onModelChange={setModelContext} resolveWorkspaceUrl={resolveWorkspaceUrl} renderMission={row=><MissionCard key={row.id||row.mission_code} row={row} businessName={businesses.find(b=>b.global_id===row.business_global_id)?.name}/>}/>:null}
           {notice ? <div className="globalNotice">{notice}<button onClick={() => setNotice("")}>×</button></div> : null}
           {loading ? <div className="loadingScreen">Sincronizando LINK WORLD…</div> : null}
 
+          {!loading ? (
+            <div hidden={view !== "concha"}><ConchaWorld businesses={businesses} businessContext={businessContext} onSelect={handleSelectBusiness} privateData={privateData} member={member} onClear={()=>{setBusinessContext(null);setModelContext(null);}} onNavigate={setView} modelId={modelContext} theme={theme} onThemeChange={()=>setTheme(t=>t==='paper'?'night':'paper')} /></div>
+          ) : null}
+
           {!loading && view === "mundo" ? (
-            <div className={`worldLayout mapDockLayout ${mapDockCollapsed ? "dockIsCollapsed" : ""}`}>
+            <div className="worldLayout ledgerMapLayout">
               <div className="mapGameStage">
                 <TerritoryMap
                   businesses={businesses}
@@ -1243,166 +1261,29 @@ export default function GameShell() {
                   onExplorePlace={handleExplorePlace}
                 />
               </div>
-              <MapPanelDock
-                collapsed={mapDockCollapsed}
-                activePanel={mapDockPanel}
-                onToggleCollapse={() => setMapDockCollapsed(value => !value)}
-                onSelectPanel={setMapDockPanel}
-                business={externalPlace?.kind === "external" ? null : selected}
-                externalPlace={externalPlace}
-                progress={progressByBusiness.get(selected?.id)}
-                gameState={gameByBusiness.get(selected?.id)}
-                globalGame={globalGame}
-                rrssProfile={rrssByBusiness.get(selected?.id)}
-                actions={actionsByBusiness.get(selected?.id) || []}
-                evidence={privateData.gameEvidence}
-                onStartAction={startGameAction}
-                onSubmitEvidence={submitGameEvidence}
-                onOpenFullBusiness={openFullBusiness}
-                onResearchPlace={researchExternalPlace}
-                businesses={businesses}
-                progressByBusiness={progressByBusiness}
-                selectedId={selected?.id}
-                onSelectBusiness={handleSelectBusiness}
-              />
-            </div>
-          ) : null}
 
-          {!loading && view === "modelos" ? (
-            member ? (
-              <section className="contentView">
-                <div className="viewHead"><div><span className="sectionKicker">DOLOR → MODELO → NEGOCIO</span><h1>Modelos económicos de LINK</h1></div><span>{privateData.models.length} modelos activos</span></div>
-                <p className="viewIntro">Aquí no se premian tareas. Cada modelo debe demostrar dolor, tratamiento, evidencia económica y una célula capaz de recorrer la Concha. Los modelos sin evidencia permanecen como hobby o experimento.</p>
-                <ModelLibrary models={privateData.models} links={privateData.modelLinks} stages={privateData.modelStages} evidence={privateData.modelEvidence} artifacts={privateData.modelArtifacts} businesses={businesses} onOpenBusiness={openFullBusiness} />
-              </section>
-            ) : <LockPanel title="Modelos económicos de LINK" onOpenLogin={() => setLoginOpen(true)} />
+            </div>
           ) : null}
 
           {!loading && view === "negocios" ? (
             <section className="contentView">
               <div className="viewHead"><div><span className="sectionKicker">CÉLULAS LINK</span><h1>Fichas de negocios</h1></div><span>{businesses.length} visibles</span></div>
-              <BusinessDossier business={selected} progress={progressByBusiness.get(selected?.id)} onShowMap={showMap} models={selectedModels} stagesByModel={stagesByModel} evidenceByModel={evidenceByModel} transactions={selectedTransactions} />
+              <BusinessDossier business={selected} progress={progressByBusiness.get(selected?.id)} onShowMap={showMap} models={selectedModels} stagesByModel={new Map([...stagesByModel].map(([id,rows])=>[id,rows.filter(r=>r.business_id===selected?.id)]))} evidenceByModel={new Map([...evidenceByModel].map(([id,rows])=>[id,rows.filter(r=>r.business_id===selected?.id)]))} transactions={selectedTransactions} />
               <div className="businessGrid businessGridCompact">
-                {businesses.map(b => (
+                {(contextBusiness?[contextBusiness]:businesses).map(b => (
                   <article key={b.id} className={`businessCard ${selected?.id === b.id ? "selectedBusinessCard" : ""}`}>
                     <div className="cardTop"><StatusPill tone={b.verification_status === "verified" ? "good" : "warn"}>{b.verification_status}</StatusPill><small>{b.city}</small></div>
                     <h3>{b.name}</h3><p>{b.summary || b.sector}</p>
                     <div className="miniMeta"><span>{businessModelLabel(b)}</span><span>{progressByBusiness.get(b.id)?.percent || 0}% desarrollo</span></div>
-                    <div className="cardActions"><button onClick={() => setSelectedId(b.id)}>Ver ficha</button><button onClick={() => showMap(b)}>Mapa</button>{b.website ? <a href={b.website} target="_blank" rel="noreferrer">Sistema ↗</a> : null}</div>
+                    <div className="cardActions"><button onClick={() => handleSelectBusiness(b.id)}>Ver ficha</button><button onClick={() => showMap(b)}>Mapa</button>{b.website ? <a href={b.website} target="_blank" rel="noreferrer">Sistema ↗</a> : null}</div>
                   </article>
                 ))}
               </div>
             </section>
           ) : null}
 
-          {!loading && view === "tableros" ? (
-            member ? (
-              <section className="contentView">
-                <div className="viewHead"><div><span className="sectionKicker">MESAS REALES</span><h1>Tableros conectados</h1></div><span>{privateData.workspaces.length} mesas</span></div>
-                <div className="workspaceGrid">
-                  {privateData.workspaces.map(row => {
-                    const url = resolveWorkspaceUrl(row);
-                    return <article className="workspaceCard" key={row.workspace_key}>
-                      <div className="workspaceIcon">▦</div>
-                      <div><span className="sectionKicker">{row.owner_linkdot_slug}</span><h3>{row.name}</h3><p>{row.description || row.metadata?.workspace_role || "Mesa especializada LINK"}</p></div>
-                      {url ? <a href={url} target="_blank" rel="noreferrer">Abrir mesa ↗</a> : <StatusPill tone="warn">sin ruta</StatusPill>}
-                    </article>;
-                  })}
-                </div>
-              </section>
-            ) : <LockPanel title="Tableros del ecosistema" onOpenLogin={() => setLoginOpen(true)} />
-          ) : null}
-
-          {!loading && view === "misiones" ? (
-            member ? (
-              <section className="contentView">
-                <div className="viewHead"><div><span className="sectionKicker">MODO DIOS · CHATGPT</span><h1>Pendientes reales</h1></div><span>{openCount} activos</span></div>
-                <div className="missionList">
-                  {privateData.missions.map(row => {
-                    const businessName = businesses.find(business => business.global_id === row.business_global_id)?.name;
-                    return <MissionCard key={row.mission_code} row={row} businessName={businessName} />;
-                  })}
-                </div>
-              </section>
-            ) : <LockPanel title="Pendientes y LINKDOTs" onOpenLogin={() => setLoginOpen(true)} />
-          ) : null}
-
-          {!loading && (view === "eventos" || view === "red") ? (
-            member ? (
-              <section className="contentView">
-                <div className="viewHead"><div><span className="sectionKicker">{view === "red" ? "MICELIO" : "EVENT BUS"}</span><h1>{view === "red" ? "Red del ecosistema" : "Eventos reales"}</h1></div><span>{view === "red" ? privateData.integrations.length + " integraciones" : privateData.events.length + " señales"}</span></div>
-                {view === "red" ? (
-                  <div className="networkColumns">
-                    <div className="networkPanel"><h3>Integraciones</h3>{privateData.integrations.map((row, i) => <div className="networkRow" key={i}><span><b>{row.provider}</b><small>{row.connection_key}</small></span><StatusPill tone={row.status === "active" ? "good" : "warn"}>{row.status}</StatusPill></div>)}</div>
-                    <div className="networkPanel"><h3>Relación de superficies</h3>{privateData.workspaces.map(row => <div className="networkRow" key={row.workspace_key}><span><b>{row.name}</b><small>{row.app_key}</small></span><span className="thinText">{row.owner_linkdot_slug}</span></div>)}</div>
-                  </div>
-                ) : (
-                  <div className="timelineList">
-                    {privateData.events.map(row => <article className="timelineRow" key={row.id}><i className="eventDot"/><div><span>{row.source_provider} · {row.entity_type}</span><h3>{row.event_type}</h3><small>{row.global_id || "evento de sistema"}</small></div><div className="rowEnd"><small>{fmtDate(row.occurred_at || row.received_at)}</small></div></article>)}
-                  </div>
-                )}
-              </section>
-            ) : <LockPanel title={view === "red" ? "Micelio privado" : "Event Bus"} onOpenLogin={() => setLoginOpen(true)} />
-          ) : null}
-
-          {!loading && view === "economia" ? (
-            member ? (
-              <section className="contentView">
-                <div className="viewHead"><div><span className="sectionKicker">FIN · TRANSVERSAL</span><h1>Verdad económica por célula</h1></div><a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer">Abrir Control Central ↗</a></div>
-                <div className="economyGrid">
-                  {businesses.map(business => {
-                    const policies = privateData.financialPolicies.filter(row => row.business_id === business.id);
-                    const providers = privateData.paymentProviders.filter(row => row.business_id === business.id);
-                    const tx = privateData.transactions.filter(row => row.business_id === business.id);
-                    const activePolicy = policies.find(row => row.status === "active" || row.production_enabled) || policies[0];
-                    return <article className="economyCard" key={business.id}>
-                      <span className="sectionKicker">{activePolicy?.default_currency || tx[0]?.currency || "CLP"}</span>
-                      <h3>{business.name}</h3>
-                      <p>{activePolicy ? `${activePolicy.collection_model || "cobro"} · ${activePolicy.payment_provider || "proveedor por definir"}` : "Política financiera no expuesta en esta capa."}</p>
-                      <div className="miniMeta"><span>{tx.length} movimientos</span><span>{providers.length} proveedor(es)</span></div>
-                      <StatusPill tone={activePolicy?.production_enabled ? "good" : activePolicy ? "neutral" : "warn"}>{activePolicy?.production_enabled ? "producción" : activePolicy?.status || "sin ruta"}</StatusPill>
-                    </article>;
-                  })}
-                </div>
-                <div className="gameStateTable">
-                  <h3>Estado jugable por negocio</h3>
-                  {[...gameByBusiness.entries()].map(([id, row]) => {
-                    const b = businesses.find(x => x.id === id);
-                    if (!b) return null;
-                    return <div className="gameStateRow" key={id}><span><b>{b.name}</b><small>{row.reason}</small></span><strong>{Math.round(Number(row.temperature || 0))}°</strong><span>{Math.round(Number(row.conversion_percent || 0))}%</span><StatusPill tone={row.state?.includes("red") ? "warn" : "neutral"}>{row.state}</StatusPill></div>;
-                  })}
-                </div>
-              </section>
-            ) : <LockPanel title="FIN y economía del juego" onOpenLogin={() => setLoginOpen(true)} />
-          ) : null}
-
-          {!loading && view === "cron" ? (
-            member ? <section className="contentView"><div className="viewHead"><div><span className="sectionKicker">CRON</span><h1>Ritmos del organismo</h1></div><span>{privateData.cron.length} rutinas</span></div><div className="timelineList">{privateData.cron.map(row => <article className="timelineRow" key={row.id || row.cron_key}><i className="eventDot"/><div><span>{row.status} · {row.source_system || "LINK"}</span><h3>{row.name || row.cron_key}</h3><small>{row.cycle_label || row.description || "ciclo persistente"}</small></div><div className="rowEnd"><small>{fmtDate(row.updated_at)}</small></div></article>)}</div></section>
-            : <LockPanel title="Cron del ecosistema" onOpenLogin={() => setLoginOpen(true)} />
-          ) : null}
-
-          {!loading && view === "alertas" ? (
-            member ? <section className="contentView"><div className="viewHead"><div><span className="sectionKicker">SEÑALES</span><h1>Alertas y conversaciones que requieren atención</h1></div><span>{alertCount} sin leer</span></div><div className="timelineList">{privateData.alerts.length ? privateData.alerts.map(row => <article className="timelineRow" key={row.id}><i className="priorityDot priority-high"/><div><span>{row.notification_type || "LINKRRSS"}</span><h3>{row.title}</h3><small>{row.body || "Señal pendiente"}</small></div><div className="rowEnd"><StatusPill tone="warn">{row.is_read ? "leída" : "pendiente"}</StatusPill><small>{fmtDate(row.created_at)}</small></div></article>) : <div className="emptyState">No hay notificaciones pendientes en la capa autorizada.</div>}</div></section>
-            : <LockPanel title="Alertas del organismo" onOpenLogin={() => setLoginOpen(true)} />
-          ) : null}
-
-          {!loading && view === "memoria" ? (
-            member ? <section className="contentView"><div className="viewHead"><div><span className="sectionKicker">HIPOCAMPO + CORTEX</span><h1>Memoria del organismo</h1></div><a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer">Abrir Control Central ↗</a></div><div className="memoryGrid"><article><b>{privateData.memoryCounts?.memories ?? 0}</b><span>recuerdos profundos</span></article><article><b>{privateData.memoryCounts?.cortex ?? 0}</b><span>documentos Cortex</span></article><article><b>{privateData.memoryCounts?.learnings ?? 0}</b><span>aprendizajes</span></article><article><b>{privateData.memoryCounts?.reports ?? 0}</b><span>informes diarios</span></article></div><div className="contextBlock"><span className="sectionKicker">CONTRATO</span><strong>Cortex encuentra · Hipocampo contextualiza · ChatGPT ayuda a decidir · LINKDOTs ejecutan · LINK WORLD conserva evidencia.</strong></div></section>
-            : <LockPanel title="Hipocampo y Cortex" onOpenLogin={() => setLoginOpen(true)} />
-          ) : null}
-
-          {!loading && view === "configuracion" ? (
-            <section className="contentView">
-              <div className="viewHead"><div><span className="sectionKicker">ESTADO TÉCNICO</span><h1>Conexiones del juego</h1></div><span>{member ? "miembro LINK" : "capa pública"}</span></div>
-              <div className="configGrid">
-                <article><span className="sectionKicker">GOOGLE</span><h3>Maps + Places</h3><p>Territorio real, Place IDs, búsqueda y geocodificación.</p><StatusPill tone="good">operativo</StatusPill></article>
-                <article><span className="sectionKicker">SUPABASE</span><h3>LINK CONTROL CENTRAL</h3><p>Fuente viva del organismo. RLS conserva la separación público/miembro.</p><StatusPill tone={hasSupabaseConfig ? "good" : "warn"}>{hasSupabaseConfig ? "conectado" : "pendiente"}</StatusPill></article>
-                <article><span className="sectionKicker">VERCEL</span><h3>LINK WORLD GAME</h3><p>Superficie jugable y deploy persistente.</p><StatusPill tone="good">production</StatusPill></article>
-                <article><span className="sectionKicker">MICELIO</span><h3>Mesas + integraciones</h3><p>{member ? privateData.integrations.length + " integraciones leídas desde CONTROL CENTRAL." : "Entra como miembro para inspeccionar las conexiones privadas."}</p><StatusPill tone={member ? "good" : "neutral"}>{member ? "visible" : "protegido"}</StatusPill></article>
-              </div>
-            </section>
-          ) : null}
         </section>
+        <WorldContextDock business={contextBusiness} businesses={businesses} view={view} data={privateData} member={member} onLogin={()=>setLoginOpen(true)} onSelect={handleSelectBusiness} onClear={()=>{setBusinessContext(null);setModelContext(null);}} onNavigate={setView} history={history} modelId={modelContext} onModelChange={setModelContext} onOpenBusiness={openFullBusiness} mapInfo={view==='mundo'?(externalPlace?.kind==='external'?<ExternalBusinessFicha place={externalPlace} onResearchPlace={researchExternalPlace}/>:<BusinessFichaContent business={contextBusiness} onOpenFullBusiness={openFullBusiness}/>):null} mapActions={view==='mundo'&&member?<MapMissionPanel business={contextBusiness} actions={actionsByBusiness.get(contextBusiness?.id)||[]} evidence={privateData.gameEvidence} onStartAction={startGameAction} onSubmitEvidence={submitGameEvidence}/>:null} mapProgress={view==='mundo'&&member?<MapProgressPanel business={contextBusiness} progress={progressByBusiness.get(contextBusiness?.id)} gameState={gameByBusiness.get(contextBusiness?.id)} globalGame={globalGame}/>:null}/>
       </div>
 
       {loginOpen ? <LoginPanel onClose={() => setLoginOpen(false)} /> : null}

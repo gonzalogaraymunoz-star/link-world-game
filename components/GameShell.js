@@ -792,13 +792,28 @@ export default function GameShell() {
   const [modelContext, setModelContext] = useState(null);
   const [routeReady, setRouteReady] = useState(false);
   const [history, setHistory] = useState([]);
-  const [theme, setTheme] = useState('paper');
+  const [theme, setTheme] = useState('day');
   const [navigationMotion, setNavigationMotion] = useState('idle');
   const surfaceRef = useRef(null);
   const scrollPositions = useRef({});
   const routeRef = useRef({dimension:'concha',business:null,model:null});
   const navigationTimer = useRef(null);
   const settleTimer = useRef(null);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('link-world-theme');
+      if (['day','gray','night'].includes(saved)) setTheme(saved);
+      else if (saved === 'paper') setTheme('day');
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('link-world-theme', theme);
+      document.documentElement.dataset.linkTheme = theme;
+    } catch {}
+  }, [theme]);
 
   function commitView(dimension, business, model) {
     setViewState(dimension);
@@ -866,6 +881,7 @@ export default function GameShell() {
     missions: [], workspaces: [], integrations: [], events: [], activity: [],
     gameStates: [], gameActions: [], gameEvidence: [],
     models: [], modelLinks: [], modelStages: [], modelEvidence: [], modelArtifacts: [],
+    journeys: [], scopeStates: [],
     rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null
   });
   const [notice, setNotice] = useState("");
@@ -1016,7 +1032,7 @@ export default function GameShell() {
     const [
       missionsRead, workspacesRead, integrationsRead, eventsRead, activityRead,
       gameStatesRead, gameActionsRead, gameEvidenceRead, modelReads, rrssRead, financeReads,
-      cronRead, alertsRead, memoryReads
+      cronRead, alertsRead, memoryReads, journeyRead, scopeRead
     ] = await Promise.all([
       supabase.from("agent_missions").select("id,mission_code,business_global_id,stage_key,title,problem_statement,diagnosis,expected_outcome,created_by_agent,status,priority,assigned_agent_slug,metadata,updated_at").order("updated_at", { ascending: false }).limit(60),
       supabase.from("link_dot_workspaces").select("workspace_key,app_key,name,description,owner_linkdot_slug,owner_director_slug,route,status,metadata").order("name"),
@@ -1046,12 +1062,14 @@ export default function GameShell() {
         supabase.from("link_cortex_documents").select("*", { count: "exact", head: true }),
         supabase.from("link_learnings").select("*", { count: "exact", head: true }),
         supabase.from("link_daily_intelligence_reports").select("*", { count: "exact", head: true })
-      ])
+      ]),
+      supabase.from("link_business_agent_journey_v").select("business_id,business_global_id,business_slug,business_name,stage_number,stage_key,stage_name,customer_state_in,customer_state_out,director_slug,director_name,director_runtime,runtime_route,autonomy_mode,execution_enabled,mission_id,mission_code,mission_title,expected_outcome,mission_status,priority,evidence_requested,evidence_received,evidence_validated,evidence_rejected,last_evidence_at").order("business_name").order("stage_number"),
+      supabase.from("agent_scope_state").select("scope_key,agent_slug,business_global_id,business_name,stage_key,stage_name,state,priority,current_focus,current_mission_id,current_mission_code,last_signal_at,next_review_at,updated_at").order("updated_at",{ascending:false})
     ]);
 
     const failures = [
       missionsRead, workspacesRead, integrationsRead, eventsRead, activityRead,
-      gameStatesRead, gameActionsRead, gameEvidenceRead, rrssRead, cronRead, alertsRead,
+      gameStatesRead, gameActionsRead, gameEvidenceRead, rrssRead, cronRead, alertsRead, journeyRead, scopeRead,
       ...modelReads, ...financeReads, ...memoryReads
     ].filter(result => result?.error);
     if (failures.length) setNotice("Algunas fuentes operativas no pudieron leerse. Los registros visibles pueden estar incompletos.");
@@ -1070,6 +1088,8 @@ export default function GameShell() {
       modelStages: safeRows(modelReads[2]),
       modelEvidence: safeRows(modelReads[3]),
       modelArtifacts: safeRows(modelReads[4]),
+      journeys: safeRows(journeyRead),
+      scopeStates: safeRows(scopeRead),
       rrss: safeRows(rrssRead),
       financialPolicies: safeRows(financeReads[0]),
       transactions: safeRows(financeReads[1]),
@@ -1108,7 +1128,7 @@ export default function GameShell() {
       setSession(next);
       if (!next) {
         setMember(false);
-        setPrivateData(prev => ({ ...prev, missions: [], workspaces: [], integrations: [], events: [], activity: [], gameStates: [], gameActions: [], gameEvidence: [], models: [], modelLinks: [], modelStages: [], modelEvidence: [], modelArtifacts: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null }));
+        setPrivateData(prev => ({ ...prev, missions: [], workspaces: [], integrations: [], events: [], activity: [], gameStates: [], gameActions: [], gameEvidence: [], models: [], modelLinks: [], modelStages: [], modelEvidence: [], modelArtifacts: [], journeys: [], scopeStates: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null }));
         return;
       }
       const check = await supabase.rpc("link_world_is_member");
@@ -1216,11 +1236,9 @@ export default function GameShell() {
   }
 
   function handleSelectBusiness(id) {
-    setSelectedId(id);
-    setBusinessContext(id);
-    setModelContext(null);
     setExternalPlace(null);
     setMapDockPanel("ficha");
+    setView('concha', id, null);
   }
 
   function openFullBusiness(business) {
@@ -1264,6 +1282,11 @@ export default function GameShell() {
           {TOP.map(([id, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => setView(id)}>{label}</button>)}
         </div>
         <div className="topSession">
+          <div className="themeModes" role="group" aria-label="Apariencia de LINK WORLD">
+            <button className={theme === 'day' ? 'active' : ''} onClick={() => setTheme('day')} aria-pressed={theme === 'day'} title="Modo día">☀</button>
+            <button className={theme === 'gray' ? 'active' : ''} onClick={() => setTheme('gray')} aria-pressed={theme === 'gray'} title="Modo gris">◐</button>
+            <button className={theme === 'night' ? 'active' : ''} onClick={() => setTheme('night')} aria-pressed={theme === 'night'} title="Modo noche">☾</button>
+          </div>
           <span className={`liveDot ${member ? "on" : ""}`} />
           <span>{member ? "Ecosistema conectado" : "Capa pública"}</span>
           {member ? <button onClick={signOut}>Salir</button> : <button onClick={() => setLoginOpen(true)}>Entrar</button>}
@@ -1274,13 +1297,13 @@ export default function GameShell() {
         <WorldNavigation view={view} collapsed={railCollapsed} onToggle={()=>setRailCollapsed(v=>!v)} onNavigate={setView}/>
 
         <section className="mainSurface" ref={surfaceRef} aria-busy={navigationMotion !== 'idle'}>
-          <div className="worldScopeBar"><button onClick={()=>setView('concha',null,null)}>LINK</button><span>/</span><select aria-label="Perspectiva del negocio" value={contextBusiness?.id||''} onChange={e=>{setBusinessContext(e.target.value||null);setModelContext(null);if(e.target.value)setSelectedId(e.target.value);}}><option value="">Todo LINK</option>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><span>/</span><b>{DIMENSIONS[view]?.label}</b><button className="scopeBack" onClick={()=>setView('concha')}>Volver al organismo ↗</button></div>
+          <div className="worldScopeBar"><button onClick={()=>setView('concha',null,null)}>LINK</button><span>/</span><select aria-label="Perspectiva del negocio" value={contextBusiness?.id||''} onChange={e=>setView('concha',e.target.value||null,null)}><option value="">Todo LINK</option>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><span>/</span><b>{DIMENSIONS[view]?.label}</b><button className="scopeBack" onClick={()=>setView('concha')}>Volver al organismo ↗</button></div>
           {!loading&&centralDimension?<DimensionWorkspace view={view} business={contextBusiness} businesses={businesses} data={privateData} member={member} onLogin={()=>setLoginOpen(true)} onNavigate={setView} modelId={modelContext} onModelChange={setModelContext} resolveWorkspaceUrl={resolveWorkspaceUrl} renderMission={row=><MissionCard key={row.id||row.mission_code} row={row} businessName={businesses.find(b=>b.global_id===row.business_global_id)?.name}/>}/>:null}
           {notice ? <div className="globalNotice">{notice}<button onClick={() => setNotice("")}>×</button></div> : null}
           {loading ? <div className="loadingScreen">Sincronizando LINK WORLD…</div> : null}
 
           {!loading ? (
-            <div hidden={view !== "concha"}><ConchaWorld businesses={businesses} businessContext={businessContext} onSelect={handleSelectBusiness} privateData={privateData} member={member} onClear={()=>{setBusinessContext(null);setModelContext(null);}} onNavigate={setView} modelId={modelContext} theme={theme} onThemeChange={()=>setTheme(t=>t==='paper'?'night':'paper')} /></div>
+            <div hidden={view !== "concha"}><ConchaWorld businesses={businesses} businessContext={businessContext} onSelect={handleSelectBusiness} privateData={privateData} member={member} onClear={()=>setView('concha',null,null)} onNavigate={setView} modelId={modelContext} theme={theme} onThemeChange={setTheme} /></div>
           ) : null}
 
           {!loading && view === "mundo" ? (
@@ -1316,7 +1339,7 @@ export default function GameShell() {
           ) : null}
 
         </section>
-        <WorldContextDock business={contextBusiness} businesses={businesses} view={view} data={privateData} member={member} onLogin={()=>setLoginOpen(true)} onSelect={handleSelectBusiness} onClear={()=>{setBusinessContext(null);setModelContext(null);}} onNavigate={setView} history={history} modelId={modelContext} onModelChange={setModelContext} onOpenBusiness={openFullBusiness} arrivalKey={`${view}:${businessContext||'all'}`} mapInfo={view==='mundo'?(externalPlace?.kind==='external'?<ExternalBusinessFicha place={externalPlace} onResearchPlace={researchExternalPlace}/>:<BusinessFichaContent business={contextBusiness} onOpenFullBusiness={openFullBusiness}/>):null} mapActions={view==='mundo'&&member?<MapMissionPanel business={contextBusiness} actions={actionsByBusiness.get(contextBusiness?.id)||[]} evidence={privateData.gameEvidence} onStartAction={startGameAction} onSubmitEvidence={submitGameEvidence}/>:null} mapProgress={view==='mundo'&&member?<MapProgressPanel business={contextBusiness} progress={progressByBusiness.get(contextBusiness?.id)} gameState={gameByBusiness.get(contextBusiness?.id)} globalGame={globalGame}/>:null}/>
+        <WorldContextDock business={contextBusiness} businesses={businesses} view={view} data={privateData} member={member} onLogin={()=>setLoginOpen(true)} onSelect={handleSelectBusiness} onClear={()=>setView('concha',null,null)} onNavigate={setView} history={history} modelId={modelContext} onModelChange={setModelContext} onOpenBusiness={openFullBusiness} arrivalKey={`${view}:${businessContext||'all'}`} mapInfo={view==='mundo'?(externalPlace?.kind==='external'?<ExternalBusinessFicha place={externalPlace} onResearchPlace={researchExternalPlace}/>:<BusinessFichaContent business={contextBusiness} onOpenFullBusiness={openFullBusiness}/>):null} mapActions={view==='mundo'&&member?<MapMissionPanel business={contextBusiness} actions={actionsByBusiness.get(contextBusiness?.id)||[]} evidence={privateData.gameEvidence} onStartAction={startGameAction} onSubmitEvidence={submitGameEvidence}/>:null} mapProgress={view==='mundo'&&member?<MapProgressPanel business={contextBusiness} progress={progressByBusiness.get(contextBusiness?.id)} gameState={gameByBusiness.get(contextBusiness?.id)} globalGame={globalGame}/>:null}/>
       </div>
 
       {loginOpen ? <LoginPanel onClose={() => setLoginOpen(false)} /> : null}

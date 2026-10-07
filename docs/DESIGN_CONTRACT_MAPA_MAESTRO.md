@@ -1,6 +1,6 @@
 # LINK WORLD · CONTRATO DE DISEÑO · MAPA MAESTRO NAVEGABLE
 
-Estado: vinculante para esta línea de interfaz.
+Estado: vinculante para esta línea de interfaz.\nPreview candidato: MAPA MAESTRO NAVEGABLE V1.
 
 ## Fuentes de autoridad
 

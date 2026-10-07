@@ -1,13 +1,14 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LinkIcon } from './WorldNavigation';
 import { DIMENSIONS, scopeMissions, scopeBusinessRows } from '../lib/world-navigation.mjs';
 import { CONCHA_STAGES, getCellModels, getCellEvidence } from '../lib/concha.mjs';
 import { EvidenceList, RecordList } from './DimensionWorkspace';
 
 const TABS=[['contexto','Contexto','orbit'],['atencion','Atención','attention'],['evidencia','Evidencia','evidence'],['recorrido','Recorrido','cycle'],['celulas','Células','grid'],['historial','Historial','history']];
-export default function WorldContextDock({business,businesses,view,data,member,onLogin,onSelect,onClear,onNavigate,history,modelId,onModelChange,onOpenBusiness,mapInfo,mapActions,mapProgress}) {
+export default function WorldContextDock({business,businesses,view,data,member,onLogin,onSelect,onClear,onNavigate,history,modelId,onModelChange,onOpenBusiness,mapInfo,mapActions,mapProgress,arrivalKey}) {
   const [collapsed,setCollapsed]=useState(true);
+  useEffect(()=>{ setCollapsed(true); },[arrivalKey]);
   const [tab,setTab]=useState('contexto');
   const [query,setQuery]=useState('');
   const tabs=view==='mundo'?[...TABS,['lugar','Lugar','orbit'],['trabajo','Acciones','branch'],['avance','Desarrollo','signal']]:TABS;

@@ -111,12 +111,24 @@ Quiero que me ayudes a destrabar esta misión dentro del ecosistema LINK.
 Empieza por revisar el estado real actual y propón el primer movimiento.`;
 }
 
-function MissionCard({ row, businessName }) {
+function MissionCard({ row, businessName, onStartRuntime, onApproveRuntime }) {
   const [showPrompt, setShowPrompt] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [runtimeBusy, setRuntimeBusy] = useState(false);
   const done = ["verified", "closed", "cancelled"].includes(row.status);
   const action = missionActionSuggestion(row);
   const prompt = buildMissionHelpPrompt(row, businessName);
+  const runtimeStatus = row.runtime_status || null;
+
+  async function runRuntime(actionFn) {
+    if (!actionFn || runtimeBusy) return;
+    setRuntimeBusy(true);
+    try {
+      await actionFn(row);
+    } finally {
+      setRuntimeBusy(false);
+    }
+  }
 
   async function copyPrompt() {
     try {
@@ -138,8 +150,9 @@ function MissionCard({ row, businessName }) {
           <small>{row.mission_code}</small>
         </div>
         <div className="rowEnd">
+          {runtimeStatus ? <StatusPill tone={runtimeStatus === "completed" ? "good" : runtimeStatus === "waiting_approval" ? "warn" : "neutral"}>{runtimeStatus}</StatusPill> : null}
           <StatusPill tone={row.status === "active" ? "good" : done ? "neutral" : "warn"}>{row.status}</StatusPill>
-          <small>{fmtDate(row.updated_at)}</small>
+          <small>{fmtDate(row.runtime_updated_at || row.updated_at)}</small>
         </div>
       </div>
 
@@ -150,6 +163,19 @@ function MissionCard({ row, businessName }) {
             <strong>{action}</strong>
           </div>
           <div className="missionButtons">
+            {!row.workflow_instance_id ? (
+              <button className="primaryButton" disabled={runtimeBusy} onClick={() => runRuntime(onStartRuntime)}>
+                {runtimeBusy ? "Activando…" : "Activar Workflow"}
+              </button>
+            ) : null}
+            {runtimeStatus === "waiting_approval" ? (
+              <button className="primaryButton" disabled={runtimeBusy} onClick={() => runRuntime(onApproveRuntime)}>
+                {runtimeBusy ? "Aprobando…" : "Aprobar y continuar"}
+              </button>
+            ) : null}
+            {row.workflow_instance_id && runtimeStatus && runtimeStatus !== "waiting_approval" ? (
+              <span className="thinText">Runtime: {runtimeStatus.replaceAll("_", " ")}</span>
+            ) : null}
             <button className="missionHelpButton" onClick={() => setShowPrompt(value => !value)}>
               {showPrompt ? "Ocultar prompt" : "Pedir ayuda a ChatGPT"}
             </button>
@@ -965,7 +991,7 @@ export default function GameShell() {
       gameStatesRead, gameActionsRead, gameEvidenceRead, modelReads, rrssRead, financeReads,
       cronRead, alertsRead, memoryReads
     ] = await Promise.all([
-      supabase.from("agent_missions").select("id,mission_code,business_global_id,stage_key,title,problem_statement,diagnosis,expected_outcome,created_by_agent,status,priority,assigned_agent_slug,metadata,updated_at").order("updated_at", { ascending: false }).limit(60),
+      supabase.from("agent_missions").select("id,mission_code,business_global_id,stage_key,title,problem_statement,diagnosis,expected_outcome,created_by_agent,status,priority,assigned_agent_slug,metadata,workflow_instance_id,runtime_status,runtime_last_event,runtime_started_at,runtime_completed_at,runtime_updated_at,updated_at").order("updated_at", { ascending: false }).limit(60),
       supabase.from("link_dot_workspaces").select("workspace_key,app_key,name,description,owner_linkdot_slug,owner_director_slug,route,status,metadata").order("name"),
       supabase.from("integration_connections").select("provider,connection_key,mode,status,last_seen_at,last_error,metadata").order("provider"),
       supabase.from("event_bus").select("id,source_provider,event_type,entity_type,global_id,occurred_at,received_at").order("received_at", { ascending: false }).limit(160),
@@ -1074,6 +1100,8 @@ export default function GameShell() {
     const channel = supabase
       .channel("link-world-game-events")
       .on("postgres_changes", { event: "*", schema: "public", table: "event_bus" }, () => void loadPrivate())
+      .on("postgres_changes", { event: "*", schema: "public", table: "agent_missions" }, () => void loadPrivate())
+      .on("postgres_changes", { event: "*", schema: "public", table: "link_runtime_events" }, () => void loadPrivate())
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [member, loadPrivate]);
@@ -1171,6 +1199,48 @@ export default function GameShell() {
     setSelectedId(business.id);
     setExternalPlace(null);
     setView("negocios");
+  }
+
+  async function startMissionRuntime(row) {
+    if (!row?.mission_code) return;
+    setNotice("");
+    try {
+      const response = await fetch("/api/runtime/missions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          missionCode: row.mission_code,
+          business: row.business_global_id || "LINK",
+          stage: row.stage_key || "transversal",
+          action: missionActionSuggestion(row),
+          title: row.title,
+          problem: row.problem_statement,
+          createdBy: row.created_by_agent || "link-director"
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "No se pudo activar el Workflow.");
+      setNotice("Workflow activado · LINK Runtime tomó la misión.");
+      window.setTimeout(() => void loadPrivate(), 900);
+    } catch (error) {
+      setNotice("No pude activar LINK Runtime: " + (error?.message || "error desconocido"));
+    }
+  }
+
+  async function approveMissionRuntime(row) {
+    if (!row?.mission_code) return;
+    setNotice("");
+    try {
+      const response = await fetch("/api/runtime/missions/" + encodeURIComponent(row.mission_code) + "/approve", {
+        method: "POST"
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "No se pudo aprobar el Workflow.");
+      setNotice("Aprobación enviada · el Workflow continúa.");
+      window.setTimeout(() => void loadPrivate(), 900);
+    } catch (error) {
+      setNotice("No pude aprobar LINK Runtime: " + (error?.message || "error desconocido"));
+    }
   }
 
   async function signOut() {
@@ -1320,7 +1390,7 @@ export default function GameShell() {
                 <div className="missionList">
                   {privateData.missions.map(row => {
                     const businessName = businesses.find(business => business.global_id === row.business_global_id)?.name;
-                    return <MissionCard key={row.mission_code} row={row} businessName={businessName} />;
+                    return <MissionCard key={row.mission_code} row={row} businessName={businessName} onStartRuntime={startMissionRuntime} onApproveRuntime={approveMissionRuntime} />;
                   })}
                 </div>
               </section>

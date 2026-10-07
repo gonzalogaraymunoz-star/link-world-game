@@ -131,7 +131,7 @@ export default function ConchaWorld({ businesses, selectedId, onSelect, privateD
               {!member ? <button className="conchaAction" onClick={onLogin}>Entrar para consultar la capa privada →</button> : null}
             </> : <><p>{business ? business.summary || business.sector : 'Selecciona un negocio. El centro, las etapas y las relaciones se reorganizan alrededor de él.'}</p><label className="cellSearch"><span>Buscar célula</span><input placeholder="Nombre del negocio" value={query} onChange={e=>setQuery(e.target.value)}/></label><div className="conchaCellList">{visibleCells.map(b=><button key={b.id} aria-pressed={business?.id===b.id} onClick={()=>enterCell(b.id)}><i/><span><b>{b.name}</b><small>{b.sector}</small></span><em>→</em></button>)}{!visibleCells.length ? <p>No hay coincidencias.</p> : null}</div></>}
             {business ? <div className="conchaInspectorActions"><button className="conchaAction" onClick={()=>onOpenBusiness(business)}>Abrir ficha completa →</button><button onClick={backWorld}>Volver a todo LINK</button></div> : null}
-            <div className="conchaContextNote">{business ? <><span>businessContext</span><b>{business.name}</b></> : <><span>businessContext</span><b>Todo LINK</b></>}{!member ? <small>Los detalles operativos se consultan con tu sesión.</small> : null}</div>
+            <div className="conchaContextNote">{business ? <><span>Perspectiva actual</span><b>{business.name}</b></> : <><span>Perspectiva actual</span><b>Todo LINK</b></>}{!member ? <small>Los detalles operativos se consultan con tu sesión.</small> : null}</div>
           </div> : null}
         </aside>
       </div>

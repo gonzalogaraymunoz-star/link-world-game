@@ -25,6 +25,8 @@ body{font-family:'Inter',sans-serif;background:#fbf9f9;color:#1b1c1c;}
 .ledgerApp .mainSurface{flex:1;min-width:0;background:var(--surface);container-type:inline-size;}
 .worldNavigation{flex:0 0 208px;width:208px;background:var(--card);padding:22px 13px 18px;display:flex;flex-direction:column;overflow:auto;transition:width .3s,flex-basis .3s;}
 .worldNavigation.isFolded{flex-basis:62px;width:62px;padding-inline:9px;}
+.worldNavigation nav{display:block;width:100%;max-width:none;overflow:visible;padding:0;border:0;border-radius:0;}
+.worldNavigation nav button{border:0;border-radius:4px;}
 .navFold,.contextFold{display:flex;align-items:center;gap:12px;width:100%;height:40px;border:0;background:transparent;font-size:10px;font-weight:500;}
 .navFold{margin-bottom:24px;}
 .linkIcon{flex-shrink:0;}
@@ -141,6 +143,19 @@ body{font-family:'Inter',sans-serif;background:#fbf9f9;color:#1b1c1c;}
 .ledgerApp .businessSatellites button.selected i,.ledgerApp .businessSatellites button.related i{background:var(--earth);}
 .ledgerApp .capacityNodes button{border:0;border-radius:4px;background:var(--card);}
 .ledgerApp .organismFooter{font-size:8px;line-height:1.8;gap:24px;}
+.ledgerApp .organismFooter{border:0;}
+.ledgerApp .capacityNodes i{border-color:var(--earth);}
+.ledgerApp .conchaStage b{font-size:14px;}
+.ledgerApp .conchaStage small{font-size:10px;}
+.ledgerApp .governanceNodes button{font-size:12px;}
+.ledgerApp .businessSatellites b{font-size:13px;}
+.ledgerApp .loadingScreen{color:var(--subtle);}
+.ledgerApp .modalBackdrop{background:rgba(27,28,28,.18);backdrop-filter:blur(20px);}
+.ledgerApp .loginModal{border:0;border-radius:4px;background:var(--card);color:var(--ink);padding:28px;box-shadow:0 20px 50px rgba(27,28,28,.06);}
+.ledgerApp .loginForm label span{color:var(--subtle);}
+.ledgerApp .loginForm input{border:0;border-bottom:1px solid var(--subtle);border-radius:0;background:transparent;color:var(--ink);padding:12px 0;}
+.ledgerApp .loginForm input:focus{border-bottom:2px solid var(--earth);}
+.ledgerApp .iconButton{color:var(--ink);}
 .ledgerApp .worldLayout{min-height:calc(100vh - 128px);}
 .ledgerApp .ledgerMapLayout{display:block;}
 .contextContent .dockPanelBody{padding:0;}
@@ -161,6 +176,7 @@ body{font-family:'Inter',sans-serif;background:#fbf9f9;color:#1b1c1c;}
 @container (max-width:1060px){.ledgerApp .organismCanvas{zoom:calc(var(--zoom)*.75);margin-top:-8px;}.ledgerApp .organismHeading h1{font-size:38px;}}
 @container (max-width:870px){.ledgerApp .organismCanvas{zoom:calc(var(--zoom)*.66);margin-top:10px;}}
 @container (max-width:750px){.ledgerApp .organismCanvas{zoom:calc(var(--zoom)*.57);}.ledgerApp .organismHeading h1{font-size:34px;}}
+@container (max-width:870px){.ledgerApp .governanceNodes small,.ledgerApp .capacityNodes small,.ledgerApp .conchaStage small{display:none;}.ledgerApp .governanceNodes button,.ledgerApp .capacityNodes button{font-size:14px;}.ledgerApp .conchaStage b{font-size:16px;}.ledgerApp .conchaStage>span{font-size:12px;}}
 @media(max-width:1100px){.ledgerApp .gameTopbar{grid-template-columns:210px 1fr auto;padding:0 18px;}.ledgerApp .topSession>span:not(.liveDot){display:none;}.dimensionWorkspace{padding:20px 28px 48px;}.worldContextDock{flex-basis:280px;width:280px;}.ledgerMetrics{grid-template-columns:1fr 1fr;}.ledgerRecord{flex-direction:column;}.ledgerRecordEnd{align-items:flex-start;}}
 @media(max-width:820px){.ledgerApp{height:100dvh;}.ledgerApp .gameTopbar{grid-template-columns:1fr auto;min-height:64px;}.ledgerApp .topTabs{display:none;}.ledgerApp .gameBody{display:flex;flex-direction:row;}.worldNavigation{flex-basis:190px;width:190px;padding-top:12px;}.worldNavigation.isFolded{flex-basis:46px;width:46px;padding-inline:3px;}.worldContextDock.isFolded{flex-basis:40px;width:40px;padding-inline:0;}.worldContextDock:not(.isFolded){position:absolute;right:0;top:70px;bottom:0;width:min(340px,calc(100vw - 46px));z-index:40;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(20px);box-shadow:0 20px 50px rgba(27,28,28,.06);}.worldNavigation:not(.isFolded){position:absolute;left:0;top:70px;bottom:0;z-index:41;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(20px);box-shadow:0 20px 50px rgba(27,28,28,.06);}.worldScopeBar{padding:12px 16px;gap:7px;font-size:9px;flex-wrap:wrap;}.worldScopeBar .scopeBack{display:none;}.worldScopeBar select{max-width:140px;}.ledgerApp .conchaToolbar{padding:4px 16px 12px;}.ledgerApp .conchaControls{flex-wrap:wrap;}.ledgerApp .organismHeading{padding:20px 20px 0;}.ledgerApp .organismCanvas{width:730px;height:610px;zoom:calc(var(--zoom)*.7);margin:18px 0 0;}.ledgerApp .organismWires{translate:-195px -60px;}.ledgerApp .conchaBody,.ledgerApp .inspectorFolded .conchaBody{display:block;}.ledgerApp .conchaMobileCells button{border:0;border-radius:4px;}.ledgerApp .conchaMobileCells button[aria-pressed=true]{background:var(--low);}.dimensionWorkspace{padding:14px 20px 42px;}.ledgerHero{padding-bottom:24px;}.ledgerHero h1{font-size:42px;}.ledgerAccess{padding:26px;}.ledgerAccess h2{font-size:25px;}.reproductionRules{grid-template-columns:1fr;}.ledgerApp .contentView{padding:24px 20px;}.ledgerApp .worldLayout{display:block;}.ledgerApp .mapPanelDock{max-height:40vh;}}
 @media(max-width:520px){.ledgerApp .organismCanvas{zoom:calc(var(--zoom)*.43);}.ledgerApp .organismHeading h1{font-size:32px;}.ledgerApp .conchaControls button{padding:5px 7px;font-size:8px;}.ledgerHero h1{font-size:36px;}.ledgerApp .brandButton b{font-size:16px;}.ledgerApp .brandButton small{font-size:7px;}.ledgerMetrics{grid-template-columns:1fr 1fr;gap:12px;}.ledgerMetrics article{padding:20px;}.ledgerMetrics b{font-size:32px;}}

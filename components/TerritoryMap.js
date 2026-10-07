@@ -319,7 +319,7 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
     <div className="territoryMapShell">
       <Script
         id="google-maps-script"
-        src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly`}
+        src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly&auth_referrer_policy=origin`}
         strategy="afterInteractive"
         onLoad={initMap}
         onReady={initMap}

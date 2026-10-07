@@ -295,7 +295,22 @@ export default function TerritoryMap({ businesses = [], selectedBusiness = null,
   }, [selectedBusiness, focusBusiness, status]);
 
   if (!apiKey) {
-    return <div className="mapError"><span>GOOGLE MAPS</span><strong>Falta la variable de entorno</strong><small>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</small></div>;
+    return (
+      <div className="mapError" role="region" aria-label="Territorio LINK sin mapa">
+        <span>TERRITORIO LINK</span>
+        <strong>Mapa geográfico pendiente de conexión</strong>
+        <small>Falta configurar Google Maps en Cloudflare. Las células reales siguen disponibles para navegar.</small>
+        <div style={{ display: "grid", gap: 8, width: "min(320px, 85vw)", margin: "16px auto 0" }}>
+          {businesses.length ? businesses.map(business => (
+            <button key={business.id} type="button" className="secondaryButton"
+              onClick={() => onSelectBusiness?.(business.id)}
+              aria-label={`Abrir célula ${business.name}`}>
+              {business.name}{business.city ? ` · ${business.city}` : ""}
+            </button>
+          )) : <small>No hay células autorizadas para mostrar en este contexto.</small>}
+        </div>
+      </div>
+    );
   }
 
   const statusLabel = status === "ready" ? "Google Maps conectado" : status === "auth-error" ? "Google Maps · autorización pendiente" : status === "checking" ? "Verificando APIs…" : "Cargando territorio…";

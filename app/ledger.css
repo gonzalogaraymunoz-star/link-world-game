@@ -68,7 +68,76 @@ body{font-family:'Inter',sans-serif;background:#fbf9f9;color:#1b1c1c;}
 .contextCells button small,.contextHistory button small{color:var(--subtle);font-size:9px;}
 .contextContent input,.dimensionWorkspace textarea{width:100%;background:transparent;border:0;border-bottom:1px solid var(--subtle);border-radius:0;padding:12px 0;font-size:11px;}
 .contextContent input:focus,.dimensionWorkspace textarea:focus{outline:0;border-bottom:2px solid var(--earth);}
+
 .dimensionWorkspace{padding:28px 48px 64px;max-width:1280px;margin:0 auto;animation:dimensionArrive .4s cubic-bezier(.2,.7,.2,1);}
+
+/* Mapa Maestro navegable: la composición permanece; el usuario entra y sale de sus dimensiones. */
+.ledgerApp .mainSurface{
+  transform-origin:50% 46%;
+  will-change:transform,opacity;
+}
+.ledgerApp.nav-leaving .mainSurface{
+  pointer-events:none;
+  animation:worldDimensionLeave .24s cubic-bezier(.4,0,.8,.2) both;
+}
+.ledgerApp.nav-arriving .mainSurface{
+  pointer-events:none;
+  animation:worldDimensionArrive .56s cubic-bezier(.16,1,.3,1) both;
+}
+.ledgerApp.nav-leaving .worldNavigation,
+.ledgerApp.nav-leaving .worldContextDock{
+  opacity:.72;
+}
+.ledgerApp.destinationMode .dimensionWorkspace{
+  max-width:none;
+  width:100%;
+  min-height:calc(100dvh - 118px);
+  padding:clamp(34px,5vw,76px) clamp(34px,6vw,92px) 88px;
+}
+.ledgerApp.destinationMode .ledgerHero{
+  padding-top:clamp(18px,3vw,44px);
+  padding-bottom:clamp(38px,5vw,74px);
+}
+.ledgerApp.destinationMode .ledgerHero h1{
+  font-size:clamp(54px,7vw,96px);
+  max-width:1050px;
+}
+.ledgerApp.destinationMode .ledgerHero p{
+  max-width:720px;
+  font-size:clamp(13px,1.2vw,16px);
+}
+.ledgerApp.destinationMode .worldScopeBar{
+  position:sticky;
+  top:0;
+  z-index:16;
+  min-height:48px;
+  padding:9px 24px;
+  border-bottom:1px solid color-mix(in srgb,var(--subtle) 12%,transparent);
+  backdrop-filter:blur(18px);
+  background:color-mix(in srgb,var(--surface) 90%,transparent);
+}
+.ledgerApp.destinationMode .worldNavigation.isFolded,
+.ledgerApp.destinationMode .worldContextDock.isFolded{
+  opacity:.78;
+}
+.ledgerApp.destinationMode .worldNavigation.isFolded:hover,
+.ledgerApp.destinationMode .worldContextDock.isFolded:hover{
+  opacity:1;
+}
+@keyframes worldDimensionLeave{
+  from{opacity:1;transform:scale(1) translateZ(0);}
+  to{opacity:.08;transform:scale(1.045) translateZ(0);}
+}
+@keyframes worldDimensionArrive{
+  from{opacity:.05;transform:scale(.955) translateY(10px) translateZ(0);}
+  58%{opacity:1;}
+  to{opacity:1;transform:scale(1) translateY(0) translateZ(0);}
+}
+@media (prefers-reduced-motion:reduce){
+  .ledgerApp.nav-leaving .mainSurface,
+  .ledgerApp.nav-arriving .mainSurface{animation:none!important;}
+}
+
 .ledgerHero{max-width:740px;padding:24px 0 44px;}
 .ledgerApp .sectionKicker{color:var(--earth);font-size:9px;font-weight:500;letter-spacing:.16em;}
 .ledgerHero h1{font-size:56px;line-height:1.03;letter-spacing:-.06em;margin:20px 0 22px;color:var(--primary);}

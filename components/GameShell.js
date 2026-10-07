@@ -793,20 +793,53 @@ export default function GameShell() {
   const [routeReady, setRouteReady] = useState(false);
   const [history, setHistory] = useState([]);
   const [theme, setTheme] = useState('paper');
+  const [navigationMotion, setNavigationMotion] = useState('idle');
   const surfaceRef = useRef(null);
   const scrollPositions = useRef({});
   const routeRef = useRef({dimension:'concha',business:null,model:null});
+  const navigationTimer = useRef(null);
+  const settleTimer = useRef(null);
+
+  function commitView(dimension, business, model) {
+    setViewState(dimension);
+    setBusinessContext(business);
+    setModelContext(model);
+    if (business) setSelectedId(business);
+    if (typeof window !== 'undefined') {
+      window.history.pushState({},'',writeWorldRoute(window.location.search,{dimension,business,model}));
+    }
+  }
+
   function setView(next, business = businessContext, model = modelContext) {
     const dimension = canonicalDimension(next);
-    setViewState(dimension); setBusinessContext(business); setModelContext(model);
-    if(business) setSelectedId(business);
-    if(typeof window !== 'undefined') window.history.pushState({},'',writeWorldRoute(window.location.search,{dimension,business,model}));
+    const current = routeRef.current;
+    if (
+      current.dimension === dimension &&
+      (current.business || null) === (business || null) &&
+      (current.model || null) === (model || null)
+    ) return;
+    if (navigationMotion !== 'idle') return;
+
+    window.clearTimeout(navigationTimer.current);
+    window.clearTimeout(settleTimer.current);
+    setNavigationMotion('leaving');
+
+    navigationTimer.current = window.setTimeout(() => {
+      commitView(dimension,business,model);
+      setRailCollapsed(true);
+      setNavigationMotion('arriving');
+      settleTimer.current = window.setTimeout(() => setNavigationMotion('idle'), 560);
+    }, 240);
   }
   useEffect(()=>{
-    const restore = ()=>{const r=readWorldRoute(window.location.search);setViewState(r.dimension);setBusinessContext(r.business);setModelContext(r.model);if(r.business)setSelectedId(r.business);};
+    const restore = ()=>{const r=readWorldRoute(window.location.search);setViewState(r.dimension);setBusinessContext(r.business);setModelContext(r.model);if(r.business)setSelectedId(r.business);setNavigationMotion('idle');};
     restore();setRouteReady(true);
     window.addEventListener('popstate',restore);
-    return()=>window.removeEventListener('popstate',restore);
+    return()=>{
+      window.removeEventListener('popstate',restore);
+      window.clearTimeout(navigationTimer.current);
+      window.clearTimeout(settleTimer.current);
+    };
   },[]);
   useEffect(()=>{
     if(!routeReady)return;
@@ -1221,7 +1254,7 @@ export default function GameShell() {
   const contextBusiness = businesses.find(row=>row.id===businessContext) || null;
   const centralDimension = DIMENSIONS[view] && !['concha','mundo','negocios'].includes(view);
   return (
-    <main className={`gameApp ledgerApp theme-${theme}`}>
+    <main className={`gameApp ledgerApp theme-${theme} nav-${navigationMotion} ${centralDimension ? 'destinationMode' : ''}`}>
       <header className="gameTopbar">
         <button className="brandButton" onClick={() => setView("concha")}>
           <span className="brandMark">••<br/>••</span>
@@ -1240,7 +1273,7 @@ export default function GameShell() {
       <div className={`gameBody ${railCollapsed ? "railIsCollapsed" : ""}`}>
         <WorldNavigation view={view} collapsed={railCollapsed} onToggle={()=>setRailCollapsed(v=>!v)} onNavigate={setView}/>
 
-        <section className="mainSurface" ref={surfaceRef}>
+        <section className="mainSurface" ref={surfaceRef} aria-busy={navigationMotion !== 'idle'}>
           <div className="worldScopeBar"><button onClick={()=>setView('concha',null,null)}>LINK</button><span>/</span><select aria-label="Perspectiva del negocio" value={contextBusiness?.id||''} onChange={e=>{setBusinessContext(e.target.value||null);setModelContext(null);if(e.target.value)setSelectedId(e.target.value);}}><option value="">Todo LINK</option>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><span>/</span><b>{DIMENSIONS[view]?.label}</b><button className="scopeBack" onClick={()=>setView('concha')}>Volver al organismo ↗</button></div>
           {!loading&&centralDimension?<DimensionWorkspace view={view} business={contextBusiness} businesses={businesses} data={privateData} member={member} onLogin={()=>setLoginOpen(true)} onNavigate={setView} modelId={modelContext} onModelChange={setModelContext} resolveWorkspaceUrl={resolveWorkspaceUrl} renderMission={row=><MissionCard key={row.id||row.mission_code} row={row} businessName={businesses.find(b=>b.global_id===row.business_global_id)?.name}/>}/>:null}
           {notice ? <div className="globalNotice">{notice}<button onClick={() => setNotice("")}>×</button></div> : null}
@@ -1283,7 +1316,7 @@ export default function GameShell() {
           ) : null}
 
         </section>
-        <WorldContextDock business={contextBusiness} businesses={businesses} view={view} data={privateData} member={member} onLogin={()=>setLoginOpen(true)} onSelect={handleSelectBusiness} onClear={()=>{setBusinessContext(null);setModelContext(null);}} onNavigate={setView} history={history} modelId={modelContext} onModelChange={setModelContext} onOpenBusiness={openFullBusiness} mapInfo={view==='mundo'?(externalPlace?.kind==='external'?<ExternalBusinessFicha place={externalPlace} onResearchPlace={researchExternalPlace}/>:<BusinessFichaContent business={contextBusiness} onOpenFullBusiness={openFullBusiness}/>):null} mapActions={view==='mundo'&&member?<MapMissionPanel business={contextBusiness} actions={actionsByBusiness.get(contextBusiness?.id)||[]} evidence={privateData.gameEvidence} onStartAction={startGameAction} onSubmitEvidence={submitGameEvidence}/>:null} mapProgress={view==='mundo'&&member?<MapProgressPanel business={contextBusiness} progress={progressByBusiness.get(contextBusiness?.id)} gameState={gameByBusiness.get(contextBusiness?.id)} globalGame={globalGame}/>:null}/>
+        <WorldContextDock business={contextBusiness} businesses={businesses} view={view} data={privateData} member={member} onLogin={()=>setLoginOpen(true)} onSelect={handleSelectBusiness} onClear={()=>{setBusinessContext(null);setModelContext(null);}} onNavigate={setView} history={history} modelId={modelContext} onModelChange={setModelContext} onOpenBusiness={openFullBusiness} arrivalKey={`${view}:${businessContext||'all'}`} mapInfo={view==='mundo'?(externalPlace?.kind==='external'?<ExternalBusinessFicha place={externalPlace} onResearchPlace={researchExternalPlace}/>:<BusinessFichaContent business={contextBusiness} onOpenFullBusiness={openFullBusiness}/>):null} mapActions={view==='mundo'&&member?<MapMissionPanel business={contextBusiness} actions={actionsByBusiness.get(contextBusiness?.id)||[]} evidence={privateData.gameEvidence} onStartAction={startGameAction} onSubmitEvidence={submitGameEvidence}/>:null} mapProgress={view==='mundo'&&member?<MapProgressPanel business={contextBusiness} progress={progressByBusiness.get(contextBusiness?.id)} gameState={gameByBusiness.get(contextBusiness?.id)} globalGame={globalGame}/>:null}/>
       </div>
 
       {loginOpen ? <LoginPanel onClose={() => setLoginOpen(false)} /> : null}

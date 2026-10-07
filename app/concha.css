@@ -8,6 +8,7 @@
 .railIsCollapsed .railNav button { display: flex; justify-content: center; }
 .conchaWorld { --paper: #f5f3e9; --ink: #35423a; --subtle: #71786f; --edge: #dcded2; --card: #fbfaf4; --cell-tint: #8da381; --green: #607a57; color-scheme: light; background: var(--paper); color: var(--ink); min-height: 100%; display: flex; flex-direction: column; overflow: hidden; }
 .conchaWorld.theme-night { --paper: #111816; --ink: #e1e7d9; --subtle: #9ea89a; --edge: #324138; --card: #18231d; --cell-tint: #b8ce93; --green: #bacd99; color-scheme: dark; }
+.conchaWorld.theme-gray { --paper: #e7e7e4; --ink: #2d302e; --subtle: #696d69; --edge: #c9ccc6; --card: #f2f2ef; --cell-tint: #89948a; --green: #667268; color-scheme: light; }
 .conchaWorld button,.conchaWorld input,.conchaWorld select { font: inherit; color: inherit; }
 .conchaWorld button { cursor: pointer; }
 .conchaWorld button:focus-visible,.railCollapseToggle:focus-visible { outline: 2px solid var(--green,#d8ff72); outline-offset: 4px; }

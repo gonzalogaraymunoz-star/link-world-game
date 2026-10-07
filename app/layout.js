@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./concha.css";
 
 export const metadata = {
   title: "LINK WORLD GAME",

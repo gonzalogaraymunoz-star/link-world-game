@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import TerritoryMap from "./TerritoryMap";
+import ConchaWorld from "./ConchaWorld";
 import { hasSupabaseConfig, supabase } from "../lib/supabase";
 
 const APP_BASES = {
@@ -14,6 +15,7 @@ const APP_BASES = {
 };
 
 const NAV = [
+  ["concha", "◉", "Organismo"],
   ["mundo", "◎", "Mundo"],
   ["modelos", "◈", "Modelos"],
   ["negocios", "□", "Células"],
@@ -26,6 +28,7 @@ const NAV = [
 ];
 
 const TOP = [
+  ["concha", "Organismo"],
   ["mundo", "Mapa"],
   ["red", "Red"],
   ["eventos", "Eventos"],
@@ -799,7 +802,8 @@ function BusinessFunnel({ models = [], stagesByModel, evidenceByModel, businessN
 
 
 export default function GameShell() {
-  const [view, setView] = useState("mundo");
+  const [view, setView] = useState("concha");
+  const [railCollapsed, setRailCollapsed] = useState(true);
   const [businesses, setBusinesses] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [session, setSession] = useState(null);
@@ -1055,7 +1059,7 @@ export default function GameShell() {
       setSession(next);
       if (!next) {
         setMember(false);
-        setPrivateData(prev => ({ ...prev, missions: [], workspaces: [], integrations: [], events: [], activity: [], gameStates: [], gameActions: [], gameEvidence: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null }));
+        setPrivateData(prev => ({ ...prev, missions: [], workspaces: [], integrations: [], events: [], activity: [], gameStates: [], gameActions: [], gameEvidence: [], models: [], modelLinks: [], modelStages: [], modelEvidence: [], modelArtifacts: [], rrss: [], financialPolicies: [], transactions: [], paymentProviders: [], cron: [], alerts: [], memoryCounts: null }));
         return;
       }
       const check = await supabase.rpc("link_world_is_member");
@@ -1195,7 +1199,7 @@ export default function GameShell() {
   return (
     <main className="gameApp">
       <header className="gameTopbar">
-        <button className="brandButton" onClick={() => setView("mundo")}>
+        <button className="brandButton" onClick={() => setView("concha")}>
           <span className="brandMark">••<br/>••</span>
           <span><b>LINK WORLD</b><small>Control central jugable</small></span>
         </button>
@@ -1209,14 +1213,15 @@ export default function GameShell() {
         </div>
       </header>
 
-      <div className="gameBody">
+      <div className={`gameBody ${railCollapsed ? "railIsCollapsed" : ""}`}>
         <aside className="leftRail">
+          <button className="railCollapseToggle" aria-label={railCollapsed ? "Abrir menú lateral" : "Plegar menú lateral"} aria-expanded={!railCollapsed} onClick={() => setRailCollapsed(value => !value)}>{railCollapsed ? "☰" : "‹"}</button>
           <div className="railStatus">
             <b>{businesses.length}</b><span>células visibles</span>
           </div>
           <nav className="railNav">
             {NAV.map(([id, icon, label]) => (
-              <button key={id} className={view === id ? "active" : ""} onClick={() => setView(id)}>
+              <button key={id} title={label} aria-label={label} className={view === id ? "active" : ""} onClick={() => setView(id)}>
                 <i>{icon}</i><span>{label}</span>
                 {id === "misiones" && member && openCount ? <em>{openCount}</em> : null}
                 {id === "alertas" && member && alertCount ? <em>{alertCount}</em> : null}
@@ -1231,6 +1236,10 @@ export default function GameShell() {
         <section className="mainSurface">
           {notice ? <div className="globalNotice">{notice}<button onClick={() => setNotice("")}>×</button></div> : null}
           {loading ? <div className="loadingScreen">Sincronizando LINK WORLD…</div> : null}
+
+          {!loading ? (
+            <div hidden={view !== "concha"}><ConchaWorld businesses={businesses} selectedId={selected?.id} onSelect={handleSelectBusiness} privateData={privateData} member={member} onLogin={() => setLoginOpen(true)} onOpenBusiness={openFullBusiness} renderMission={row => <MissionCard key={row.id || row.mission_code} row={row} businessName={businesses.find(b => b.global_id === row.business_global_id)?.name} />} /></div>
+          ) : null}
 
           {!loading && view === "mundo" ? (
             <div className={`worldLayout mapDockLayout ${mapDockCollapsed ? "dockIsCollapsed" : ""}`}>

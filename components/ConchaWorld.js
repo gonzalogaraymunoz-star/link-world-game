@@ -5,7 +5,7 @@ import { CONCHA_STAGES, getCellModels, getCellStages, getCellEvidence, getRelate
 
 const GOVERNANCE = [['director', 'Director', 'Coordinación'], ['hipocampo', 'Hipocampo', 'Memoria'], ['cortex', 'Cortex', 'Interpretación'], ['pulso', 'Pulso Vivo', 'Observación'], ['nervioso', 'Sistema nervioso', 'Gobierno y señales']];
 const CAPACITIES = [['fin', 'FIN', 'Estado económico'], ['rrss', 'RRSS', 'Canales'], ['personas', 'Personas', 'Identidad'], ['artefactos', 'Artefactos', 'Herramientas'], ['modelos', 'Modelos', 'Conocimiento'], ['evolucion', 'Evolución', 'Aprendizaje']];
-const emptyData = { models: [], modelLinks: [], modelStages: [], modelEvidence: [], modelArtifacts: [], missions: [], workspaces: [] };
+const emptyData = { models: [], modelLinks: [], modelStages: [], modelEvidence: [], modelArtifacts: [], missions: [], workspaces: [], journeys: [], scopeStates: [] };
 
 export default function ConchaWorld({ businesses, businessContext, onSelect, privateData, member, onClear, onNavigate, modelId, theme, onThemeChange }) {
   const [paused, setPaused] = useState(false);
@@ -36,7 +36,7 @@ export default function ConchaWorld({ businesses, businessContext, onSelect, pri
           <button title="Restablecer vista" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
           <button title="Acercar" aria-label="Acercar" onClick={() => setZoom(v => Math.min(1.6, v + .15))}>+</button>
           <button onClick={() => setPaused(v => !v)} aria-pressed={paused}>{paused ? 'Reanudar' : 'Pausar'}</button>
-          <button title="Cambiar apariencia" onClick={() => onThemeChange()}>{theme === 'paper' ? 'Noche' : 'Día'}</button>
+          <button title="Cambiar apariencia" onClick={() => onThemeChange(theme === 'day' ? 'gray' : theme === 'gray' ? 'night' : 'day')}>{theme === 'day' ? 'Día' : theme === 'gray' ? 'Gris' : 'Noche'}</button>
           <button aria-label="Pantalla completa" title="Pantalla completa" onClick={() => { if (document.fullscreenElement) document.exitFullscreen?.(); else root.current?.requestFullscreen?.(); }}>⛶</button>
         </div>
       </div>
@@ -65,7 +65,7 @@ export default function ConchaWorld({ businesses, businessContext, onSelect, pri
                 return <button key={row.key} className={`conchaStage signal-${signal.state}`} style={{ left: p.x, top: p.y, '--stage-color': row.color }} onClick={() => openStage(row.key)} aria-label={`Abrir ${row.label}${business ? ' de '+business.name : ' transversal'}`}><span>0{i+1}</span><b>{row.label}</b><small>{business && member ? signal.label : row.note}</small></button>;
               })}
             </div>
-            <button className={`conchaNucleus ${business ? 'cellEntered' : ''}`} key={business?.id || 'world'} style={{ left: cx, top: cy, '--entry-x': '430px', '--entry-y': `${248 + businesses.findIndex(row=>row.id===business?.id)*76 - cy}px` }} onClick={() => business && onNavigate('negocios')}><span>{business ? 'CÉLULA CENTRAL' : 'LA CONCHA'}</span><b>{business?.name || 'Vida del negocio'}</b><small>{model?.name || (business ? business.sector : '6 etapas · un solo contexto')}</small></button>
+            <button className={`conchaNucleus ${business ? 'cellEntered' : ''}`} key={business?.id || 'world'} style={{ left: cx, top: cy, '--entry-x': '430px', '--entry-y': `${248 + businesses.findIndex(row=>row.id===business?.id)*76 - cy}px` }} onClick={() => business && onNavigate('negocios')}><span>{business ? (business.verification_status === 'verified' ? 'NEGOCIO COMPROBADO' : 'CÉLULA EN DESARROLLO') : 'LA CONCHA'}</span><b>{business?.name || 'Vida del negocio'}</b><small>{model?.name || (business ? business.sector : '6 etapas · un solo contexto')}</small></button>
             <div className="businessSatellites"><span className="microLabel">CÉLULAS DEL ORGANISMO</span>{businesses.map(row => <button key={row.id} className={`${business?.id === row.id ? 'selected' : ''} ${related.has(row.id) ? 'related' : ''}`} onClick={() => enterCell(row.id)} aria-pressed={business?.id === row.id}><i/><span><b>{row.name}</b><small>{business?.id === row.id ? 'En el centro' : related.has(row.id) ? 'Modelo compartido' : row.sector || 'Célula LINK'}</small></span><em>↗</em></button>)}{!businesses.length ? <p>No hay células disponibles en esta capa.</p> : null}</div>
             <div className="capacityNodes">{CAPACITIES.map(([id,name,note]) => <button key={name} onClick={() => openDimension(id,name)}><i/><b>{name}</b><small>{note}</small></button>)}</div>
           </div>

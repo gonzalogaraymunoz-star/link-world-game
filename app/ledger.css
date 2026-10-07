@@ -4,6 +4,7 @@
 body{font-family:'Inter',sans-serif;background:#fbf9f9;color:#1b1c1c;}
 .ledgerApp{--surface:#fbf9f9;--ledger-card:#fff;--card:var(--ledger-card);--low:#efeded;--ledger-ink:#1b1c1c;--ink:var(--ledger-ink);--ledger-subtle:#4c4546;--subtle:var(--ledger-subtle);--earth:#7c5546;--primary:#000;--text:var(--ink);--muted:var(--subtle);--line:var(--low);--accent:var(--earth);background:var(--surface);color:var(--ink);color-scheme:light;}
 .ledgerApp.theme-night{--surface:#151515;--ledger-card:#1b1b1b;--low:#282525;--ledger-ink:#fbf9f9;--ledger-subtle:#bab1ae;--earth:#cca28d;--primary:#fbf9f9;color-scheme:dark;}
+.ledgerApp.theme-gray{--surface:#e7e7e4;--ledger-card:#f2f2ef;--low:#d7d7d2;--ledger-ink:#242525;--ledger-subtle:#686967;--earth:#687168;--primary:#111212;color-scheme:light;}
 .ledgerApp h1,.ledgerApp h2,.ledgerApp h3,.ledgerApp .brandButton b{font-family:'Space Grotesk',sans-serif;font-weight:500;letter-spacing:-.045em;}
 .ledgerApp button,.ledgerApp input,.ledgerApp select,.ledgerApp textarea{font-family:'Inter',sans-serif;color:var(--ink);}
 .ledgerApp button,.ledgerApp a{touch-action:manipulation;}
@@ -18,6 +19,9 @@ body{font-family:'Inter',sans-serif;background:#fbf9f9;color:#1b1c1c;}
 .ledgerApp .topTabs button{border:0;border-radius:2px;color:var(--subtle);background:transparent;font-size:11px;padding:11px 17px;}
 .ledgerApp .topTabs button.active{background:var(--low);color:var(--ink);}
 .ledgerApp .topSession{color:var(--subtle);font-size:10px;gap:9px;}
+.ledgerApp .themeModes{display:flex;align-items:center;gap:2px;padding:3px;background:var(--low);border-radius:999px;margin-right:5px;}
+.ledgerApp .themeModes button{min-width:28px;width:28px;height:28px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--subtle);display:grid;place-items:center;font-size:12px;}
+.ledgerApp .themeModes button.active{background:var(--card);color:var(--primary);box-shadow:0 1px 4px color-mix(in srgb,var(--ink) 10%,transparent);}
 .ledgerApp .topSession button{border:0;border-radius:2px;color:var(--card);background:var(--primary);padding:10px 17px;font-size:10px;}
 .ledgerApp .liveDot{width:5px;height:5px;background:var(--subtle);}
 .ledgerApp .liveDot.on{background:var(--earth);box-shadow:none;}
@@ -186,6 +190,7 @@ body{font-family:'Inter',sans-serif;background:#fbf9f9;color:#1b1c1c;}
 .ledgerApp .statusPill{background:var(--low);color:var(--subtle);border:0;border-radius:2px;}
 .ledgerApp .conchaWorld{--paper:var(--surface);--card:var(--ledger-card);--ink:var(--ledger-ink);--subtle:var(--ledger-subtle);--edge:color-mix(in srgb,var(--subtle) 15%,transparent);--cell-tint:var(--earth);--green:var(--earth);min-height:calc(100vh - 128px);}
 .ledgerApp .conchaWorld.theme-night{--paper:var(--surface);--edge:#393333;--cell-tint:var(--earth);--green:var(--earth);}
+.ledgerApp .conchaWorld.theme-gray{--paper:var(--surface);--edge:#c8c8c3;--cell-tint:var(--earth);--green:var(--earth);}
 .ledgerApp .conchaToolbar{border:0;padding:4px 30px 12px;background:var(--surface);}
 .ledgerApp .conchaBreadcrumb{display:none;}
 .ledgerApp .conchaControls{margin-left:auto;}

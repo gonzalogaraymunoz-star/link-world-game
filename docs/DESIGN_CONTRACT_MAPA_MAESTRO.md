@@ -90,3 +90,12 @@ Si ninguna respuesta es sí: NO IMPLEMENTAR todavía.
 Desarrollar mucho, desplegar poco.
 
 Acumular un paquete coherente, validar código y recién entonces generar un preview. Producción sólo después de aprobar la experiencia.
+
+
+## Producción principal
+
+- Shell persistente: Mapa Maestro / Concha.
+- URL principal: https://link-world-9h0.pages.dev
+- Apariencia persistente: día / gris / noche.
+- LINK WORLD operativo vive dentro del mismo shell y comparte businessContext, stage/dimension y navegación.
+- La Concha usa primero estado específico de modelo cuando existe; si no, cae al recorrido canónico vivo del negocio (MAR → Venta → Cierre → Boarding → Opera → Postventa).

@@ -11,7 +11,7 @@ import { hasSupabaseConfig, supabase } from "../lib/supabase";
 
 const APP_BASES = {
   linkcontrolgeneral: "https://linkcontrolgeneral.vercel.app",
-  linkrrss: "https://linkrrss.vercel.app",
+  linkrrss: "https://linkrrss.gonzalogaraymunoz.workers.dev",
   "hotel-experience": "https://hotel-experience.vercel.app",
   "ventas-hotelexperience": "https://ventas-hotelexperience.vercel.app",
   taxihotel: "https://taxihotel.vercel.app",
@@ -359,7 +359,7 @@ function BusinessInspector({ business, gameState, rrssProfile, progress, actions
       <div className="actionStack">
         <button className="secondaryButton" onClick={() => onShowMap(business)}>Ubicar en territorio</button>
         {website ? <a className="secondaryButton" href={website} target="_blank" rel="noreferrer">Abrir sistema del negocio ↗</a> : null}
-        {rrssProfile ? <a className="secondaryButton" href="https://linkrrss.vercel.app" target="_blank" rel="noreferrer">Abrir LINKRRSS ↗</a> : null}
+        {rrssProfile ? <a className="secondaryButton" href={rrssUrl(business, "home")} target="_blank" rel="noreferrer">Abrir LINKRRSS ↗</a> : null}
       </div>
     </aside>
   );
@@ -587,7 +587,7 @@ function MapToolsPanel({ business, rrssProfile, onOpenFullBusiness }) {
       <div className="toolModuleList">
         {business ? <button onClick={() => onOpenFullBusiness(business)}><b>Ficha completa</b><span>Identidad, modelo y contexto del negocio</span></button> : null}
         {business?.website ? <a href={business.website} target="_blank" rel="noreferrer"><b>Sitio / sistema</b><span>{business.website}</span></a> : null}
-        {rrssProfile ? <a href="https://linkrrss.vercel.app" target="_blank" rel="noreferrer"><b>LINKRRSS</b><span>Conversaciones, publicaciones y señales</span></a> : null}
+        {rrssProfile ? <a href={rrssUrl(business, "home")} target="_blank" rel="noreferrer"><b>LINKRRSS</b><span>Conversaciones, publicaciones y señales</span></a> : null}
         <a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer"><b>Control Central</b><span>Fuente viva y coordinación LINK</span></a>
       </div>
     </div>

@@ -397,7 +397,7 @@ function BusinessInspector({ business, gameState, rrssProfile, progress, actions
       <div className="actionStack">
         <button className="secondaryButton" onClick={() => onShowMap(business)}>Ubicar en territorio</button>
         {website ? <a className="secondaryButton" href={website} target="_blank" rel="noreferrer">Abrir sistema del negocio ↗</a> : null}
-        {rrssProfile ? <a className="secondaryButton" href="https://linkrrss.vercel.app" target="_blank" rel="noreferrer">Abrir LINKRRSS ↗</a> : null}
+        <a className="secondaryButton" href={`https://linkrrss.vercel.app/?business=${encodeURIComponent(business.id)}&section=${rrssProfile ? "home" : "connections"}`} target="_blank" rel="noreferrer">{rrssProfile ? "Abrir LINKRRSS ↗" : "Conectar entrada LINKRRSS ↗"}</a>
       </div>
     </aside>
   );

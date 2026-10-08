@@ -7,10 +7,11 @@ import '@fontsource/space-grotesk/600.css';
 import "./globals.css";
 import "./concha.css";
 import "./ledger.css";
+import "./game-lab.css";
 
 export const metadata = {
   title: "LINK WORLD GAME",
-  description: "Territorio jugable del ecosistema LINK"
+  description: "Laboratorio de estabilización de negocios de LINK"
 };
 
 export default function RootLayout({ children }) {

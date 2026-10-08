@@ -830,7 +830,10 @@ export default function GameShell() {
     setModelContext(model);
     if (business) setSelectedId(business);
     if (typeof window !== 'undefined') {
-      window.history.pushState({},'',writeWorldRoute(window.location.search,{dimension,business,model}));
+      const nextRoute = writeWorldRoute(window.location.search,{dimension,business,model});
+      const finalRoute = dimension === 'concha' ? nextRoute.replace(/([?&])surface=mesa(&|$)/, (_, lead, tail) => tail ? lead : '') : nextRoute;
+      window.history.pushState({},'',finalRoute);
+      window.dispatchEvent(new Event('linkworld:route'));
     }
   }
 
@@ -880,6 +883,18 @@ export default function GameShell() {
   },[view,businessContext]);
   useEffect(()=>{const escape=e=>{if(e.key==='Escape'&&!e.target.closest('input,textarea,select'))setView('concha',routeRef.current.business,routeRef.current.model);};window.addEventListener('keydown',escape);return()=>window.removeEventListener('keydown',escape);},[]);
   const [railCollapsed, setRailCollapsed] = useState(true);
+  const [focusMode, setFocusMode] = useState(false);
+  useEffect(() => {
+    try { setFocusMode(window.localStorage.getItem('link-world-free-screen') === '1'); } catch {}
+  }, []);
+  const toggleFocus = () => {
+    setFocusMode(previous => {
+      const value = !previous;
+      try { window.localStorage.setItem('link-world-free-screen', value?'1':'0'); } catch {}
+      return value;
+    });
+  };
+
   const [businesses, setBusinesses] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [session, setSession] = useState(null);
@@ -1281,10 +1296,10 @@ export default function GameShell() {
   const contextBusiness = businesses.find(row=>row.id===businessContext) || null;
   const centralDimension = DIMENSIONS[view] && !['concha','mundo','negocios'].includes(view);
   return (
-    <main className={`gameApp ledgerApp theme-${theme} nav-${navigationMotion} ${centralDimension ? 'destinationMode' : ''}`}>
+    <main className={`gameApp ledgerApp worldGameShell theme-${theme} nav-${navigationMotion} ${centralDimension ? 'destinationMode' : ''} ${focusMode ? 'worldFocus' : ''}`}>
       <header className="gameTopbar">
         <button className="brandButton" onClick={() => setView("concha")}>
-          <span className="brandMark">••<br/>••</span>
+          <span className="worldUnifiedWordmark">LINK<span>·</span></span>
           <span><b>LINK WORLD</b><small>Mapa vivo del ecosistema</small></span>
         </button>
         <div className="topTabs">
@@ -1306,7 +1321,7 @@ export default function GameShell() {
         <WorldNavigation view={view} collapsed={railCollapsed} onToggle={()=>setRailCollapsed(v=>!v)} onNavigate={setView} business={contextBusiness}/>
 
         <section className="mainSurface" ref={surfaceRef} aria-busy={navigationMotion !== 'idle'}>
-          <div className="worldScopeBar"><button onClick={()=>setView('concha',null,null)}>LINK</button><span>/</span><select aria-label="Perspectiva del negocio" value={contextBusiness?.id||''} onChange={e=>setView('concha',e.target.value||null,null)}><option value="">Todo LINK</option>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><span>/</span><b>{DIMENSIONS[view]?.label}</b><button className="scopeBack" onClick={()=>setView('concha')}>Volver al organismo ↗</button></div>
+          <div className="worldScopeBar"><button onClick={()=>setView('concha',null,null)}>LINK</button><span>/</span><select aria-label="Perspectiva del negocio" value={contextBusiness?.id||''} onChange={e=>setView('concha',e.target.value||null,null)}><option value="">Todo LINK</option>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><span>/</span><b>{DIMENSIONS[view]?.label}</b><a className="worldMapReturn" href={`/?dimension=concha${contextBusiness?.id?'&business='+encodeURIComponent(contextBusiness.id):''}`} title="Volver al Mapa Maestro interactivo">Mapa Vivo ↗</a><button className="scopeFocus" onClick={toggleFocus} aria-pressed={focusMode} title={focusMode?"Mostrar navegación e inspector":"Vista libre · pantalla completa"}>{focusMode?"⊟ Restaurar paneles":"⛶ Vista libre"}</button></div>
           {!loading&&centralDimension?<DimensionWorkspace view={view} business={contextBusiness} businesses={businesses} data={privateData} member={member} onLogin={()=>setLoginOpen(true)} onNavigate={setView} modelId={modelContext} onModelChange={setModelContext} resolveWorkspaceUrl={resolveWorkspaceUrl} renderMission={row=><MissionCard key={row.id||row.mission_code} row={row} businessName={businesses.find(b=>b.global_id===row.business_global_id)?.name}/>}/>:null}
           {notice ? <div className="globalNotice">{notice}<button onClick={() => setNotice("")}>×</button></div> : null}
           {loading ? <div className="loadingScreen">Sincronizando LINK WORLD…</div> : null}

@@ -18,7 +18,7 @@ const APP_BASES = {
   "link-world": "https://link-world-delta.vercel.app"
 };
 
-const TOP = [['concha','Organismo'],['mundo','Mapa'],['mesas','Mesas'],['director','Atención']];
+const TOP = [['concha','Organismo'],['mundo','Mapa']];
 
 const fmtDate = value => {
   if (!value) return "—";
@@ -1276,7 +1276,7 @@ export default function GameShell() {
       <header className="gameTopbar">
         <button className="brandButton" onClick={() => setView("concha")}>
           <span className="brandMark">••<br/>••</span>
-          <span><b>LINK WORLD</b><small>Control central jugable</small></span>
+          <span><b>LINK WORLD</b><small>Mapa vivo del ecosistema</small></span>
         </button>
         <div className="topTabs">
           {TOP.map(([id, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => setView(id)}>{label}</button>)}
@@ -1294,7 +1294,7 @@ export default function GameShell() {
       </header>
 
       <div className={`gameBody ${railCollapsed ? "railIsCollapsed" : ""}`}>
-        <WorldNavigation view={view} collapsed={railCollapsed} onToggle={()=>setRailCollapsed(v=>!v)} onNavigate={setView}/>
+        <WorldNavigation view={view} collapsed={railCollapsed} onToggle={()=>setRailCollapsed(v=>!v)} onNavigate={setView} business={contextBusiness}/>
 
         <section className="mainSurface" ref={surfaceRef} aria-busy={navigationMotion !== 'idle'}>
           <div className="worldScopeBar"><button onClick={()=>setView('concha',null,null)}>LINK</button><span>/</span><select aria-label="Perspectiva del negocio" value={contextBusiness?.id||''} onChange={e=>setView('concha',e.target.value||null,null)}><option value="">Todo LINK</option>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><span>/</span><b>{DIMENSIONS[view]?.label}</b><button className="scopeBack" onClick={()=>setView('concha')}>Volver al organismo ↗</button></div>

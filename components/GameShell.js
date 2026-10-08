@@ -18,6 +18,15 @@ const APP_BASES = {
   "link-world": "https://link-world-delta.vercel.app"
 };
 
+function rrssUrl(business, section = "home", conversationId = null) {
+  const url = new URL(APP_BASES.linkrrss);
+  if (business?.id || business?.slug) url.searchParams.set("business", business.id || business.slug);
+  url.searchParams.set("dimension", "rrss");
+  url.searchParams.set("section", section);
+  if (conversationId) url.searchParams.set("conversation_id", conversationId);
+  return url.toString();
+}
+
 const TOP = [['concha','Organismo'],['mundo','Mapa']];
 
 const fmtDate = value => {

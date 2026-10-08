@@ -8,10 +8,11 @@ import "./globals.css";
 import "./concha.css";
 import "./ledger.css";
 import "./game-lab.css";
+import "./living-map.css";
 
 export const metadata = {
   title: "LINK WORLD GAME",
-  description: "Laboratorio de estabilización de negocios de LINK"
+  description: "Mapa Maestro interactivo del ecosistema LINK"
 };
 
 export default function RootLayout({ children }) {

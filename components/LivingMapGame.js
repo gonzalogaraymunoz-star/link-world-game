@@ -246,11 +246,12 @@ export default function LivingMapGame(){
     setStatus(selectedBusiness ? `${label} · ${selectedBusiness.name}` : label);
     const index=STAGES.findIndex(s=>s.key===key);
     const a=STAGES[index], b=STAGES[(index+1)%STAGES.length];
-    triggerPulse(`M ${a.x} ${a.y} Q 790 438 ${b.x} ${b.y}`,"orange",selectedBusiness ? `${label} · ${selectedBusiness.name}` : label);
+    triggerPulse(`M ${a.x} ${a.y} A 151 151 0 0 1 ${b.x} ${b.y}`,"orange",selectedBusiness ? `${label} · ${selectedBusiness.name}` : label);
   }
 
   function chooseBusiness(row,index){
     if(motion) return;
+    if(selectedBusiness?.id===row.id){ leaveBusiness(); return; }
     clearFocus();
     const source={x:1376,y:284+index*69};
     setFlight({name:row.name,fromX:source.x,fromY:source.y,toX:CENTER.x,toY:CENTER.y,direction:"in"});
@@ -335,7 +336,7 @@ export default function LivingMapGame(){
               <circle cx={CENTER.x} cy={CENTER.y} r="151" className="conchaOrbit"/>
               {STAGES.map((stage,i)=>{
                 const next=STAGES[(i+1)%STAGES.length];
-                return <path key={stage.key} d={`M ${stage.x} ${stage.y} Q ${CENTER.x} ${CENTER.y} ${next.x} ${next.y}`} className={`stageFlow ${selectedStage===stage.key?"active":""}`} markerEnd="url(#arrowOrange)"/>;
+                return <path key={stage.key} d={`M ${stage.x} ${stage.y} A 151 151 0 0 1 ${next.x} ${next.y}`} className={`stageFlow ${selectedStage===stage.key?"active":""}`} markerEnd="url(#arrowOrange)"/>;
               })}
 
               {ARTIFACTS.map((_,i)=><Wire key={"a"+i} d={`M 956 438 C 1015 ${390+i*10} 1040 ${286+i*34} 1114 ${286+i*34}`} className="artifactWire" active={activeArtifact===i}/>)}
@@ -408,7 +409,7 @@ export default function LivingMapGame(){
             <button className={`conchaCore ${selectedBusiness?"businessCore":""} ${motion?"inMotion":""}`} style={{left:CENTER.x,top:CENTER.y}} onClick={selectedBusiness?leaveBusiness:()=>setStatus("CONCHA · 6 etapas · misma información · distinto contexto")}>
               <b>{selectedBusiness ? shortBusiness(selectedBusiness.name) : "CONCHA"}</b>
               <small>{selectedBusiness ? "CÉLULA / NEGOCIO" : <>6 ETAPAS<br/>MISMA INFORMACIÓN<br/>DISTINTO CONTEXTO</>}</small>
-              {selectedStage && selectedBusiness ? <em>{STAGES.find(s=>s.key===selectedStage)?.label} · {stageTone(selectedStageState)}</em> : null}
+
             </button>
 
             {flight ? (

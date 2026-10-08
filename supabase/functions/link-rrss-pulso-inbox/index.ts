@@ -253,12 +253,32 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const { data: linkIdResult, error: linkIdError } = await supabase.rpc("link_rrss_promote_candidates_v1", {
-      p_business_id: businessId,
-      p_since: startedAt,
-    });
-    if (linkIdError) summary.errors.push({ step: "link_id", error: linkIdError.message });
-    else summary.link_id = linkIdResult;
+    const { data: promotionRequest, error: promotionInsertError } = await supabase
+      .from("link_rrss_promotion_requests")
+      .insert({
+        business_id: businessId,
+        since: startedAt,
+      })
+      .select("id")
+      .single();
+
+    if (promotionInsertError) {
+      summary.errors.push({ step: "link_id", error: promotionInsertError.message });
+    } else {
+      const { data: promotionResult, error: promotionReadError } = await supabase
+        .from("link_rrss_promotion_requests")
+        .select("status,result,error,processed_at")
+        .eq("id", promotionRequest.id)
+        .single();
+
+      if (promotionReadError) {
+        summary.errors.push({ step: "link_id", error: promotionReadError.message });
+      } else if (promotionResult?.status === "error") {
+        summary.errors.push({ step: "link_id", error: promotionResult.error || "LINK ID promotion error" });
+      } else {
+        summary.link_id = promotionResult?.result || {};
+      }
+    }
 
     const status = summary.errors.length ? "partial" : "ok";
     const finishedAt = new Date().toISOString();

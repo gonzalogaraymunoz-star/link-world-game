@@ -58,6 +58,10 @@ export default function WorldNavigation({ view, collapsed, onToggle, onNavigate,
             <LinkIcon name="play" />
             {!collapsed ? <span><b>GAME</b><small>Estabilizar negocio</small></span> : null}
           </a>
+          <a className="appHandoff finance" href="/fin/" title="Abrir LINK FIN · Mesa Ana">
+            <LinkIcon name="grid" />
+            {!collapsed ? <span><b>FIN</b><small>Control financiero · Ana</small></span> : null}
+          </a>
           <a className="appHandoff control" href={buildControlUrl(context,"world")} title="Abrir LINK CONTROL CENTRAL">
             <LinkIcon name="settings" />
             {!collapsed ? <span><b>CONTROL</b><small>Gobernar y ejecutar</small></span> : null}

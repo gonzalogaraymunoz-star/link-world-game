@@ -466,6 +466,182 @@
   font-size:9px;letter-spacing:.04em;pointer-events:none;opacity:.78;
 }
 
+
+
+/* CELL-REACTIVE MAP · the cell changes the whole organism without replacing the master map */
+.mapStage .reactiveZone,
+.mapStage .linkIdNode,
+.mapStage .stageNode,
+.mapStage .conchaCore,
+.mapStage .infraNodes button{
+  transition:
+    transform .52s cubic-bezier(.22,.8,.2,1),
+    opacity .42s ease,
+    filter .42s ease,
+    font-size .42s ease,
+    box-shadow .42s ease,
+    border-color .42s ease,
+    background .42s ease;
+}
+.mapStage.cellMoving .reactiveZone{
+  opacity:.68;
+  filter:saturate(.82);
+}
+.mapStage.cellMoving .linkIdNode,
+.mapStage.cellMoving .stageNode{
+  transform:translate(-50%,-50%) scale(.96);
+}
+.mapStage.cellMoving .conchaCore{
+  transform:translate(-50%,-50%) scale(1.08);
+  box-shadow:0 0 0 22px color-mix(in srgb,var(--green) 8%,transparent);
+}
+.mapStage.cellEngaged .cellTitle h4{font-size:11.8px}
+.mapStage.cellEngaged .cellTitle p{font-size:7.4px}
+.mapStage.cellEngaged .stageNode b{font-size:9.35px}
+.mapStage.cellEngaged .stageNode small{font-size:6.2px}
+.mapStage.cellEngaged .inputCaps>button b,
+.mapStage.cellEngaged .artifacts>button b{font-size:7.35px}
+.mapStage.cellEngaged .inputCaps>button small,
+.mapStage.cellEngaged .artifacts>button small{font-size:6.15px}
+.mapStage.cellEngaged .transversals button b{font-size:6.25px}
+.mapStage.cellEngaged .reproduction button b{font-size:6.75px}
+.mapStage.cellEngaged .infraNodes b{font-size:6.75px}
+
+.mapStage.lens-linkid .linkIdNode{
+  transform:translate(-50%,-50%) scale(1.085);
+  box-shadow:0 0 0 15px color-mix(in srgb,var(--orange) 10%,transparent),0 18px 52px color-mix(in srgb,var(--orange) 12%,transparent);
+}
+.mapStage.lens-input .inputCaps,
+.mapStage.lens-governance .governance,
+.mapStage.lens-artifact .artifacts,
+.mapStage.lens-transversal .transversals,
+.mapStage.lens-reproduction .reproduction,
+.mapStage.lens-infra .infrastructure{
+  transform:scale(1.035);
+  filter:saturate(1.08);
+}
+.mapStage.lens-stage .stageRing,
+.mapStage.lens-model .conchaCore{
+  filter:saturate(1.08);
+}
+.mapStage.cellEngaged:not(.lens-governance) .governance,
+.mapStage.cellEngaged:not(.lens-input) .worldReal{
+  opacity:.92;
+}
+
+/* The inspector is a lens over GAME, never a second dashboard. */
+.cellLens{
+  position:absolute;
+  right:28px;
+  top:92px;
+  z-index:30;
+  width:365px;
+  max-height:565px;
+  overflow:auto;
+  border:1px solid color-mix(in srgb,var(--ink) 14%,var(--line));
+  border-radius:18px;
+  background:color-mix(in srgb,var(--paper2) 94%,transparent);
+  color:var(--ink);
+  box-shadow:0 22px 70px color-mix(in srgb,var(--ink) 13%,transparent);
+  backdrop-filter:blur(18px);
+  padding:16px;
+  animation:lensArrive .38s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes lensArrive{
+  from{opacity:0;transform:translateX(16px) scale(.985)}
+  to{opacity:1;transform:translateX(0) scale(1)}
+}
+.cellLensHead{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+.cellLensHead span{
+  display:block;
+  font-size:6px;
+  color:var(--muted);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.cellLensHead h3{
+  margin:0;
+  font:500 17px/1.05 "Space Grotesk",Inter,sans-serif;
+  letter-spacing:-.02em;
+}
+.cellLensHead>button{
+  width:28px;height:28px;border:0;border-radius:50%;
+  background:color-mix(in srgb,var(--ink) 7%,transparent);
+  color:var(--ink);cursor:pointer;font-size:18px;line-height:1;
+}
+.cellLensSummary{
+  margin:13px 0 11px;
+  font-size:8px;
+  line-height:1.55;
+  color:var(--muted);
+}
+.cellLensItems{
+  display:grid;
+  gap:7px;
+  margin:9px 0 12px;
+}
+.cellLensItems>div{
+  display:grid;
+  grid-template-columns:5px 1fr;
+  gap:8px;
+  align-items:start;
+  padding:8px 9px;
+  border:1px solid color-mix(in srgb,var(--ink) 8%,var(--line));
+  border-radius:10px;
+  background:color-mix(in srgb,var(--paper) 52%,transparent);
+}
+.cellLensItems i{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--green);margin-top:3px;
+}
+.cellLensItems span{
+  font-size:7px;
+  line-height:1.45;
+}
+.cellLensLinks{
+  display:flex;flex-wrap:wrap;gap:7px;margin:10px 0;
+}
+.cellLensLinks a{
+  text-decoration:none;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:7px 9px;
+  color:var(--ink);
+  font-size:6.5px;
+  background:var(--paper2);
+}
+.cellLensActions{
+  border-top:1px solid var(--line);
+  padding-top:12px;
+  display:grid;
+  gap:8px;
+}
+.cellLensActions>a{
+  text-decoration:none;
+  width:max-content;
+  border-radius:999px;
+  padding:9px 12px;
+  background:var(--ink);
+  color:var(--paper);
+  font-size:7px;
+  font-weight:600;
+  letter-spacing:.04em;
+}
+.cellLensActions small{
+  font-size:5.5px;
+  color:var(--muted);
+  letter-spacing:.03em;
+}
+.linkIdNode.active{border-color:var(--orange)}
+
+.experiment-caracol .businesses .newCell{display:none}
+
 @media(prefers-reduced-motion:reduce){
   .livingMapGame *{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
 }

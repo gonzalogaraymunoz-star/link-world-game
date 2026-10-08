@@ -43,7 +43,8 @@ const ARTIFACTS = [
   ["AGENTIC CRM","crm comercial"],
   ["PROPUESTA","cotizaciones"],
   ["PAYMENTS","MP / Stripe / Global66"],
-  ["HOTEL EXPERIENCE","reservas y experiencia"],
+  ["LINK KARAOKE","karaoke · cola / DJ / identidad"],
+  ["LINKRRSS","Instagram / Zernio / comunicación"],
   ["TAXIHOTEL","traslados / operación"],
   ["LINK VOICE","voz + interfaz"],
   ["LINK MOBILE","app móvil"],
@@ -72,6 +73,43 @@ const INFRA = [
   ["VERCEL","publicación","▲"],
   ["CLOUDFLARE","runtime / edge","☁"]
 ];
+
+const BUSINESS_PROFILES = {
+  caracol: {
+    label: "CARACOL",
+    rule: "2 modelos de ingreso · 1 capa relacional",
+    models: [
+      {
+        name: "MARKETING",
+        note: "LINKRRSS → Zernio → Instagram",
+        detail: "Comunicación y captación. Los contactos alimentan Personas + MAR."
+      },
+      {
+        name: "KARAOKE",
+        note: "LINK Karaoke · lunes / miércoles / viernes",
+        detail: "Operación desde 21:00; preparación desde 20:00. Ingreso por jornada: $60.000 líquidos. Costo DJ: $30.000."
+      }
+    ],
+    artifacts: ["LINK KARAOKE","LINKRRSS"],
+    transversals: ["MAR","RRSS","VENTAS","CIERRE","BOARDING","OPERACIONES","POSTVENTA","FIN","PERSONAS","EVIDENCIAS","ARTEFACTOS","EVOLUCIÓN"],
+    stageState: {
+      marketing: "active",
+      ventas: "active",
+      cierre: "active",
+      onboarding: "active",
+      entrega: "active",
+      postventa: "active"
+    },
+    evidence: "Karaoke: evidencia económica ya registrada. Marketing: conservar publicaciones, conversaciones y resultados como evidencia.",
+    next: "Completar relaciones reales por etapa sin inventar datos faltantes."
+  }
+};
+
+function businessProfile(row){
+  const name=String(row?.name||"").toLowerCase();
+  if(name.includes("caracol")) return BUSINESS_PROFILES.caracol;
+  return null;
+}
 
 function cap(value="") {
   return String(value).replace(/\s+/g," ").trim();
@@ -208,6 +246,7 @@ export default function LivingMapGame(){
   },[selectedBusiness,selectedStage,scopes,journeys]);
 
   const businessRows=useMemo(()=>businesses.slice(0,8),[businesses]);
+  const selectedProfile=useMemo(()=>businessProfile(selectedBusiness),[selectedBusiness]);
 
   function clearFocus(){
     setSelectedStage(null);setActiveGov(null);setActiveArtifact(null);setActiveTransversal(null);setActiveRepro(null);
@@ -264,7 +303,8 @@ export default function LivingMapGame(){
       const q=new URLSearchParams(window.location.search);
       q.set("business",row.id);
       window.history.replaceState({},"","?"+q.toString());
-      setStatus(`${row.name} · misma Concha, distinto contexto`);
+      const profile=businessProfile(row);
+      setStatus(profile ? `${row.name} · ${profile.rule}` : `${row.name} · misma Concha, distinto contexto`);
     },900);
   }
 
@@ -301,10 +341,10 @@ export default function LivingMapGame(){
       if(!selectedBusiness){out[stage.key]="neutral";return;}
       const scope=scopes.find(row=>row.business_global_id===selectedBusiness.global_id && row.stage_key===stage.key);
       const journey=journeys.find(row=>row.business_id===selectedBusiness.id && row.stage_key===stage.key);
-      out[stage.key]=scope?.state || journey?.mission_status || "neutral";
+      out[stage.key]=scope?.state || journey?.mission_status || selectedProfile?.stageState?.[stage.key] || "neutral";
     });
     return out;
-  },[selectedBusiness,scopes,journeys]);
+  },[selectedBusiness,scopes,journeys,selectedProfile]);
 
   return (
     <main className={`livingMapGame theme-${theme} ${layout.portrait?"portraitMap":""}`}>
@@ -412,6 +452,35 @@ export default function LivingMapGame(){
 
             </button>
 
+            {selectedProfile ? (
+              <aside aria-label="Contexto activo de Caracol" style={{
+                position:"absolute",left:580,top:603,width:420,zIndex:8,
+                border:"1px solid var(--line)",borderRadius:14,
+                background:"color-mix(in srgb,var(--paper2) 92%,transparent)",
+                boxShadow:"0 14px 34px var(--shadow)",padding:"10px 12px",
+                display:"grid",gridTemplateColumns:"1fr 1fr",gap:8
+              }}>
+                <div style={{gridColumn:"1 / -1",display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:10}}>
+                  <b style={{fontSize:8,letterSpacing:".12em"}}>{selectedProfile.label} · MODELOS ACTIVOS</b>
+                  <small style={{fontSize:6,color:"var(--muted)"}}>{selectedProfile.rule}</small>
+                </div>
+                {selectedProfile.models.map(model=>(
+                  <button key={model.name} onClick={()=>setStatus(`${model.name} · ${model.note}`)} style={{
+                    border:"1px solid var(--line)",borderRadius:10,background:"transparent",color:"var(--ink)",
+                    padding:"8px 9px",textAlign:"left",cursor:"pointer",minHeight:54
+                  }}>
+                    <b style={{display:"block",fontSize:7,letterSpacing:".08em"}}>{model.name}</b>
+                    <small style={{display:"block",fontSize:6,color:"var(--green)",marginTop:3}}>{model.note}</small>
+                    <span style={{display:"block",fontSize:5.5,lineHeight:1.35,color:"var(--muted)",marginTop:4}}>{model.detail}</span>
+                  </button>
+                ))}
+                <div style={{gridColumn:"1 / -1",display:"flex",justifyContent:"space-between",gap:12,fontSize:5.5,color:"var(--muted)"}}>
+                  <span>{selectedProfile.evidence}</span>
+                  <span style={{whiteSpace:"nowrap"}}>faltantes → pendiente</span>
+                </div>
+              </aside>
+            ) : null}
+
             {flight ? (
               <div className={`flyingCell ${flight.direction}`} style={{
                 "--fx":flight.fromX+"px","--fy":flight.fromY+"px","--tx":flight.toX+"px","--ty":flight.toY+"px"
@@ -423,7 +492,7 @@ export default function LivingMapGame(){
             <section className="artifacts">
               <h4>ARTEFACTOS</h4>
               {ARTIFACTS.map(([label,note],i)=>(
-                <button key={label} className={activeArtifact===i?"active":""} onClick={()=>chooseArtifact(i,label)}>
+                <button key={label} className={(activeArtifact===i || !!selectedProfile?.artifacts?.includes(label))?"active":""} onClick={()=>chooseArtifact(i,label)}>
                   <i/><span><b>{label}</b><small>{note}</small></span>
                 </button>
               ))}
@@ -443,7 +512,7 @@ export default function LivingMapGame(){
               <h4>CAPACIDADES TRANSVERSALES</h4>
               <div>
                 {TRANSVERSALS.map(([label,note],i)=>(
-                  <button key={label} className={activeTransversal===i?"active":""} onClick={()=>selectTransversal(i,label)}>
+                  <button key={label} className={(activeTransversal===i || !!selectedProfile?.transversals?.includes(label))?"active":""} onClick={()=>selectTransversal(i,label)}>
                     <i/><b>{label}</b><small>{note}</small>
                   </button>
                 ))}

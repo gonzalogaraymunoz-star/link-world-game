@@ -104,8 +104,8 @@ const BUSINESS_PROFILES = {
   caracol: {
     label: "CARACOL",
     rule: "2 modelos activos · una identidad común",
-    channels: ["Instagram","QR físico","Eventos"],
-    inputCaps: ["LINKRRSS","QR / LINK ID","EVENTOS"],
+    channels: ["Instagram"],
+    inputCaps: ["LINKRRSS","QR / LINK ID"],
     models: [
       {
         key: "marketing",
@@ -185,6 +185,14 @@ function worldUrl(business, dimension="concha", modelId=null) {
   if (business?.id) q.set("business", business.id);
   if (modelId) q.set("model", modelId);
   return LINK_WORLD_BASE + "/?" + q.toString();
+}
+
+function rrssUrl(business, section="home") {
+  const q = new URLSearchParams();
+  if (business?.slug || business?.id) q.set("business", business.slug || business.id);
+  q.set("section", section);
+  q.set("from", "game");
+  return "https://linkrrss.vercel.app/?" + q.toString();
 }
 
 function stageTone(state) {
@@ -438,6 +446,10 @@ export default function LivingMapGame(){
     const path=`M 60 ${y} C 145 ${y} 188 420 245 438 C 355 470 520 365 704 316`;
     triggerPulse(path,"orange",`${label} → LINK ID → MAR`);
     setSelectedStage("marketing");
+    if(selectedBusiness && label==="Instagram"){
+      window.location.href=rrssUrl(selectedBusiness,"connections");
+      return;
+    }
     openLens("input",{
       kicker:selectedBusiness ? selectedBusiness.name+" · MUNDO REAL" : "MUNDO REAL",
       title:label,
@@ -466,6 +478,10 @@ export default function LivingMapGame(){
     const y=286+index*34;
     const path=`M 1115 ${y} C 1050 ${y} 1010 395 955 438`;
     triggerPulse(path,"blue",label);
+    if(selectedBusiness && label==="LINKRRSS"){
+      window.location.href=rrssUrl(selectedBusiness,"home");
+      return;
+    }
     const persisted=businessArtifacts.filter(row=>String(row.name||"").toUpperCase().includes(label.replace("LINKRRSS","LINK")));
     openLens("artifact",{
       kicker:selectedBusiness ? selectedBusiness.name+" · ARTEFACTO" : "ARTEFACTO",
@@ -688,7 +704,7 @@ export default function LivingMapGame(){
                   <small style={{fontSize:6,color:"var(--muted)"}}>{selectedProfile.rule}</small>
                 </div>
                 {selectedProfile.models.map(model=>(
-                  <button key={model.name} onClick={()=>{openModel(model);setStatus(`${model.name} · ${model.note}`);}} style={{
+                  <button key={model.name} onClick={()=>{setStatus(`${model.name} · ${model.note}`);window.location.href=worldUrl(selectedBusiness,model.dimension,model.modelId);}} style={{
                     border:"1px solid var(--line)",borderRadius:10,background:"transparent",color:"var(--ink)",
                     padding:"8px 9px",textAlign:"left",cursor:"pointer",minHeight:54
                   }}>

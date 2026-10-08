@@ -362,6 +362,7 @@ export default function LivingMapGame(){
   }
 
   function openLinkId(){
+    if(!selectedBusiness){setStatus("Selecciona una célula para ver su LINK ID.");return;}
     const count=businessLinkIds.filter(row=>row.status==="active").length;
     openLens("linkid",{
       kicker:"LINK ID · "+selectedBusiness.name,
@@ -397,6 +398,7 @@ export default function LivingMapGame(){
   }
 
   function openInputCapability(label,note){
+    if(!selectedBusiness){setStatus("Selecciona una célula para contextualizar esta capacidad.");return;}
     openLens("input",{
       kicker:selectedBusiness.name+" · CAPACIDAD DE ENTRADA",
       title:label,
@@ -411,6 +413,7 @@ export default function LivingMapGame(){
   }
 
   function openInfrastructure(label,note){
+    if(!selectedBusiness){setStatus("Selecciona una célula para ver su infraestructura.");return;}
     const key=String(label).toLowerCase();
     const links=selectedProfile?.infrastructure?.[key] || [];
     openLens("infra",{

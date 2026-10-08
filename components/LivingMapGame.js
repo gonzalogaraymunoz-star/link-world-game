@@ -237,6 +237,7 @@ export default function LivingMapGame(){
   const [experiment,setExperiment]=useState(null);
   const [inspector,setInspector]=useState(null);
   const [lensFolded,setLensFolded]=useState(false);
+  const [gatewayOpen,setGatewayOpen]=useState(false);
   const [selectedBusiness,setSelectedBusiness]=useState(null);
   const [selectedStage,setSelectedStage]=useState(null);
   const [activeGov,setActiveGov]=useState(null);
@@ -597,11 +598,14 @@ export default function LivingMapGame(){
   };
   return (
     <main className={`livingMapGame theme-${theme} ${layout.portrait?"portraitMap":""} ${experiment==="caracol"?"experiment-caracol":""}`}>
-      <nav className="worldGameGateway" aria-label="Mesas y navegación operativa de LINK WORLD">
-        <span>LINK WORLD / MAPA VIVO</span>
-        <a href={portalUrl('concha','mesa')} title="Abrir Concha operativa con el negocio activo">Concha operativa ↗</a>
-        <a href={portalUrl('misiones')} title="Abrir misiones del negocio">Misiones ↗</a>
-        <a href={portalUrl('fin')} title="Abrir finanzas del negocio">FIN ↗</a>
+      <nav className={`worldGameGateway ${gatewayOpen?'isOpen':''}`} aria-label="Mesas y navegación operativa de LINK WORLD">
+        <button type="button" onClick={()=>setGatewayOpen(open=>!open)} aria-expanded={gatewayOpen} aria-controls="worldGameGatewayLinks" title={gatewayOpen?'Plegar accesos':'Abrir mesas operativas de LINK WORLD'}>{gatewayOpen?'× Cerrar mesas':'↗ Abrir mesas'}</button>
+        {gatewayOpen ? <div className="worldGameGatewayLinks" id="worldGameGatewayLinks">
+          <span>LINK WORLD / MESAS REALES</span>
+          <a href={portalUrl('concha','mesa')} title="Abrir Concha operativa con el negocio activo">Concha operativa ↗</a>
+          <a href={portalUrl('misiones')} title="Abrir misiones del negocio">Misiones ↗</a>
+          <a href={portalUrl('fin')} title="Abrir finanzas del negocio">FIN ↗</a>
+        </div>:null}
       </nav>
       <div className="mapViewport" ref={viewportRef}>
         <div className="mapStageHolder" style={{width:layout.w,height:layout.h}}>

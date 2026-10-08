@@ -15,7 +15,7 @@ const APP_BASES = {
   "hotel-experience": "https://hotel-experience.vercel.app",
   "ventas-hotelexperience": "https://ventas-hotelexperience.vercel.app",
   taxihotel: "https://taxihotel.vercel.app",
-  "link-world": "https://link-world-delta.vercel.app"
+  "link-world": "https://link-world-9h0.pages.dev"
 };
 
 const TOP = [['concha','Organismo'],['mundo','Mapa']];

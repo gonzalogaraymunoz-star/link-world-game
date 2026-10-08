@@ -144,10 +144,11 @@ const BUSINESS_PROFILES = {
         { label:"LINK WORLD / GAME", href:"https://github.com/gonzalogaraymunoz-star/link-world-game" }
       ],
       vercel: [
-        { label:"LINKRRSS", href:"https://linkrrss.vercel.app" }
+        
       ],
       cloudflare: [
         { label:"LINK WORLD GAME", href:"https://link-world-game.pages.dev" },
+        { label:"LINKRRSS", href:"https://linkrrss.gonzalogaraymunoz.workers.dev" },
         { label:"LINK WORLD", href:"https://link-world-9h0.pages.dev" }
       ]
     },
@@ -191,8 +192,9 @@ function rrssUrl(business, section="home") {
   const q = new URLSearchParams();
   if (business?.slug || business?.id) q.set("business", business.slug || business.id);
   q.set("section", section);
+  q.set("dimension", "rrss");
   q.set("from", "game");
-  return "https://linkrrss.vercel.app/?" + q.toString();
+  return "https://linkrrss.gonzalogaraymunoz.workers.dev/?" + q.toString();
 }
 
 function stageTone(state) {
@@ -407,7 +409,7 @@ export default function LivingMapGame(){
 
   function openInputCapability(label,note){
     if(!selectedBusiness){setStatus("Selecciona una célula para contextualizar esta capacidad.");return;}
-    openLens("input",{
+    openLens(label==="LINKRRSS"?"rrss":"input",{
       kicker:selectedBusiness.name+" · CAPACIDAD DE ENTRADA",
       title:label,
       summary:note,
@@ -416,7 +418,8 @@ export default function LivingMapGame(){
         label==="QR / LINK ID" ? "QR/identidad alimenta la capa común de Personas sin crear una base separada por modelo." : "",
         label==="EVENTOS" ? "Las activaciones presenciales pueden entrar como señales y conservar origen." : ""
       ].filter(Boolean),
-      dimension:label==="QR / LINK ID"?"personas":"marketing"
+      dimension:label==="LINKRRSS"?"rrss":label==="QR / LINK ID"?"personas":"marketing",
+      links:label==="LINKRRSS"?[{label:"Abrir LINK RRSS · "+selectedBusiness.name,href:rrssUrl(selectedBusiness,"home")}]:[]
     });
   }
 
@@ -795,7 +798,7 @@ export default function LivingMapGame(){
                 {inspector.items?.length ? <div className="cellLensItems">{inspector.items.map((item,i)=><div key={i}><i/><span>{item}</span></div>)}</div> : null}
                 {inspector.links?.length ? <div className="cellLensLinks">{inspector.links.map(link=><a key={link.href} href={link.href} target="_blank" rel="noreferrer">{link.label} ↗</a>)}</div> : null}
                 <div className="cellLensActions">
-                  <a href={worldUrl(selectedBusiness,inspector.dimension,inspector.modelId)} target="_blank" rel="noreferrer">Abrir en LINK WORLD →</a>
+                  <a href={inspector.kind==="rrss"?rrssUrl(selectedBusiness,"home"):worldUrl(selectedBusiness,inspector.dimension,inspector.modelId)} target="_blank" rel="noreferrer">{inspector.kind==="rrss"?"Abrir LINK RRSS →":"Abrir en LINK WORLD →"}</a>
                   <small>GAME observa · LINK WORLD trabaja · ChatGPT / modo Dios resuelve</small>
                 </div>
               </aside>

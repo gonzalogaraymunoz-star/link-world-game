@@ -1,5 +1,5 @@
-import BusinessEvolutionGame from "../components/BusinessEvolutionGame";
+import LivingMapGame from "../components/LivingMapGame";
 
 export default function Home() {
-  return <BusinessEvolutionGame />;
+  return <LivingMapGame />;
 }

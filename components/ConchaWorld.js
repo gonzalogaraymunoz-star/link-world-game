@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { CONCHA_STAGES, getCellModels, getCellStages, getCellEvidence, getRelatedCellIds, stageSignal } from '../lib/concha.mjs';
+import { buildControlUrl, buildGameUrl, contextFromBusiness } from '../lib/link-app-context.mjs';
 
 const GOVERNANCE = [['director', 'Director', 'Coordinación'], ['hipocampo', 'Hipocampo', 'Memoria'], ['cortex', 'Cortex', 'Interpretación'], ['pulso', 'Pulso Vivo', 'Observación'], ['nervioso', 'Sistema nervioso', 'Gobierno y señales']];
 const CAPACITIES = [['fin', 'FIN', 'Estado económico'], ['rrss', 'RRSS', 'Canales'], ['personas', 'Personas', 'Identidad'], ['artefactos', 'Artefactos', 'Herramientas'], ['modelos', 'Modelos', 'Conocimiento'], ['evolucion', 'Evolución', 'Aprendizaje']];
@@ -19,8 +20,19 @@ export default function ConchaWorld({ businesses, businessContext, onSelect, pri
   const related = getRelatedCellIds(data, business?.id);
   function enterCell(id) { onSelect(id); }
   function backWorld() { onClear(); }
-  function openStage(key) { onNavigate(key); }
-  function openDimension(id) { onNavigate(id); }
+  function openStage(key) {
+    window.location.assign(buildGameUrl(contextFromBusiness(business,{stage:key,model:model?.id||null}),'world'));
+  }
+  function openGovernance(id) {
+    window.location.assign(buildControlUrl(contextFromBusiness(business,{focus:id}),'world'));
+  }
+  function openCapability(id) {
+    window.location.assign(buildGameUrl(contextFromBusiness(business,{focus:id,model:model?.id||null}),'world'));
+  }
+  function openBusinessGame() {
+    if (!business) return;
+    window.location.assign(buildGameUrl(contextFromBusiness(business,{model:model?.id||null}),'world'));
+  }
   const cx = 550, cy = 375;
   const position = i => { const angle = (-90 + i * 60) * Math.PI / 180; return { x: cx + Math.cos(angle) * 162, y: cy + Math.sin(angle) * 162 }; };
 
@@ -58,16 +70,16 @@ export default function ConchaWorld({ businesses, businessContext, onSelect, pri
             </svg>
 
             <div className="worldIdentity"><span className="microLabel">ORGANISMO</span><button className="linkHeart" onClick={backWorld}><b>LINK</b><small>Conocimiento común</small></button><p>El contexto cambia.<br/>La identidad se conserva.</p></div>
-            <div className="governanceNodes">{GOVERNANCE.map(([id,name,note]) => <button key={name} onClick={() => openDimension(id,name)}><i/><b>{name}</b><small>{note}</small></button>)}</div>
+            <div className="governanceNodes">{GOVERNANCE.map(([id,name,note]) => <button key={name} onClick={() => openGovernance(id)} title="Abrir en LINK CONTROL CENTRAL"><i/><b>{name}</b><small>{note}</small></button>)}</div>
             <div className="conchaRing" aria-label="Seis etapas de la Concha">
               {CONCHA_STAGES.map((row,i) => {
                 const p = position(i); const signal = stageSignal(stages.find(s => s.stage_key === row.key), getCellEvidence(data,business?.id,model?.id,row.key));
                 return <button key={row.key} className={`conchaStage signal-${signal.state}`} style={{ left: p.x, top: p.y, '--stage-color': row.color }} onClick={() => openStage(row.key)} aria-label={`Abrir ${row.label}${business ? ' de '+business.name : ' transversal'}`}><span>0{i+1}</span><b>{row.label}</b><small>{business && member ? signal.label : row.note}</small></button>;
               })}
             </div>
-            <button className={`conchaNucleus ${business ? 'cellEntered' : ''}`} key={business?.id || 'world'} style={{ left: cx, top: cy, '--entry-x': '430px', '--entry-y': `${248 + businesses.findIndex(row=>row.id===business?.id)*76 - cy}px` }} onClick={() => business && onNavigate('negocios')}><span>{business ? (business.verification_status === 'verified' ? 'NEGOCIO COMPROBADO' : 'CÉLULA EN DESARROLLO') : 'LA CONCHA'}</span><b>{business?.name || 'Vida del negocio'}</b><small>{model?.name || (business ? business.sector : '6 etapas · un solo contexto')}</small></button>
+            <button className={`conchaNucleus ${business ? 'cellEntered' : ''}`} key={business?.id || 'world'} style={{ left: cx, top: cy, '--entry-x': '430px', '--entry-y': `${248 + businesses.findIndex(row=>row.id===business?.id)*76 - cy}px` }} onClick={openBusinessGame}><span>{business ? (business.verification_status === 'verified' ? 'NEGOCIO COMPROBADO' : 'CÉLULA EN DESARROLLO') : 'LA CONCHA'}</span><b>{business?.name || 'Vida del negocio'}</b><small>{model?.name || (business ? business.sector : '6 etapas · un solo contexto')}</small></button>
             <div className="businessSatellites"><span className="microLabel">CÉLULAS DEL ORGANISMO</span>{businesses.map(row => <button key={row.id} className={`${business?.id === row.id ? 'selected' : ''} ${related.has(row.id) ? 'related' : ''}`} onClick={() => enterCell(row.id)} aria-pressed={business?.id === row.id}><i/><span><b>{row.name}</b><small>{business?.id === row.id ? 'En el centro' : related.has(row.id) ? 'Modelo compartido' : row.sector || 'Célula LINK'}</small></span><em>↗</em></button>)}{!businesses.length ? <p>No hay células disponibles en esta capa.</p> : null}</div>
-            <div className="capacityNodes">{CAPACITIES.map(([id,name,note]) => <button key={name} onClick={() => openDimension(id,name)}><i/><b>{name}</b><small>{note}</small></button>)}</div>
+            <div className="capacityNodes">{CAPACITIES.map(([id,name,note]) => <button key={name} onClick={() => openCapability(id)} title="Trabajar en LINK WORLD GAME"><i/><b>{name}</b><small>{note}</small></button>)}</div>
           </div>
           <div className="conchaMobileCells" aria-label="Elegir negocio">{businesses.map(row => <button key={row.id} aria-pressed={business?.id === row.id} onClick={() => enterCell(row.id)}>{row.name}</button>)}</div>
           <div className="organismFooter"><span><i/> Líneas tenues: estructura de LINK</span><span>Líneas tierra: modelo compartido registrado</span><span>{business ? 'Contexto: '+business.name : 'Contexto: todo LINK'}</span></div>

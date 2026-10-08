@@ -1,5 +1,5 @@
-import GameShell from "../components/GameShell";
+import BusinessEvolutionGame from "../components/BusinessEvolutionGame";
 
 export default function Home() {
-  return <GameShell />;
+  return <BusinessEvolutionGame />;
 }

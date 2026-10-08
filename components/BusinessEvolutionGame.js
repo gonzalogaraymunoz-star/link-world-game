@@ -135,6 +135,16 @@ export default function BusinessEvolutionGame() {
   }, [member,loadPrivate]);
 
   const business = businesses.find(row => row.id === businessId) || null;
+
+  useEffect(() => {
+    if (!business) return;
+    const q = new URLSearchParams(window.location.search);
+    q.set("business",business.id);
+    if (business.global_id) q.set("business_global",business.global_id);
+    q.set("stage",stageKey);
+    window.history.replaceState({},"","?" + q.toString());
+  },[business,stageKey]);
+
   const businessJourneys = useMemo(
     () => journeys.filter(row => row.business_id === business?.id),
     [journeys,business?.id]

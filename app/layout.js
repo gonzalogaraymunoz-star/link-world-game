@@ -7,10 +7,12 @@ import '@fontsource/space-grotesk/600.css';
 import "./globals.css";
 import "./concha.css";
 import "./ledger.css";
+import "./living-map.css";
+import "./world-unified.css";
 
 export const metadata = {
   title: "LINK WORLD GAME",
-  description: "Territorio jugable del ecosistema LINK"
+  description: "Mapa Maestro y mesas operativas del ecosistema LINK"
 };
 
 export default function RootLayout({ children }) {

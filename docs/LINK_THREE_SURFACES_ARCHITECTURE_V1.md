@@ -170,3 +170,10 @@ La Concha no certifica por sí sola: organiza el recorrido que permite producir 
 - un paquete coherente = un despliegue;
 - evitar microdeploys;
 - producción sólo cuando la separación de responsabilidades está validada.
+
+
+## Deployment map
+
+- WORLD production branch: link-world-production → link-world-9h0.pages.dev
+- GAME production branch: game-production → link-world-game.pages.dev
+- CONTROL runtime: LINKCONTROLGENERAL → linkcontrolgeneral.vercel.app

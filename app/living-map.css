@@ -59,16 +59,19 @@
   overscroll-behavior:none;
   scrollbar-width:thin;
   scrollbar-color:color-mix(in srgb,var(--ink) 18%,transparent) transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .portraitMap .mapViewport{
+  display:block;
   overflow-x:auto;
   overflow-y:hidden;
   scroll-snap-type:x proximity;
 }
 .mapStageHolder{
   position:relative;
-  min-width:100%;
-  min-height:100%;
+  flex:0 0 auto;
   margin:auto;
 }
 .mapStage{

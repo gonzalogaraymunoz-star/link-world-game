@@ -567,7 +567,7 @@ export default function LivingMapGame(){
   },[selectedBusiness,scopes,journeys,selectedProfile]);
 
   return (
-    <main className={`livingMapGame theme-${theme} ${layout.portrait?"portraitMap":""}`}>
+    <main className={`livingMapGame theme-${theme} ${layout.portrait?"portraitMap":""} ${experiment==="caracol"?"experiment-caracol":""}`}>
       <div className="mapViewport" ref={viewportRef}>
         <div className="mapStageHolder" style={{width:layout.w,height:layout.h}}>
           <section className={`mapStage ${selectedBusiness?"cellEngaged":""} ${motion?"cellMoving":""} ${inspector?`lens-${inspector.kind}`:""}`} style={{transform:`scale(${layout.scale})`}} aria-label="LINK WORLD GAME · Mapa Maestro interactivo">

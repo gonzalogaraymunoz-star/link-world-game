@@ -28,8 +28,8 @@ const GOVERNANCE = [
 ];
 
 const INPUT_CAPS = [
-  ["LINKRRSS","comunicaciones"],
-  ["QR / LINK ID","identidad"],
+  ["LINKRRSS","primer artefacto MAR"],
+  ["QR","canal físico → LINK ID"],
   ["TRANSLATE","traducción"],
   ["WEBSITE","sitios de negocios"],
   ["PROVEEDORES","contactos"],
@@ -105,7 +105,7 @@ const BUSINESS_PROFILES = {
     label: "CARACOL",
     rule: "2 modelos activos · una identidad común",
     channels: ["Instagram"],
-    inputCaps: ["LINKRRSS","QR / LINK ID"],
+    inputCaps: ["LINKRRSS","QR"],
     models: [
       {
         key: "marketing",
@@ -113,7 +113,7 @@ const BUSINESS_PROFILES = {
         modelId: "97f17cef-c53d-4858-b354-c56e20dcd15b",
         dimension: "marketing",
         maturity: "evidenced",
-        note: "LINKRRSS → Zernio → Instagram",
+        note: "Instagram → Zernio → LINKRRSS → LINK ID → MAR",
         detail: "Servicio mensual de Contenido / RRSS. Caracol es la célula de origen.",
         nextGate: "Demostrar un segundo ciclo pagado o instalar el mismo modelo en un segundo cliente."
       },
@@ -416,11 +416,11 @@ export default function LivingMapGame(){
       title:label,
       summary:note,
       items:[
-        label==="LINKRRSS" ? "Instagram → Zernio → LINKRRSS → MAR, conservando contexto Caracol." : "",
-        label==="QR / LINK ID" ? "QR/identidad alimenta la capa común de Personas sin crear una base separada por modelo." : "",
+        label==="LINKRRSS" ? "Instagram → Zernio → LINKRRSS → LINK ID → MAR → ciclo, conservando el contexto." : "",
+        label==="QR" ? "El QR registra una señal; LINK ID identifica antes de derivarla a MAR, sin duplicar personas." : "",
         label==="EVENTOS" ? "Las activaciones presenciales pueden entrar como señales y conservar origen." : ""
       ].filter(Boolean),
-      dimension:label==="LINKRRSS"?"rrss":label==="QR / LINK ID"?"personas":"marketing",
+      dimension:label==="LINKRRSS"?"rrss":label==="QR"?"personas":"marketing",
       links:label==="LINKRRSS"?[{label:"Abrir LINK RRSS · "+selectedBusiness.name,href:rrssUrl(selectedBusiness,"home")}]:[]
     });
   }

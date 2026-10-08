@@ -74,20 +74,58 @@ const INFRA = [
   ["CLOUDFLARE","runtime / edge","☁"]
 ];
 
+const LINK_WORLD_BASE = "https://link-world-9h0.pages.dev";
+const CARACOL_ID = "31333b84-79fa-4c52-b974-977145ec9e9a";
+const CARACOL_GLOBAL_ID = "LNK-BIZ-8940CF9AD521445D";
+
+const STAGE_DIMENSIONS = {
+  marketing:"marketing",
+  ventas:"ventas",
+  cierre:"cierre",
+  onboarding:"onboarding",
+  entrega:"entrega",
+  postventa:"postventa"
+};
+
+const TRANSVERSAL_DIMENSIONS = {
+  MAR:"marketing", RRSS:"rrss", VENTAS:"ventas", CIERRE:"cierre",
+  BOARDING:"onboarding", OPERACIONES:"entrega", POSTVENTA:"postventa",
+  FIN:"fin", PERSONAS:"personas", EVIDENCIAS:"evidencias",
+  ARTEFACTOS:"artefactos", EVOLUCIÓN:"evolucion"
+};
+
+const REPRO_DIMENSIONS = {
+  EVIDENCIAS:"evidencias", APRENDIZAJE:"evolucion", GÉNESIS:"genesis",
+  ARTEFACTOS:"artefactos", MODELOS:"modelos", EVOLUCIÓN:"evolucion",
+  "MITOSIS / MEIOSIS":"reproduccion"
+};
+
 const BUSINESS_PROFILES = {
   caracol: {
     label: "CARACOL",
-    rule: "2 modelos de ingreso · 1 capa relacional",
+    rule: "2 modelos activos · una identidad común",
+    channels: ["Instagram","QR físico","Eventos"],
+    inputCaps: ["LINKRRSS","QR / LINK ID","EVENTOS"],
     models: [
       {
+        key: "marketing",
         name: "MARKETING",
+        modelId: "97f17cef-c53d-4858-b354-c56e20dcd15b",
+        dimension: "marketing",
+        maturity: "evidenced",
         note: "LINKRRSS → Zernio → Instagram",
-        detail: "Comunicación y captación. Los contactos alimentan Personas + MAR."
+        detail: "Servicio mensual de Contenido / RRSS. Caracol es la célula de origen.",
+        nextGate: "Demostrar un segundo ciclo pagado o instalar el mismo modelo en un segundo cliente."
       },
       {
+        key: "karaoke",
         name: "KARAOKE",
+        modelId: "5c08f32e-25c5-421d-91aa-9d5f2fc508cf",
+        dimension: "entrega",
+        maturity: "productizable",
         note: "LINK Karaoke · lunes / miércoles / viernes",
-        detail: "Operación desde 21:00; preparación desde 20:00. Ingreso por jornada: $60.000 líquidos. Costo DJ: $30.000."
+        detail: "Servicio recurrente por sesión. LINK Karaoke conserva identidad, canción, cola e historial.",
+        nextGate: "Empaquetar la oferta para un segundo local y comprobar adquisición, precio y operación fuera de Caracol."
       }
     ],
     artifacts: ["LINK KARAOKE","LINKRRSS"],
@@ -97,11 +135,33 @@ const BUSINESS_PROFILES = {
       ventas: "active",
       cierre: "active",
       onboarding: "active",
-      entrega: "active",
+      entrega: "verified",
       postventa: "active"
     },
-    evidence: "Karaoke: evidencia económica ya registrada. Marketing: conservar publicaciones, conversaciones y resultados como evidencia.",
-    next: "Completar relaciones reales por etapa sin inventar datos faltantes."
+    infrastructure: {
+      github: [
+        { label:"LINKRRSS", href:"https://github.com/gonzalogaraymunoz-star/linkrrss" },
+        { label:"LINK WORLD / GAME", href:"https://github.com/gonzalogaraymunoz-star/link-world-game" }
+      ],
+      vercel: [
+        { label:"LINKRRSS", href:"https://linkrrss.vercel.app" }
+      ],
+      cloudflare: [
+        { label:"LINK WORLD GAME", href:"https://link-world-game.pages.dev" },
+        { label:"LINK WORLD", href:"https://link-world-9h0.pages.dev" }
+      ]
+    },
+    reproduction: {
+      "EVIDENCIAS":"La célula ya conserva evidencia operativa y económica; la verificación sigue perteneciendo a FIN/Evidencias.",
+      "APRENDIZAJE":"Marketing y Karaoke devuelven señales a la misma memoria de Caracol sin duplicar Personas.",
+      "GÉNESIS":"Los dolores repetidos pueden convertirse en mejoras de LINKRRSS, LINK Karaoke o nuevos artefactos.",
+      "ARTEFACTOS":"Artefactos comprobados en Caracol pueden reutilizarse en otras células conservando trazabilidad.",
+      "MODELOS":"Marketing Caracol está evidenciado; Karaoke Caracol está productizable. Son modelos distintos dentro del mismo contexto cliente.",
+      "EVOLUCIÓN":"Caracol avanza por evidencia real; una capacidad no cambia de madurez sólo porque exista en la interfaz.",
+      "MITOSIS / MEIOSIS":"No se declara una réplica nueva sin evidencia. Karaoke tiene gate explícito para probarse en un segundo local."
+    },
+    evidence: "Lo comprobado se muestra; lo propuesto se mantiene como pendiente. GAME no fabrica evidencia.",
+    next: "Cerrar cada etapa con estado, misión y evidencia real."
   }
 };
 
@@ -117,6 +177,14 @@ function cap(value="") {
 
 function shortBusiness(name="") {
   return cap(name).replace(/Travelers/i,"Travelers").replace(/Experience/i,"Experience");
+}
+
+function worldUrl(business, dimension="concha", modelId=null) {
+  const q = new URLSearchParams();
+  q.set("dimension", dimension);
+  if (business?.id) q.set("business", business.id);
+  if (modelId) q.set("model", modelId);
+  return LINK_WORLD_BASE + "/?" + q.toString();
 }
 
 function stageTone(state) {
@@ -152,7 +220,12 @@ export default function LivingMapGame(){
   const [businesses,setBusinesses]=useState([]);
   const [journeys,setJourneys]=useState([]);
   const [scopes,setScopes]=useState([]);
+  const [missions,setMissions]=useState([]);
+  const [cellArtifacts,setCellArtifacts]=useState([]);
+  const [linkIds,setLinkIds]=useState([]);
   const [member,setMember]=useState(false);
+  const [experiment,setExperiment]=useState(null);
+  const [inspector,setInspector]=useState(null);
   const [selectedBusiness,setSelectedBusiness]=useState(null);
   const [selectedStage,setSelectedStage]=useState(null);
   const [activeGov,setActiveGov]=useState(null);
@@ -168,6 +241,8 @@ export default function LivingMapGame(){
     try{
       const saved=window.localStorage.getItem("link-world-game-theme");
       if(["day","gray","night"].includes(saved)) setTheme(saved);
+      const q=new URLSearchParams(window.location.search);
+      setExperiment(q.get("experiment"));
     }catch{}
   },[]);
 
@@ -199,16 +274,28 @@ export default function LivingMapGame(){
 
   const loadPrivate=useCallback(async()=>{
     if(!supabase || !member) return;
-    const [j,s]=await Promise.all([
+    const [j,s,m,a,l]=await Promise.all([
       supabase.from("link_business_agent_journey_v")
         .select("business_id,business_global_id,stage_number,stage_key,stage_name,mission_status,evidence_requested,evidence_validated")
         .order("business_name").order("stage_number"),
       supabase.from("agent_scope_state")
         .select("business_global_id,stage_key,state,current_focus,updated_at")
-        .order("updated_at",{ascending:false})
+        .order("updated_at",{ascending:false}),
+      supabase.from("agent_missions")
+        .select("id,mission_code,business_global_id,stage_key,title,status,priority,metadata,updated_at")
+        .order("updated_at",{ascending:false}),
+      supabase.from("link_dot_artifacts")
+        .select("id,business_id,artifact_key,name,description,artifact_type,route,status,source_system,source_table,updated_at")
+        .order("updated_at",{ascending:false}),
+      supabase.from("link_lead_identities")
+        .select("id,business_id,status,universal_code,created_at")
+        .order("created_at",{ascending:false})
     ]);
     if(!j.error) setJourneys(j.data||[]);
     if(!s.error) setScopes(s.data||[]);
+    if(!m.error) setMissions(m.data||[]);
+    if(!a.error) setCellArtifacts(a.data||[]);
+    if(!l.error) setLinkIds(l.data||[]);
   },[member]);
 
   useEffect(()=>{
@@ -221,7 +308,7 @@ export default function LivingMapGame(){
       if(alive) setMember(!check.error && check.data===true);
     });
     const {data:listener}=supabase.auth.onAuthStateChange(async(_event,session)=>{
-      if(!session){setMember(false);setJourneys([]);setScopes([]);return;}
+      if(!session){setMember(false);setJourneys([]);setScopes([]);setMissions([]);setCellArtifacts([]);setLinkIds([]);return;}
       const check=await supabase.rpc("link_world_is_member");
       setMember(!check.error && check.data===true);
     });
@@ -231,9 +318,11 @@ export default function LivingMapGame(){
   useEffect(()=>{ if(member) void loadPrivate(); },[member,loadPrivate]);
 
   useEffect(()=>{
-    const initial=new URLSearchParams(window.location.search).get("business");
+    const q=new URLSearchParams(window.location.search);
+    const initial=q.get("business") || (q.get("experiment")==="caracol" ? "caracol" : null);
     if(!initial) return;
-    const found=businesses.find(b=>b.id===initial);
+    const token=String(initial).toLowerCase();
+    const found=businesses.find(b=>b.id===initial || b.global_id===initial || String(b.slug||"").toLowerCase()===token || String(b.name||"").toLowerCase()===token);
     if(found) setSelectedBusiness(found);
   },[businesses]);
 
@@ -245,11 +334,93 @@ export default function LivingMapGame(){
     return journey?.mission_status || "neutral";
   },[selectedBusiness,selectedStage,scopes,journeys]);
 
-  const businessRows=useMemo(()=>businesses.slice(0,8),[businesses]);
+  const businessRows=useMemo(()=>{
+    if(experiment==="caracol") return businesses.filter(b=>String(b.slug||b.name||"").toLowerCase().includes("caracol"));
+    return businesses.slice(0,8);
+  },[businesses,experiment]);
   const selectedProfile=useMemo(()=>businessProfile(selectedBusiness),[selectedBusiness]);
+  const businessMissions=useMemo(()=>selectedBusiness ? missions.filter(row=>row.business_global_id===selectedBusiness.global_id) : [],[missions,selectedBusiness]);
+  const businessArtifacts=useMemo(()=>selectedBusiness ? cellArtifacts.filter(row=>row.business_id===selectedBusiness.id) : [],[cellArtifacts,selectedBusiness]);
+  const businessLinkIds=useMemo(()=>selectedBusiness ? linkIds.filter(row=>row.business_id===selectedBusiness.id) : [],[linkIds,selectedBusiness]);
+  const visibleArtifacts=useMemo(()=>selectedProfile ? ARTIFACTS.filter(([label])=>selectedProfile.artifacts.includes(label)) : ARTIFACTS,[selectedProfile]);
+  const visibleInputCaps=useMemo(()=>selectedProfile ? INPUT_CAPS.filter(([label])=>selectedProfile.inputCaps.includes(label)) : INPUT_CAPS,[selectedProfile]);
+  const visibleChannels=useMemo(()=>selectedProfile ? CHANNELS.filter(label=>selectedProfile.channels.includes(label)) : CHANNELS,[selectedProfile]);
 
   function clearFocus(){
-    setSelectedStage(null);setActiveGov(null);setActiveArtifact(null);setActiveTransversal(null);setActiveRepro(null);
+    setSelectedStage(null);setActiveGov(null);setActiveArtifact(null);setActiveTransversal(null);setActiveRepro(null);setInspector(null);
+  }
+
+  function openLens(kind, payload={}){
+    if(!selectedBusiness){
+      setStatus("Selecciona primero una célula para ver cómo esta área la refleja.");
+      return;
+    }
+    const profile=selectedProfile;
+    const title=payload.title || payload.label || selectedBusiness.name;
+    const base={kind,title,kicker:payload.kicker||selectedBusiness.name,summary:payload.summary||"",items:payload.items||[],dimension:payload.dimension||"concha",modelId:payload.modelId||null,links:payload.links||[]};
+    setInspector(base);
+  }
+
+  function openLinkId(){
+    const count=businessLinkIds.filter(row=>row.status==="active").length;
+    openLens("linkid",{
+      kicker:"LINK ID · "+selectedBusiness.name,
+      title:"Identidad común de la célula",
+      summary:"Marketing y Karaoke pueden originar contactos distintos, pero LINK conserva una sola capa relacional de Personas/Identidad.",
+      items: member ? [
+        count+" LINK ID activos vinculados a "+selectedBusiness.name,
+        "Cada identidad conserva su origen y puede relacionarse con distintos modelos sin duplicar a la persona."
+      ] : [
+        "La cantidad real de identidades se muestra al entrar como Miembro LINK.",
+        "La arquitectura mantiene una sola identidad y conserva el origen de cada señal."
+      ],
+      dimension:"personas"
+    });
+  }
+
+  function openModel(model){
+    const rows=model.key==="marketing"
+      ? businessMissions.filter(row=>["marketing","transversal"].includes(row.stage_key))
+      : [];
+    openLens("model",{
+      kicker:selectedBusiness.name+" · MODELO",
+      title:model.name,
+      summary:model.detail,
+      items:[
+        "Madurez: "+model.maturity,
+        ...(rows.length ? rows.slice(0,4).map(row=>row.status+" · "+row.title) : ["Sin misión específica persistida para este modelo en GAME."]),
+        "Siguiente gate: "+model.nextGate
+      ],
+      dimension:model.dimension,
+      modelId:model.modelId
+    });
+  }
+
+  function openInputCapability(label,note){
+    openLens("input",{
+      kicker:selectedBusiness.name+" · CAPACIDAD DE ENTRADA",
+      title:label,
+      summary:note,
+      items:[
+        label==="LINKRRSS" ? "Instagram → Zernio → LINKRRSS → MAR, conservando contexto Caracol." : "",
+        label==="QR / LINK ID" ? "QR/identidad alimenta la capa común de Personas sin crear una base separada por modelo." : "",
+        label==="EVENTOS" ? "Las activaciones presenciales pueden entrar como señales y conservar origen." : ""
+      ].filter(Boolean),
+      dimension:label==="QR / LINK ID"?"personas":"marketing"
+    });
+  }
+
+  function openInfrastructure(label,note){
+    const key=String(label).toLowerCase();
+    const links=selectedProfile?.infrastructure?.[key] || [];
+    openLens("infra",{
+      kicker:selectedBusiness.name+" · INFRAESTRUCTURA",
+      title:label,
+      summary:note+" · muestra únicamente los destinos conocidos para la célula activa.",
+      items: links.length ? links.map(item=>item.label) : ["No hay un destino específico verificado para "+label+" en esta célula."],
+      dimension:"concha",
+      links
+    });
   }
 
   function triggerPulse(path,tone,label){
@@ -259,33 +430,63 @@ export default function LivingMapGame(){
   }
 
   function chooseChannel(index,label){
-    clearFocus();
+    setSelectedStage(null);setActiveGov(null);setActiveArtifact(null);setActiveTransversal(null);setActiveRepro(null);
     const y=392+index*18;
     const path=`M 60 ${y} C 145 ${y} 188 420 245 438 C 355 470 520 365 704 316`;
     triggerPulse(path,"orange",`${label} → LINK ID → MAR`);
     setSelectedStage("marketing");
+    openLens("input",{
+      kicker:selectedBusiness ? selectedBusiness.name+" · MUNDO REAL" : "MUNDO REAL",
+      title:label,
+      summary:selectedBusiness ? label+" es una entrada observada para "+selectedBusiness.name+" en este contexto." : "Selecciona una célula para contextualizar esta entrada.",
+      dimension:"marketing"
+    });
   }
 
   function chooseGovernance(index,id,label){
-    clearFocus();setActiveGov(id);
+    setSelectedStage(null);setActiveArtifact(null);setActiveTransversal(null);setActiveRepro(null);setActiveGov(id);
     const x=430+index*116;
     const path=`M ${x} 126 C ${x} 205 690 205 790 284`;
     triggerPulse(path,"violet",label);
+    const rows=businessMissions.filter(row=>row.status!=="verified");
+    openLens("governance",{
+      kicker:selectedBusiness ? selectedBusiness.name+" · GOBIERNO" : "GOBIERNO",
+      title:label,
+      summary:selectedBusiness ? label+" observa o coordina el contexto de "+selectedBusiness.name+"; no reemplaza la dimensión que ejecuta." : "",
+      items:id==="pulso" ? rows.slice(0,4).map(row=>row.status+" · "+row.title) : [],
+      dimension:id==="pulso"?"pulso":id==="director"?"director":"concha"
+    });
   }
 
   function chooseArtifact(index,label){
-    clearFocus();setActiveArtifact(index);
+    setSelectedStage(null);setActiveGov(null);setActiveTransversal(null);setActiveRepro(null);setActiveArtifact(index);
     const y=286+index*34;
     const path=`M 1115 ${y} C 1050 ${y} 1010 395 955 438`;
     triggerPulse(path,"blue",label);
+    const persisted=businessArtifacts.filter(row=>String(row.name||"").toUpperCase().includes(label.replace("LINKRRSS","LINK")));
+    openLens("artifact",{
+      kicker:selectedBusiness ? selectedBusiness.name+" · ARTEFACTO" : "ARTEFACTO",
+      title:label,
+      summary:persisted[0]?.description || "Capacidad reutilizable activada para la célula.",
+      items:persisted.length ? persisted.slice(0,4).map(row=>row.status+" · "+row.name) : ["Relacionado a "+selectedBusiness?.name+" por su modelo activo."],
+      dimension:"artefactos"
+    });
   }
 
   function chooseStage(key,label){
-    setSelectedStage(key);setActiveArtifact(null);setActiveGov(null);
+    setSelectedStage(key);setActiveArtifact(null);setActiveGov(null);setActiveTransversal(null);setActiveRepro(null);
     setStatus(selectedBusiness ? `${label} · ${selectedBusiness.name}` : label);
     const index=STAGES.findIndex(s=>s.key===key);
     const a=STAGES[index], b=STAGES[(index+1)%STAGES.length];
     triggerPulse(`M ${a.x} ${a.y} A 151 151 0 0 1 ${b.x} ${b.y}`,"orange",selectedBusiness ? `${label} · ${selectedBusiness.name}` : label);
+    const rows=businessMissions.filter(row=>row.stage_key===key);
+    openLens("stage",{
+      kicker:selectedBusiness ? selectedBusiness.name+" · CONCHA" : "CONCHA",
+      title:label,
+      summary:selectedBusiness ? "Mesa de "+label+" filtrada por "+selectedBusiness.name+"." : "",
+      items:rows.length ? rows.slice(0,5).map(row=>row.status+" · "+row.title) : ["Sin misión persistida para esta etapa."],
+      dimension:STAGE_DIMENSIONS[key]||"concha"
+    });
   }
 
   function chooseBusiness(row,index){
@@ -301,7 +502,7 @@ export default function LivingMapGame(){
       setSelectedBusiness(row);
       setFlight(null);setMotion(false);
       const q=new URLSearchParams(window.location.search);
-      q.set("business",row.id);
+      q.set("business",row.slug || row.id);
       window.history.replaceState({},"","?"+q.toString());
       const profile=businessProfile(row);
       setStatus(profile ? `${row.name} · ${profile.rule}` : `${row.name} · misma Concha, distinto contexto`);
@@ -325,14 +526,33 @@ export default function LivingMapGame(){
   }
 
   function selectTransversal(index,label){
-    clearFocus();setActiveTransversal(index);
+    setSelectedStage(null);setActiveGov(null);setActiveArtifact(null);setActiveRepro(null);setActiveTransversal(index);
     setStatus(label);
     triggerPulse(`M ${520+index*67} 706 C ${520+index*67} 660 760 625 790 596`,"violet",label);
+    const dimension=TRANSVERSAL_DIMENSIONS[label]||"concha";
+    let items=[];
+    if(label==="ARTEFACTOS") items=businessArtifacts.length ? businessArtifacts.slice(0,6).map(row=>row.status+" · "+row.name) : (selectedProfile?.artifacts||[]);
+    if(label==="EVOLUCIÓN") items=[selectedProfile?.reproduction?.EVOLUCIÓN].filter(Boolean);
+    if(label==="EVIDENCIAS") items=[selectedProfile?.evidence].filter(Boolean);
+    openLens("transversal",{
+      kicker:selectedBusiness ? selectedBusiness.name+" · CAPACIDAD TRANSVERSAL" : "CAPACIDAD TRANSVERSAL",
+      title:label,
+      summary:selectedBusiness ? "Misma capacidad de LINK, filtrada por "+selectedBusiness.name+"; no es una copia." : "",
+      items,
+      dimension
+    });
   }
 
   function selectRepro(index,label){
-    clearFocus();setActiveRepro(index);setStatus(label);
+    setSelectedStage(null);setActiveGov(null);setActiveArtifact(null);setActiveTransversal(null);setActiveRepro(index);setStatus(label);
     triggerPulse(`M ${390+index*130} 790 C ${390+index*130} 740 705 726 790 705`,"violet",label);
+    openLens("reproduction",{
+      kicker:selectedBusiness ? selectedBusiness.name+" · REPRODUCCIÓN" : "REPRODUCCIÓN",
+      title:label,
+      summary:selectedProfile?.reproduction?.[label] || "Esta capacidad sólo cambia cuando existe evidencia suficiente.",
+      items:label==="MODELOS" ? selectedProfile?.models?.map(model=>model.name+" · "+model.maturity) || [] : [],
+      dimension:REPRO_DIMENSIONS[label]||"reproduccion"
+    });
   }
 
   const stageStatusByKey=useMemo(()=>{
@@ -350,7 +570,7 @@ export default function LivingMapGame(){
     <main className={`livingMapGame theme-${theme} ${layout.portrait?"portraitMap":""}`}>
       <div className="mapViewport" ref={viewportRef}>
         <div className="mapStageHolder" style={{width:layout.w,height:layout.h}}>
-          <section className="mapStage" style={{transform:`scale(${layout.scale})`}} aria-label="LINK WORLD GAME · Mapa Maestro interactivo">
+          <section className={`mapStage ${selectedBusiness?"cellEngaged":""} ${motion?"cellMoving":""} ${inspector?`lens-${inspector.kind}`:""}`} style={{transform:`scale(${layout.scale})`}} aria-label="LINK WORLD GAME · Mapa Maestro interactivo">
             <svg className="mapSvg" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
               <defs>
                 <marker id="arrowOrange" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L6,3.5 L0,7 Z" className="arrowOrange"/></marker>
@@ -368,8 +588,8 @@ export default function LivingMapGame(){
                 return <Wire key={"g"+i} d={`M ${x} 126 C ${x} 205 695 200 790 285`} className="govWire" active={activeGov===GOVERNANCE[i][0]}/>;
               })}
 
-              {CHANNELS.map((_,i)=><Wire key={"c"+i} d={`M 58 ${392+i*18} C 145 ${392+i*18} 187 420 246 438`} className="entryWire"/>)}
-              {INPUT_CAPS.map((_,i)=><Wire key={"i"+i} d={`M 394 ${316+i*38} C 510 ${316+i*38} 540 365 624 438`} className="entryCapWire"/>)}
+              {visibleChannels.map((_,i)=><Wire key={"c"+i} d={`M 58 ${392+i*18} C 145 ${392+i*18} 187 420 246 438`} className="entryWire"/>)}
+              {visibleInputCaps.map((_,i)=><Wire key={"i"+i} d={`M 394 ${316+i*38} C 510 ${316+i*38} 540 365 624 438`} className="entryCapWire"/>)}
               <Wire d="M 315 438 C 415 475 525 370 624 438" className="warmWire"/>
 
               <circle cx={CENTER.x} cy={CENTER.y} r="185" className="conchaHalo"/>
@@ -379,7 +599,7 @@ export default function LivingMapGame(){
                 return <path key={stage.key} d={`M ${stage.x} ${stage.y} A 151 151 0 0 1 ${next.x} ${next.y}`} className={`stageFlow ${selectedStage===stage.key?"active":""}`} markerEnd="url(#arrowOrange)"/>;
               })}
 
-              {ARTIFACTS.map((_,i)=><Wire key={"a"+i} d={`M 956 438 C 1015 ${390+i*10} 1040 ${286+i*34} 1114 ${286+i*34}`} className="artifactWire" active={activeArtifact===i}/>)}
+              {visibleArtifacts.map((_,i)=><Wire key={"a"+i} d={`M 956 438 C 1015 ${390+i*10} 1040 ${286+i*34} 1114 ${286+i*34}`} className="artifactWire" active={activeArtifact===i}/>)}
               {businessRows.map((_,i)=><Wire key={"b"+i} d={`M 1218 ${320+i*21} C 1295 ${320+i*21} 1308 ${284+i*69} 1354 ${284+i*69}`} className="businessWire"/>)}
 
               {TRANSVERSALS.map((_,i)=><Wire key={"t"+i} d={`M ${520+i*67} 706 C ${520+i*67} 660 760 625 790 596`} className="transWire" active={activeTransversal===i}/>)}
@@ -397,7 +617,7 @@ export default function LivingMapGame(){
               <p>Un solo organismo.<br/>Células que operan,<br/>artefactos que se comparten,<br/>inteligencia que aprende<br/>y se reproduce.</p>
             </header>
 
-            <section className="governance">
+            <section className="governance reactiveZone">
               <h4>GOBIERNO E INTELIGENCIA</h4>
               <div className="govNodes">
                 {GOVERNANCE.map(([id,label,note],i)=>(
@@ -409,28 +629,28 @@ export default function LivingMapGame(){
               <p>VISIÓN · DECISIONES · CONTEXTO · EVENTOS</p>
             </section>
 
-            <section className="worldReal">
+            <section className="worldReal reactiveZone">
               <h4>MUNDO REAL</h4>
               <p>personas<br/>proveedores<br/>canales<br/>señales</p>
               <div className="channelList">
-                {CHANNELS.map((label,i)=><button key={label} onClick={()=>chooseChannel(i,label)}><i/>{label}</button>)}
+                {visibleChannels.map((label,i)=><button key={label} onClick={()=>chooseChannel(i,label)}><i/>{label}</button>)}
               </div>
             </section>
 
-            <button className="linkIdNode" onClick={()=>{clearFocus();setStatus("LINK ID · registro de ingresos");}}>
+            <button className={`linkIdNode ${inspector?.kind==="linkid"?"active":""}`} onClick={()=>{setSelectedStage(null);setActiveGov(null);setActiveArtifact(null);setActiveTransversal(null);setActiveRepro(null);setStatus("LINK ID · "+(selectedBusiness?.name||"registro de ingresos"));openLinkId();}}>
               <b>LINK ID</b><small>registro de ingresos</small>
             </button>
 
-            <section className="inputCaps">
+            <section className="inputCaps reactiveZone">
               <h4>CAPACIDADES DE ENTRADA</h4>
-              {INPUT_CAPS.map(([label,note],i)=>(
-                <button key={label} onClick={()=>chooseChannel(Math.min(i,CHANNELS.length-1),label)}>
+              {visibleInputCaps.map(([label,note],i)=>(
+                <button key={label} onClick={()=>{setSelectedStage(null);setActiveGov(null);setActiveArtifact(null);setActiveTransversal(null);setActiveRepro(null);openInputCapability(label,note);setStatus(label+" · "+(selectedBusiness?.name||"LINK"));}}>
                   <i/><span><b>{label}</b><small>{note}</small></span>
                 </button>
               ))}
             </section>
 
-            <section className="cellTitle">
+            <section className="cellTitle reactiveZone">
               <h4>CÉLULA / NEGOCIO</h4>
               <p>misma lógica en todas las células</p>
             </section>
@@ -465,7 +685,7 @@ export default function LivingMapGame(){
                   <small style={{fontSize:6,color:"var(--muted)"}}>{selectedProfile.rule}</small>
                 </div>
                 {selectedProfile.models.map(model=>(
-                  <button key={model.name} onClick={()=>setStatus(`${model.name} · ${model.note}`)} style={{
+                  <button key={model.name} onClick={()=>{openModel(model);setStatus(`${model.name} · ${model.note}`);}} style={{
                     border:"1px solid var(--line)",borderRadius:10,background:"transparent",color:"var(--ink)",
                     padding:"8px 9px",textAlign:"left",cursor:"pointer",minHeight:54
                   }}>
@@ -489,16 +709,16 @@ export default function LivingMapGame(){
               </div>
             ):null}
 
-            <section className="artifacts">
+            <section className="artifacts reactiveZone">
               <h4>ARTEFACTOS</h4>
-              {ARTIFACTS.map(([label,note],i)=>(
+              {visibleArtifacts.map(([label,note],i)=>(
                 <button key={label} className={(activeArtifact===i || !!selectedProfile?.artifacts?.includes(label))?"active":""} onClick={()=>chooseArtifact(i,label)}>
                   <i/><span><b>{label}</b><small>{note}</small></span>
                 </button>
               ))}
             </section>
 
-            <section className="businesses">
+            <section className="businesses reactiveZone">
               <h4>CÉLULAS / NEGOCIOS</h4>
               {businessRows.map((row,i)=>(
                 <button key={row.id} className={selectedBusiness?.id===row.id?"selected":""} onClick={()=>chooseBusiness(row,i)}>
@@ -508,7 +728,7 @@ export default function LivingMapGame(){
               <button className="newCell" onClick={()=>setStatus("Nuevas células nacen desde evidencia, aprendizaje y reproducción.")}><i/><span><b>…</b><small>nuevas células</small></span></button>
             </section>
 
-            <section className="transversals">
+            <section className="transversals reactiveZone">
               <h4>CAPACIDADES TRANSVERSALES</h4>
               <div>
                 {TRANSVERSALS.map(([label,note],i)=>(
@@ -519,7 +739,7 @@ export default function LivingMapGame(){
               </div>
             </section>
 
-            <section className="reproduction">
+            <section className="reproduction reactiveZone">
               <h4>REPRODUCCIÓN</h4>
               <div>
                 {REPRODUCTION.map(([label,note],i)=>(
@@ -531,10 +751,10 @@ export default function LivingMapGame(){
               <p>CADA APRENDIZAJE PUEDE SER UNA NUEVA CÉLULA</p>
             </section>
 
-            <section className="infrastructure">
+            <section className="infrastructure reactiveZone">
               <div className="infraIntro"><b>INFRAESTRUCTURA TÉCNICA</b><small>sostiene el organismo.<br/>no es una etapa del negocio.</small></div>
               <div className="infraNodes">
-                {INFRA.map(([label,note,icon])=><button key={label} onClick={()=>setStatus(`${label} · ${note}`)}><em>{icon}</em><span><b>{label}</b><small>{note}</small></span></button>)}
+                {INFRA.map(([label,note,icon])=><button key={label} onClick={()=>{openInfrastructure(label,note);setStatus(`${label} · ${selectedBusiness?.name||note}`);}}><em>{icon}</em><span><b>{label}</b><small>{note}</small></span></button>)}
               </div>
             </section>
 
@@ -545,6 +765,22 @@ export default function LivingMapGame(){
               <span><i className="violet"/>TRANSVERSALES / INTELIGENCIA</span>
               <span><i className="gray"/>INFRAESTRUCTURA</span>
             </aside>
+
+            {inspector ? (
+              <aside className="cellLens" aria-label="Reflejo de la célula activa">
+                <div className="cellLensHead">
+                  <div><span>{inspector.kicker}</span><h3>{inspector.title}</h3></div>
+                  <button onClick={()=>setInspector(null)} aria-label="Cerrar">×</button>
+                </div>
+                {inspector.summary ? <p className="cellLensSummary">{inspector.summary}</p> : null}
+                {inspector.items?.length ? <div className="cellLensItems">{inspector.items.map((item,i)=><div key={i}><i/><span>{item}</span></div>)}</div> : null}
+                {inspector.links?.length ? <div className="cellLensLinks">{inspector.links.map(link=><a key={link.href} href={link.href} target="_blank" rel="noreferrer">{link.label} ↗</a>)}</div> : null}
+                <div className="cellLensActions">
+                  <a href={worldUrl(selectedBusiness,inspector.dimension,inspector.modelId)} target="_blank" rel="noreferrer">Abrir en LINK WORLD →</a>
+                  <small>GAME observa · LINK WORLD trabaja · ChatGPT / modo Dios resuelve</small>
+                </div>
+              </aside>
+            ) : null}
 
             <aside className="mapMode">
               <button className={theme==="day"?"active":""} onClick={()=>setTheme("day")} title="Día">☀</button>

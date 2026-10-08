@@ -6,7 +6,7 @@ import { hasSupabaseConfig, supabase } from "../lib/supabase";
 
 const APP_BASES = {
   linkcontrolgeneral: "https://linkcontrolgeneral.vercel.app",
-  linkrrss: "https://linkrrss.vercel.app",
+  linkrrss: "https://linkrrss.gonzalogaraymunoz.workers.dev",
   "hotel-experience": "https://hotel-experience.vercel.app",
   "ventas-hotelexperience": "https://ventas-hotelexperience.vercel.app",
   taxihotel: "https://taxihotel.vercel.app",
@@ -17,6 +17,7 @@ const NAV = [
   ["mundo", "◎", "Mundo"],
   ["modelos", "◈", "Modelos"],
   ["negocios", "□", "Células"],
+  ["mar", "≈", "MAR"],
   ["misiones", "◇", "Pendientes"],
   ["tableros", "▦", "Mesas"],
   ["cron", "◷", "Ritmos"],
@@ -397,7 +398,7 @@ function BusinessInspector({ business, gameState, rrssProfile, progress, actions
       <div className="actionStack">
         <button className="secondaryButton" onClick={() => onShowMap(business)}>Ubicar en territorio</button>
         {website ? <a className="secondaryButton" href={website} target="_blank" rel="noreferrer">Abrir sistema del negocio ↗</a> : null}
-        <a className="secondaryButton" href={`https://linkrrss.vercel.app/?business=${encodeURIComponent(business.id)}&section=${rrssProfile ? "home" : "connections"}`} target="_blank" rel="noreferrer">{rrssProfile ? "Abrir LINKRRSS ↗" : "Conectar entrada LINKRRSS ↗"}</a>
+        <a className="secondaryButton" href={`https://linkrrss.gonzalogaraymunoz.workers.dev/?business=${encodeURIComponent(business.id)}&section=${rrssProfile ? "home" : "connections"}`} target="_blank" rel="noreferrer">{rrssProfile ? "Abrir LINKRRSS ↗" : "Conectar entrada LINKRRSS ↗"}</a>
       </div>
     </aside>
   );
@@ -625,7 +626,7 @@ function MapToolsPanel({ business, rrssProfile, onOpenFullBusiness }) {
       <div className="toolModuleList">
         {business ? <button onClick={() => onOpenFullBusiness(business)}><b>Ficha completa</b><span>Identidad, modelo y contexto del negocio</span></button> : null}
         {business?.website ? <a href={business.website} target="_blank" rel="noreferrer"><b>Sitio / sistema</b><span>{business.website}</span></a> : null}
-        {rrssProfile ? <a href="https://linkrrss.vercel.app" target="_blank" rel="noreferrer"><b>LINKRRSS</b><span>Conversaciones, publicaciones y señales</span></a> : null}
+        {rrssProfile ? <a href="https://linkrrss.gonzalogaraymunoz.workers.dev" target="_blank" rel="noreferrer"><b>LINKRRSS</b><span>Conversaciones, publicaciones y señales</span></a> : null}
         <a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer"><b>Control Central</b><span>Fuente viva y coordinación LINK</span></a>
       </div>
     </div>
@@ -824,6 +825,178 @@ function BusinessFunnel({ models = [], stagesByModel, evidenceByModel, businessN
 }
 
 
+
+function MarPanel({ business, businesses, marData, onSelectBusiness }) {
+  if (!business) return null;
+
+  const profileById = new Map((marData.profiles || []).map(row => [row.id, row]));
+  const sourceById = new Map((marData.sources || []).map(row => [row.id, row]));
+  const accounts = (marData.accounts || []).filter(account => {
+    const source = sourceById.get(account.source_id);
+    const profile = source ? profileById.get(source.profile_id) : null;
+    return profile?.business_id === business.id;
+  });
+  const accountIds = new Set(accounts.map(row => row.id));
+  const conversations = (marData.conversations || [])
+    .filter(row => accountIds.has(row.account_id))
+    .sort((a,b) => new Date(b.last_message_at || b.updated_at || 0) - new Date(a.last_message_at || a.updated_at || 0));
+  const leads = (marData.leads || [])
+    .filter(row => row.business_id === business.id)
+    .sort((a,b) => Number(b.effective_priority || b.score || 0) - Number(a.effective_priority || a.score || 0));
+  const briefs = (marData.briefs || []).filter(row => row.business_id === business.id && row.status !== "archived");
+
+  const inferred = accounts.map(account => ({
+    key: account.platform,
+    label: account.display_name || account.username || account.platform,
+    channel: account.platform,
+    status: account.status === "connected" ? "connected" : "pending",
+    strategy: "Canal detectado desde LINKRRSS."
+  }));
+  const declared = Array.isArray(business.owned_facts?.mar_capabilities) ? business.owned_facts.mar_capabilities : [];
+  const capabilities = declared.length ? declared : inferred;
+
+  const now = Date.now();
+  const live7d = conversations.filter(row => row.last_message_at && now - new Date(row.last_message_at).getTime() <= 7 * 86400000);
+  const unread = conversations.filter(row => Number(row.unread_count || 0) > 0);
+  const connected = capabilities.filter(row => ["connected","active"].includes(String(row.status || ""))).length;
+
+  const accountById = new Map(accounts.map(row => [row.id, row]));
+  const normalizedLeads = leads.map(row => ({
+    ...row,
+    _natural: String(row.natural_name || row.identity_label || "").trim().toLowerCase(),
+    _contact: String(row.contact_point || "").trim().toLowerCase()
+  }));
+
+  function matchLead(conversation) {
+    const values = [
+      conversation.participant_name,
+      conversation.participant_username,
+      conversation.participant_id
+    ].map(v => String(v || "").trim().toLowerCase()).filter(Boolean);
+    return normalizedLeads.find(lead => values.some(v => v === lead._natural || v === lead._contact)) || null;
+  }
+
+  function capabilityTone(status) {
+    if (["connected","active"].includes(String(status))) return "good";
+    if (status === "not_applicable") return "neutral";
+    if (["planned","pending","disconnected"].includes(String(status))) return "warn";
+    return "neutral";
+  }
+
+  return (
+    <section className="contentView marView">
+      <div className="viewHead">
+        <div>
+          <span className="sectionKicker">CONCHA · ETAPA 1</span>
+          <h1>MAR</h1>
+          <p className="marSubtitle">Capacidades del negocio → actividad viva → aduana LINK ID → prospecto.</p>
+        </div>
+        <div className="marBusinessPicker">
+          {businesses.map(row => (
+            <button key={row.id} className={row.id === business.id ? "active" : ""} onClick={() => onSelectBusiness(row.id)}>
+              {row.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="marKpis">
+        <div><span>capacidades activas</span><b>{connected}/{capabilities.length || 0}</b></div>
+        <div><span>conversaciones</span><b>{conversations.length}</b></div>
+        <div><span>actividad 7 días</span><b>{live7d.length}</b></div>
+        <div><span>sin leer</span><b>{unread.length}</b></div>
+        <div><span>LINK ID / prospectos</span><b>{leads.length}</b></div>
+      </div>
+
+      <div className="marGrid">
+        <section className="marPanel marCapabilities">
+          <div className="marPanelHead">
+            <div><span className="sectionKicker">ADN DE MARKETING</span><h2>{business.name}</h2></div>
+            <small>{briefs.length ? briefs.length + " brief(s) activos" : "sin brief activo"}</small>
+          </div>
+          <div className="marCapabilityList">
+            {capabilities.length ? capabilities.map((cap, i) => (
+              <article key={cap.key || i}>
+                <div>
+                  <b>{cap.label || cap.key}</b>
+                  <small>{cap.strategy || "Capacidad MAR declarada."}</small>
+                </div>
+                <StatusPill tone={capabilityTone(cap.status)}>
+                  {cap.status === "not_applicable" ? "no aplica" : String(cap.status || "definir").replaceAll("_"," ")}
+                </StatusPill>
+              </article>
+            )) : <div className="marEmpty">Esta célula todavía no declaró sus capacidades MAR.</div>}
+          </div>
+          {briefs.length ? (
+            <div className="marBriefs">
+              {briefs.slice(0,3).map(brief => (
+                <div key={brief.id}><span>{brief.primary_channel || "canal"}</span><b>{brief.name}</b><small>{brief.capture_rule || brief.offer || "Brief activo"}</small></div>
+              ))}
+            </div>
+          ) : null}
+        </section>
+
+        <section className="marPanel marPulse">
+          <div className="marPanelHead">
+            <div><span className="sectionKicker">PULSO VIVO</span><h2>Señales que están entrando</h2></div>
+            <a href="https://linkrrss.gonzalogaraymunoz.workers.dev" target="_blank" rel="noreferrer">Abrir LINKRRSS ↗</a>
+          </div>
+          <div className="marConversationList">
+            {conversations.slice(0,18).map(row => {
+              const account = accountById.get(row.account_id);
+              const matched = matchLead(row);
+              return (
+                <article key={row.id} className={Number(row.unread_count || 0) > 0 ? "unread" : ""}>
+                  <div className="marConversationChannel">
+                    <span>{account?.platform || "canal"}</span>
+                    <small>{fmtDate(row.last_message_at || row.updated_at)}</small>
+                  </div>
+                  <div className="marConversationBody">
+                    <b>{row.participant_name || row.participant_username || "Persona sin identificar"}</b>
+                    <p>{row.last_message || "Sin vista previa del mensaje."}</p>
+                  </div>
+                  <div className="marCustomsState">
+                    {matched ? <StatusPill tone="good">{matched.universal_code || "LINK ID"}</StatusPill> : <StatusPill tone="warn">aduana</StatusPill>}
+                    {Number(row.unread_count || 0) > 0 ? <small>{row.unread_count} sin leer</small> : null}
+                  </div>
+                </article>
+              );
+            })}
+            {!conversations.length ? <div className="marEmpty">No hay conversaciones recuperadas para esta célula.</div> : null}
+          </div>
+        </section>
+      </div>
+
+      <section className="marPanel marCustoms">
+        <div className="marPanelHead">
+          <div><span className="sectionKicker">ADUANA LINK ID</span><h2>Prospectos que ya cruzaron</h2></div>
+          <small>{leads.length} identidades trazables</small>
+        </div>
+        <div className="marLeadGrid">
+          {leads.slice(0,12).map(row => (
+            <article key={row.lead_id || row.identity_id}>
+              <div className="marLeadTop">
+                <StatusPill tone={Number(row.effective_priority || row.score || 0) >= 70 ? "warn" : "neutral"}>
+                  {row.universal_code || "LINK ID"}
+                </StatusPill>
+                <span>{row.contact_channel || row.source || "canal"}</span>
+              </div>
+              <h3>{row.natural_name || row.identity_label || "Persona identificada"}</h3>
+              <p>{row.interested_product || row.interested_pack || row.recommended_action || "Sin producto definido todavía."}</p>
+              <div className="marLeadMeta">
+                <span>{String(row.stage || "prospecto").replaceAll("_"," ")}</span>
+                <span>{Number(row.days_idle || 0)} d sin actividad</span>
+                <b>{Math.round(Number(row.effective_priority || row.score || 0))}</b>
+              </div>
+            </article>
+          ))}
+          {!leads.length ? <div className="marEmpty">Todavía no hay prospectos LINK ID asignados a esta célula.</div> : null}
+        </div>
+      </section>
+    </section>
+  );
+}
+
 export default function GameShell() {
   const [view, setView] = useState("mundo");
   const [businesses, setBusinesses] = useState([]);
@@ -842,6 +1015,7 @@ export default function GameShell() {
   const [mapDockCollapsed, setMapDockCollapsed] = useState(false);
   const [mapDockPanel, setMapDockPanel] = useState("ficha");
   const [externalPlace, setExternalPlace] = useState(null);
+  const [marData, setMarData] = useState({ briefs: [], profiles: [], sources: [], accounts: [], conversations: [], leads: [] });
 
   const selected = useMemo(
     () => businesses.find(row => row.id === selectedId) || businesses[0] || null,
@@ -1057,6 +1231,34 @@ export default function GameShell() {
       }
     });
   }, [member]);
+
+  const loadMar = useCallback(async () => {
+    if (!supabase || !member) return;
+    const [briefs, profiles, sources, accounts, conversations, leads] = await Promise.all([
+      supabase.from("link_marketing_briefs").select("id,business_id,name,status,audience,benefit,hook,offer,capture_rule,primary_channel,target_leads,budget_clp,metadata,updated_at").order("updated_at",{ascending:false}).limit(120),
+      supabase.from("link_rrss_profiles").select("id,business_id,name,slug,status,metadata,updated_at").order("updated_at",{ascending:false}),
+      supabase.from("link_rrss_sources").select("id,profile_id,provider,label,status,external_profile_id,capabilities,last_synced_at,last_error,metadata,updated_at").order("updated_at",{ascending:false}),
+      supabase.from("link_rrss_accounts").select("id,source_id,external_account_id,platform,username,display_name,status,can_post,can_analytics,last_synced_at,metadata,updated_at").order("updated_at",{ascending:false}),
+      supabase.from("link_rrss_conversations").select("id,account_id,external_conversation_id,participant_id,participant_name,participant_username,status,unread_count,last_message,last_message_at,last_seen_at,updated_at").order("last_message_at",{ascending:false}).limit(400),
+      supabase.from("link_contactable_lead_workboard_v").select("identity_id,lead_id,universal_code,person_id,person_universal_code,identity_label,identity_basis,business_id,business_name,source,source_page,stage,score,interested_pack,interested_product,last_activity_at,days_idle,effective_priority,recommended_action,natural_name,contact_point,contact_channel,quality_state").order("effective_priority",{ascending:false}).limit(220)
+    ]);
+    const reads=[briefs,profiles,sources,accounts,conversations,leads];
+    const failures=reads.filter(row=>row?.error);
+    if (failures.length) console.warn("LINK WORLD GAME · MAR read errors", failures.map(row=>row.error?.message));
+    setMarData({
+      briefs:safeRows(briefs),
+      profiles:safeRows(profiles),
+      sources:safeRows(sources),
+      accounts:safeRows(accounts),
+      conversations:safeRows(conversations),
+      leads:safeRows(leads)
+    });
+  }, [member]);
+
+  useEffect(() => {
+    if (member) loadMar();
+    else setMarData({ briefs: [], profiles: [], sources: [], accounts: [], conversations: [], leads: [] });
+  }, [member, loadMar]);
 
   useEffect(() => {
     if (!supabase) {
@@ -1336,6 +1538,17 @@ export default function GameShell() {
                 onSelectBusiness={handleSelectBusiness}
               />
             </div>
+          ) : null}
+
+          {!loading && view === "mar" ? (
+            member ? (
+              <MarPanel
+                business={selected}
+                businesses={businesses}
+                marData={marData}
+                onSelectBusiness={setSelectedId}
+              />
+            ) : <LockPanel title="MAR · adquisición y membrana" onOpenLogin={() => setLoginOpen(true)} />
           ) : null}
 
           {!loading && view === "modelos" ? (

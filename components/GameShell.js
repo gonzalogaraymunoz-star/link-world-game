@@ -825,13 +825,21 @@ export default function GameShell() {
   }, [theme]);
 
   function commitView(dimension, business, model) {
+    // Update the current route synchronously, so rapid navigation never gets dropped.
+    routeRef.current = {dimension,business,model};
     setViewState(dimension);
     setBusinessContext(business);
     setModelContext(model);
     if (business) setSelectedId(business);
     if (typeof window !== 'undefined') {
-      const nextRoute = writeWorldRoute(window.location.search,{dimension,business,model});
-      const finalRoute = dimension === 'concha' ? nextRoute.replace(/([?&])surface=mesa(&|$)/, (_, lead, tail) => tail ? lead : '') : nextRoute;
+      const params = new URLSearchParams(window.location.search);
+      const keepDesk = dimension === 'concha' &&
+        params.get('surface') === 'mesa' &&
+        !!business;
+      const nextParams = new URLSearchParams(writeWorldRoute(window.location.search,{dimension,business,model}).split('?')[1] || '');
+      if (dimension === 'concha' && !keepDesk) nextParams.delete('surface');
+      if (dimension !== 'concha') nextParams.delete('surface');
+      const finalRoute = window.location.pathname + '?' + nextParams.toString();
       window.history.pushState({},'',finalRoute);
       window.dispatchEvent(new Event('linkworld:route'));
     }
@@ -845,18 +853,12 @@ export default function GameShell() {
       (current.business || null) === (business || null) &&
       (current.model || null) === (model || null)
     ) return;
-    if (navigationMotion !== 'idle') return;
-
     window.clearTimeout(navigationTimer.current);
     window.clearTimeout(settleTimer.current);
-    setNavigationMotion('leaving');
-
-    navigationTimer.current = window.setTimeout(() => {
-      commitView(dimension,business,model);
-      setRailCollapsed(true);
-      setNavigationMotion('arriving');
-      settleTimer.current = window.setTimeout(() => setNavigationMotion('idle'), 560);
-    }, 240);
+    // GAME navigation should remain responsive on consecutive clicks.
+    commitView(dimension,business,model);
+    setRailCollapsed(true);
+    setNavigationMotion('idle');
   }
   useEffect(()=>{
     const restore = ()=>{const r=readWorldRoute(window.location.search);setViewState(r.dimension);setBusinessContext(r.business);setModelContext(r.model);if(r.business)setSelectedId(r.business);setNavigationMotion('idle');};

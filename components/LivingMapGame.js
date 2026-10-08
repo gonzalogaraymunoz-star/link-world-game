@@ -236,6 +236,7 @@ export default function LivingMapGame(){
   const [member,setMember]=useState(false);
   const [experiment,setExperiment]=useState(null);
   const [inspector,setInspector]=useState(null);
+  const [lensFolded,setLensFolded]=useState(false);
   const [selectedBusiness,setSelectedBusiness]=useState(null);
   const [selectedStage,setSelectedStage]=useState(null);
   const [activeGov,setActiveGov]=useState(null);
@@ -368,6 +369,7 @@ export default function LivingMapGame(){
     const profile=selectedProfile;
     const title=payload.title || payload.label || selectedBusiness.name;
     const base={kind,title,kicker:payload.kicker||selectedBusiness.name,summary:payload.summary||"",items:payload.items||[],dimension:payload.dimension||"concha",modelId:payload.modelId||null,links:payload.links||[]};
+    setLensFolded(false);
     setInspector(base);
   }
 
@@ -789,10 +791,13 @@ export default function LivingMapGame(){
             </aside>
 
             {inspector ? (
-              <aside className="cellLens" aria-label="Reflejo de la célula activa">
+              <aside className={`cellLens ${lensFolded?"isFolded":""}`} aria-label="Reflejo de la célula activa">
                 <div className="cellLensHead">
                   <div><span>{inspector.kicker}</span><h3>{inspector.title}</h3></div>
-                  <button onClick={()=>setInspector(null)} aria-label="Cerrar">×</button>
+                  <div className="cellLensControls">
+                    <button onClick={()=>setLensFolded(value=>!value)} aria-label={lensFolded?"Desplegar panel":"Plegar panel"} aria-expanded={!lensFolded} title={lensFolded?"Desplegar panel":"Plegar para ver el mapa completo"}>{lensFolded?"▸":"‹"}</button>
+                    <button onClick={()=>setInspector(null)} aria-label="Cerrar panel" title="Cerrar panel">×</button>
+                  </div>
                 </div>
                 {inspector.summary ? <p className="cellLensSummary">{inspector.summary}</p> : null}
                 {inspector.items?.length ? <div className="cellLensItems">{inspector.items.map((item,i)=><div key={i}><i/><span>{item}</span></div>)}</div> : null}

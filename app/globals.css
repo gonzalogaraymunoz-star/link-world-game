@@ -2251,3 +2251,112 @@ button, input { font: inherit; }
   .stageActionGrid,
   .funnelTrack { grid-template-columns: 1fr; }
 }
+
+
+/* MAR · membrana, Pulso Vivo y aduana LINK ID */
+.marView { display: grid; gap: 14px; }
+.marSubtitle { margin: 6px 0 0; color: rgba(255,255,255,.43); font-size: 10px; line-height: 1.5; }
+.marBusinessPicker { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 520px; }
+.marBusinessPicker button {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: rgba(255,255,255,.02);
+  color: rgba(255,255,255,.5);
+  padding: 7px 9px;
+  font-size: 7px;
+  cursor: pointer;
+}
+.marBusinessPicker button.active {
+  border-color: rgba(216,255,114,.28);
+  background: rgba(216,255,114,.055);
+  color: #d8ff72;
+}
+.marKpis {
+  display: grid;
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 13px;
+  overflow: hidden;
+  background: rgba(255,255,255,.012);
+}
+.marKpis > div { min-height: 76px; padding: 12px; border-right: 1px solid rgba(255,255,255,.06); display: grid; align-content: center; gap: 4px; }
+.marKpis > div:last-child { border-right: 0; }
+.marKpis span { color: rgba(255,255,255,.32); font-size: 7px; text-transform: uppercase; letter-spacing: .06em; }
+.marKpis b { color: #d8ff72; font-size: 22px; font-weight: 500; }
+.marGrid { display: grid; grid-template-columns: minmax(300px,.8fr) minmax(0,1.4fr); gap: 12px; align-items: start; }
+.marPanel {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 14px;
+  background: rgba(255,255,255,.012);
+  padding: 14px;
+}
+.marPanelHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+.marPanelHead h2 { margin: 5px 0 0; font-size: 17px; font-weight: 500; }
+.marPanelHead > small,
+.marPanelHead > a { color: rgba(255,255,255,.38); font-size: 7px; text-decoration: none; }
+.marPanelHead > a:hover { color: #d8ff72; }
+.marCapabilityList { display: grid; gap: 6px; }
+.marCapabilityList article {
+  min-height: 66px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.marCapabilityList article > div { display: grid; gap: 4px; }
+.marCapabilityList b { font-size: 10px; font-weight: 500; }
+.marCapabilityList small { color: rgba(255,255,255,.38); font-size: 7px; line-height: 1.45; }
+.marBriefs { display: grid; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.06); }
+.marBriefs > div { display: grid; grid-template-columns: 80px minmax(0,1fr); gap: 3px 8px; padding: 7px 0; }
+.marBriefs span { grid-row: 1 / span 2; color: rgba(216,255,114,.55); font-size: 7px; }
+.marBriefs b { font-size: 8px; font-weight: 500; }
+.marBriefs small { color: rgba(255,255,255,.34); font-size: 7px; }
+.marConversationList { display: grid; gap: 5px; }
+.marConversationList article {
+  display: grid;
+  grid-template-columns: 90px minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 9px;
+  padding: 9px 10px;
+  background: rgba(255,255,255,.008);
+}
+.marConversationList article.unread { border-color: rgba(255,179,106,.18); background: rgba(255,179,106,.025); }
+.marConversationChannel { display: grid; gap: 3px; }
+.marConversationChannel span { color: rgba(216,255,114,.72); font-size: 7px; text-transform: uppercase; }
+.marConversationChannel small { color: rgba(255,255,255,.26); font-size: 6px; }
+.marConversationBody { min-width: 0; display: grid; gap: 3px; }
+.marConversationBody b { font-size: 9px; font-weight: 500; }
+.marConversationBody p { margin: 0; color: rgba(255,255,255,.42); font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.marCustomsState { min-width: 80px; display: grid; justify-items: end; gap: 4px; }
+.marCustomsState small { color: rgba(255,179,106,.55); font-size: 6px; }
+.marCustoms { padding-bottom: 16px; }
+.marLeadGrid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; }
+.marLeadGrid article { min-height: 150px; border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 10px; display: grid; align-content: start; gap: 7px; }
+.marLeadTop { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.marLeadTop > span { color: rgba(255,255,255,.28); font-size: 6px; }
+.marLeadGrid h3 { margin: 1px 0 0; font-size: 11px; font-weight: 500; }
+.marLeadGrid p { margin: 0; min-height: 32px; color: rgba(255,255,255,.4); font-size: 7px; line-height: 1.45; }
+.marLeadMeta { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 5px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.055); }
+.marLeadMeta span { color: rgba(255,255,255,.31); font-size: 6px; }
+.marLeadMeta b { color: #d8ff72; font-size: 13px; font-weight: 500; }
+.marEmpty { padding: 18px; color: rgba(255,255,255,.32); font-size: 8px; text-align: center; }
+
+@media (max-width: 1100px) {
+  .marKpis { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .marKpis > div { border-bottom: 1px solid rgba(255,255,255,.06); }
+  .marGrid { grid-template-columns: 1fr; }
+  .marLeadGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 680px) {
+  .marBusinessPicker { justify-content: flex-start; }
+  .marKpis { grid-template-columns: 1fr 1fr; }
+  .marConversationList article { grid-template-columns: 72px minmax(0,1fr); }
+  .marCustomsState { grid-column: 2; justify-items: start; grid-auto-flow: column; justify-content: start; }
+  .marLeadGrid { grid-template-columns: 1fr; }
+}

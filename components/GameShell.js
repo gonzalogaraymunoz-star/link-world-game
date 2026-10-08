@@ -13,6 +13,15 @@ const APP_BASES = {
   "link-world": "https://link-world-delta.vercel.app"
 };
 
+function rrssUrl(business, section = "home", conversationId = null) {
+  const url = new URL(APP_BASES.linkrrss);
+  if (business?.id || business?.slug) url.searchParams.set("business", business.id || business.slug);
+  url.searchParams.set("dimension", "rrss");
+  url.searchParams.set("section", section);
+  if (conversationId) url.searchParams.set("conversation_id", conversationId);
+  return url.toString();
+}
+
 const NAV = [
   ["mundo", "◎", "Mundo"],
   ["modelos", "◈", "Modelos"],
@@ -398,7 +407,7 @@ function BusinessInspector({ business, gameState, rrssProfile, progress, actions
       <div className="actionStack">
         <button className="secondaryButton" onClick={() => onShowMap(business)}>Ubicar en territorio</button>
         {website ? <a className="secondaryButton" href={website} target="_blank" rel="noreferrer">Abrir sistema del negocio ↗</a> : null}
-        <a className="secondaryButton" href={`https://linkrrss.gonzalogaraymunoz.workers.dev/?business=${encodeURIComponent(business.id)}&section=${rrssProfile ? "home" : "connections"}`} target="_blank" rel="noreferrer">{rrssProfile ? "Abrir LINKRRSS ↗" : "Conectar entrada LINKRRSS ↗"}</a>
+        <a className="secondaryButton" href={rrssUrl(business, rrssProfile ? "home" : "connections")} target="_blank" rel="noreferrer">{rrssProfile ? "Abrir LINKRRSS ↗" : "Conectar entrada LINKRRSS ↗"}</a>
       </div>
     </aside>
   );
@@ -626,7 +635,7 @@ function MapToolsPanel({ business, rrssProfile, onOpenFullBusiness }) {
       <div className="toolModuleList">
         {business ? <button onClick={() => onOpenFullBusiness(business)}><b>Ficha completa</b><span>Identidad, modelo y contexto del negocio</span></button> : null}
         {business?.website ? <a href={business.website} target="_blank" rel="noreferrer"><b>Sitio / sistema</b><span>{business.website}</span></a> : null}
-        {rrssProfile ? <a href="https://linkrrss.gonzalogaraymunoz.workers.dev" target="_blank" rel="noreferrer"><b>LINKRRSS</b><span>Conversaciones, publicaciones y señales</span></a> : null}
+        {rrssProfile ? <a href={rrssUrl(business, "home")} target="_blank" rel="noreferrer"><b>LINKRRSS</b><span>Conversaciones, publicaciones y señales</span></a> : null}
         <a href="https://linkcontrolgeneral.vercel.app" target="_blank" rel="noreferrer"><b>Control Central</b><span>Fuente viva y coordinación LINK</span></a>
       </div>
     </div>
@@ -939,7 +948,7 @@ function MarPanel({ business, businesses, marData, onSelectBusiness }) {
         <section className="marPanel marPulse">
           <div className="marPanelHead">
             <div><span className="sectionKicker">PULSO VIVO</span><h2>Señales que están entrando</h2></div>
-            <a href="https://linkrrss.gonzalogaraymunoz.workers.dev" target="_blank" rel="noreferrer">Abrir LINKRRSS ↗</a>
+            <a href={rrssUrl(business, "inbox")} target="_blank" rel="noreferrer">Abrir LINKRRSS ↗</a>
           </div>
           <div className="marConversationList">
             {conversations.slice(0,18).map(row => {
@@ -952,7 +961,7 @@ function MarPanel({ business, businesses, marData, onSelectBusiness }) {
                     <small>{fmtDate(row.last_message_at || row.updated_at)}</small>
                   </div>
                   <div className="marConversationBody">
-                    <b>{row.participant_name || row.participant_username || "Persona sin identificar"}</b>
+                    <a href={rrssUrl(business, "inbox", row.id)} target="_blank" rel="noreferrer" title="Abrir conversación en LINK RRSS"><b>{row.participant_name || row.participant_username || "Persona sin identificar"} ↗</b></a>
                     <p>{row.last_message || "Sin vista previa del mensaje."}</p>
                   </div>
                   <div className="marCustomsState">

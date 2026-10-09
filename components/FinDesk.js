@@ -128,7 +128,20 @@ export default function FinDesk() {
   const [drawer, setDrawer] = useState(null);
   const [draft, setDraft] = useState({});
   const [collapsed, setCollapsed] = useState(false);
+  const [theme, setTheme] = useState("day");
   const [importing, setImporting] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("link-fin-appearance");
+      if (["day", "gray", "night"].includes(saved)) setTheme(saved);
+    } catch { /* Keep the default appearance when storage is unavailable. */ }
+  }, []);
+
+  const chooseTheme = value => {
+    setTheme(value);
+    try { window.localStorage.setItem("link-fin-appearance", value); } catch { /* Optional preference. */ }
+  };
 
   const canEdit = role === "operator" || role === "director";
   const director = role === "director";
@@ -324,7 +337,7 @@ export default function FinDesk() {
   const opWithoutPay = targetOperations.filter(o => !payables.some(p => p.operation_id === o.id)).length;
   const inputFile = <label className="fanaUpload">Importar servicios CSV <input type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" disabled={importing || !canEdit} onChange={e => { importCsv(e.target.files?.[0]); e.target.value = ""; }} /></label>;
 
-  return <div className={"finDesk " + (collapsed ? "fanaCollapsed" : "")}>
+  return <div className={"finDesk fanaTheme-" + theme + (collapsed ? " fanaCollapsed" : "")}>
     <aside className="fanaSidebar">
       <a className="fanaLogo" href="/"><span className="fanaMark">F</span><span className="fanaLogoWords"><b>LINK FIN</b><small>Control financiero</small></span></a>
       <button className="fanaCollapse" onClick={() => setCollapsed(v => !v)} title="Contraer menú">{collapsed ? "☰" : "☷"}</button>
@@ -336,9 +349,9 @@ export default function FinDesk() {
       <div className="fanaSideFoot"><span className="fanaRole">{director ? "Dirección FIN" : role === "operator" ? "Operador FIN" : "Consulta FIN"}</span><a href="/">↖ <span className="fanaNavLabel">LINK WORLD</span></a><button onClick={() => supabase.auth.signOut()}>⇥ <span className="fanaNavLabel">Salir</span></button></div>
     </aside>
     <main className="fanaMain">
-      <header className="fanaTopbar"><div><span className="fanaEyebrow">LINK WORLD / FIN / MESA ANA</span><strong>{MENUS.find(x => x[0] === section)?.[1]}</strong></div><div className="fanaTopActions"><span className="fanaLive">● Datos persistentes</span><button disabled={busy} onClick={refresh} className="fanaSecondary">↻ Actualizar</button></div></header>
+      <header className="fanaTopbar"><div><span className="fanaEyebrow">LINK WORLD / FIN / MESA ANA</span><strong>{MENUS.find(x => x[0] === section)?.[1]}</strong></div><div className="fanaTopActions"><span className="fanaLive">● Datos persistentes</span><div className="fanaThemeModes" role="group" aria-label="Apariencia de FIN">{[["day", "☼", "Día"], ["gray", "▦", "Mineral"], ["night", "☾", "Noche"]].map(([id, glyph, label]) => <button key={id} type="button" aria-label={"Modo " + label} title={"Modo " + label} aria-pressed={theme === id} className={theme === id ? "active" : ""} onClick={() => chooseTheme(id)}>{glyph}</button>)}</div><button disabled={busy} onClick={refresh} className="fanaSecondary">↻ Actualizar</button></div></header>
       <div className="fanaContent">
-        <div className="fanaTitle"><div><span className="fanaEyebrow">FIN · DIRECCIÓN Y OPERACIÓN HUMANA</span><h1>Control financiero</h1><p>Operación → obligación → documento → autorización → pago comprobado. Sin montos inventados.</p></div><span className="fanaBadge">Mesa de Ana</span></div>
+        <div className="fanaTitle"><div><span className="fanaEyebrow">LINK WORLD / FIN / CONTROL ECONÓMICO</span><h1>Control financiero</h1><p>Operación → obligación → documento → autorización → pago comprobado. Sin montos inventados.</p></div><span className="fanaBadge">Mesa de Ana</span></div>
         <div className="fanaFilters"><label>Negocio <select value={bizId} onChange={e => setBizId(e.target.value)}>{businesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label><label>Período <select value={period} onChange={e => setPeriod(e.target.value)}><option value="2026-10">Octubre 2026</option><option value="2026-09">Septiembre 2026</option><option value="all">Todo el historial</option></select></label><label className="fanaSearch">Buscar <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Reserva, proveedor, tour, documento…" /></label></div>
         {error && <div className="fanaError" role="alert">{error} <button onClick={() => setError("")}>×</button></div>}
         {notice && <div className="fanaNotice" role="status">{notice} <button onClick={() => setNotice("")}>×</button></div>}

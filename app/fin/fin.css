@@ -9,3 +9,415 @@
 .fanaOverlay{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.64);display:flex;justify-content:flex-end}.fanaDrawer{width:min(490px,100%);height:100%;overflow:auto;background:#111814;border-left:1px solid rgba(216,255,114,.23);padding:26px;box-shadow:-20px 0 70px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:15px}.fanaDrawerHead{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;border-bottom:1px solid var(--f-border);padding-bottom:18px}.fanaDrawerHead h2{font-size:22px;line-height:1.2;font-weight:500;margin:4px 0 0}.fanaDrawerHead button{color:var(--f-white);background:#263027;border:0;border-radius:8px;font-size:21px;width:32px;height:32px}.fanaDrawerMeta{display:flex;flex-wrap:wrap;gap:7px;font-size:10px;color:#b2c3b4}.fanaDrawerMeta>span:not(.fanaPill){border:1px solid var(--f-border);background:#1c241d;padding:5px 8px;border-radius:7px}.fanaDrawerTwo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.fanaDrawerActions{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}.fanaPrimary{background:var(--f-accent)!important;color:#11170f!important;padding:10px 14px!important;border:0!important;border-radius:9px!important;font-size:11px!important;font-weight:600!important}.fanaCalc{border:1px solid rgba(216,255,114,.2);background:#182119;padding:14px;border-radius:12px}.fanaCalc>span{color:var(--f-accent);font-size:10px}.fanaCalc>div{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:13px}.fanaCalc>div>div{display:flex;flex-direction:column;gap:3px}.fanaCalc small{font-size:10px;color:#9cad9e}.fanaCalc strong{font-size:16px;font-weight:500}.fanaCalc p{font-size:10px;color:#92a594;margin:13px 0 0;line-height:1.5}.fanaLogin{min-height:100vh;display:grid;place-items:center;grid-column:1/-1;padding:20px}.fanaLoginPanel{width:min(420px,100%);border:1px solid var(--f-border);background:#151b17;padding:28px;border-radius:16px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}.fanaLoginPanel h1{font-size:28px;font-weight:500;margin:3px 0 0}.fanaLoginPanel p{color:var(--f-muted);font-size:12px;line-height:1.6}.fanaLoginPanel form{width:100%;display:grid;gap:14px;margin:15px 0}.fanaLoginPanel form label{color:var(--f-muted);display:grid;gap:5px;font-size:11px}.fanaLoginPanel input{background:#0d130f!important;border:1px solid var(--f-border);color:white!important;border-radius:8px;padding:12px;width:100%}.fanaLoginPanel a{font-size:11px}.fanaLoading{grid-template-columns:1fr;display:grid;place-items:center;color:var(--f-accent)}
 @media(max-width:1120px){.fanaKpis{grid-template-columns:repeat(2,minmax(0,1fr))}.fanaHomeGrid{grid-template-columns:1fr}.fanaWide{grid-column:auto}.fanaFilters{grid-template-columns:repeat(2,minmax(0,1fr))}.fanaSearch{grid-column:1/-1}}
 @media(max-width:760px){.finDesk,.fanaCollapsed{display:block;padding-bottom:56px}.fanaSidebar{height:auto;position:fixed;bottom:0;left:0;right:0;top:auto;z-index:45;flex-direction:row;justify-content:center;padding:7px;background:#0b0e0d;border-right:0;border-top:1px solid var(--f-border)}.fanaLogo,.fanaCollapse,.fanaSideLabel,.fanaSideFoot{display:none!important}.fanaNav{width:100%;flex-direction:row!important;justify-content:space-between;overflow:auto;gap:1px}.fanaNav button{flex:1;min-width:53px;padding:6px 4px!important;display:flex;flex-direction:column;gap:2px;font-size:9px;text-align:center}.fanaNavLabel,.fanaCollapsed .fanaNavLabel{display:block}.fanaGlyph{font-size:17px}.fanaTopbar{height:60px;padding:8px 15px}.fanaLive{display:none}.fanaContent{padding:22px 13px 75px}.fanaTitle{flex-direction:column}.fanaFilters{grid-template-columns:1fr}.fanaSearch{grid-column:auto}.fanaKpis{gap:7px}.fanaKpi{min-height:92px;padding:11px}.fanaKpi strong{font-size:22px}.fanaPanel{padding:14px}.fanaExceptionGrid{grid-template-columns:1fr}.fanaDrawer{padding:20px 15px}.fanaFooter{display:block}.fanaDrawerTwo{grid-template-columns:1fr}.fanaTable{min-width:650px}}
+
+
+/* LINK WORLD GAME · unified Architectural Ledger appearance.
+   Reuses the live GAME's paper/ink/sage language and three appearance modes.
+   Presentation only: financial calculations, evidence, permissions and RLS remain unchanged. */
+.finDesk {
+  color-scheme: light;
+  --f-bg: #f5f3ee;
+  --f-surface: #f5f3ee;
+  --f-panel: #fffefb;
+  --f-soft: #eaece6;
+  --f-border: #dfe4dc;
+  --f-white: #29332d;
+  --f-muted: #77827b;
+  --f-accent: #466e59;
+  --f-warn: #995b35;
+  --f-fluor: #c8ff3d;
+  --f-sidebar: #fffefb;
+  --f-topbar: rgba(255,254,251,.96);
+  --f-hover: #f0f3ec;
+  --f-input: #fffefb;
+  --f-card-inner: #faf9f5;
+  --f-pill: #f1f3ee;
+  --f-ok-bg: #e5f0e5;
+  --f-ok-border: #cadecb;
+  --f-alert-bg: #fff2e5;
+  --f-alert-border: #e9d4bb;
+  --f-hairline: rgba(41,51,45,.055);
+  --f-focus: #648a77;
+  font-family: Inter,-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font-size: 13px;
+  letter-spacing: -.013em;
+  background: var(--f-bg);
+  color: var(--f-white);
+  grid-template-columns: 208px minmax(0, 1fr);
+  transition: grid-template-columns .23s ease;
+}
+.finDesk.fanaTheme-gray {
+  --f-bg: #e8eae6;
+  --f-surface: #e8eae6;
+  --f-panel: #f4f4f0;
+  --f-sidebar: #f4f4f0;
+  --f-topbar: rgba(244,244,240,.96);
+  --f-border: #cbd3ca;
+  --f-soft: #d7ddd5;
+  --f-hover: #e1e7df;
+  --f-input: #f8f9f5;
+  --f-card-inner: #eef0ea;
+  --f-pill: #e6ebe3;
+}
+.finDesk.fanaTheme-night {
+  color-scheme: dark;
+  --f-bg: #141c18;
+  --f-surface: #141c18;
+  --f-panel: #1d2720;
+  --f-sidebar: #1d2720;
+  --f-topbar: rgba(29,39,32,.96);
+  --f-soft: #2b3930;
+  --f-border: #3a4a3e;
+  --f-white: #e4eadf;
+  --f-muted: #a5b4a8;
+  --f-accent: #bdd5bc;
+  --f-warn: #ffc18a;
+  --f-hover: #27352b;
+  --f-input: #17221a;
+  --f-card-inner: #1a261e;
+  --f-pill: #27362b;
+  --f-ok-bg: #263e29;
+  --f-ok-border: #496d4d;
+  --f-alert-bg: #3a3028;
+  --f-alert-border: #75614d;
+  --f-hairline: rgba(255,255,255,.06);
+  --f-focus: #c8ff3d;
+}
+.finDesk.fanaCollapsed { grid-template-columns: 62px minmax(0, 1fr); }
+.finDesk h1,.finDesk h2,.finDesk h3,.finDesk .fanaKpi strong,.finDesk .fanaProof strong {
+  font-family: "Space Grotesk",Inter,-apple-system,BlinkMacSystemFont,sans-serif;
+  font-weight: 500;
+}
+.finDesk button,.finDesk input,.finDesk select,.finDesk textarea {
+  font-family: Inter,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+.finDesk button:focus-visible,.finDesk a:focus-visible,
+.finDesk select:focus-visible,.finDesk input:focus-visible,
+.finDesk textarea:focus-visible {
+  outline: 2px solid var(--f-focus);
+  outline-offset: 3px;
+}
+.finDesk ::selection { background: var(--f-fluor); color: #1b1c1c; }
+.finDesk a { color: var(--f-accent); }
+.finDesk .fanaSidebar {
+  background: var(--f-sidebar);
+  border-right: 1px solid var(--f-border);
+  padding: 16px 10px;
+  gap: 22px;
+}
+.finDesk .fanaLogo {
+  gap: 12px;
+  color: var(--f-white)!important;
+}
+.finDesk .fanaMark {
+  background: var(--f-fluor);
+  border: 1px solid #b6e52e;
+  color: #1b1c1c;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: none;
+}
+.finDesk .fanaLogoWords b {
+  font-family: "Space Grotesk",Inter,sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: .075em;
+}
+.finDesk .fanaLogoWords small {
+  color: var(--f-muted);
+  letter-spacing: .06em;
+  font-size: 9px;
+}
+.finDesk .fanaCollapse {
+  border-color: var(--f-border);
+  background: var(--f-panel);
+  color: var(--f-accent);
+  border-radius: 9px;
+}
+.finDesk .fanaCollapse:hover,
+.finDesk .fanaCollapse:focus-visible { background: var(--f-hover); }
+.finDesk .fanaSideLabel {
+  color: var(--f-muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .23em;
+}
+.finDesk .fanaNav button {
+  color: var(--f-muted)!important;
+  background: transparent!important;
+  border: 1px solid transparent!important;
+  border-radius: 10px!important;
+  font-size: 11px;
+  padding: 11px 10px!important;
+  font-weight: 500;
+  transition: background .16s,border-color .16s,color .16s;
+}
+.finDesk .fanaNav button:hover {
+  color: var(--f-white)!important;
+  background: var(--f-hover)!important;
+}
+.finDesk .fanaNav button.active {
+  color: var(--f-accent)!important;
+  background: var(--f-hover)!important;
+  border-color: var(--f-border)!important;
+}
+.finDesk .fanaNav button.active::after {
+  content: "";
+  width: 4px;height: 4px; flex: 0 0 auto;
+  background: var(--f-accent);border-radius: 50%;
+  margin-left: auto;
+}
+.finDesk.fanaCollapsed .fanaNav button.active::after { display: none; }
+.finDesk .fanaGlyph {font-size: 16px; width: 22px; font-weight: 400;}
+.finDesk .fanaSideFoot {border-color: var(--f-border);}
+.finDesk .fanaSideFoot a,.finDesk .fanaSideFoot button {color: var(--f-muted);}
+.finDesk .fanaSideFoot a:hover,.finDesk .fanaSideFoot button:hover {color: var(--f-accent);}
+.finDesk .fanaRole {color: var(--f-accent);}
+
+.finDesk .fanaMain {
+  background: var(--f-surface);
+}
+.finDesk .fanaTopbar {
+  background: var(--f-topbar);
+  border-bottom: 1px solid var(--f-border);
+  height: 65px;
+  backdrop-filter: blur(14px);
+}
+.finDesk .fanaTopbar strong {
+  font-family: "Space Grotesk",Inter,sans-serif;
+  font-size: 13px;font-weight: 500;letter-spacing: -.018em;
+}
+.finDesk .fanaEyebrow {
+  color: var(--f-accent);
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: .20em;
+}
+.finDesk .fanaLive { color: var(--f-accent); font-size: 10px; }
+.finDesk .fanaTopActions {gap: 12px;}
+.finDesk .fanaThemeModes {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--f-border);
+  background: var(--f-soft);
+  border-radius: 999px;
+}
+.finDesk .fanaThemeModes button {
+  height: 29px;width: 29px;min-width: 29px;
+  padding: 0!important;
+  background: transparent;
+  color: var(--f-muted);
+  border: 1px solid transparent;
+  border-radius: 50%;
+  font-size: 15px; line-height: 1;
+  display: inline-grid;place-items: center;
+}
+.finDesk .fanaThemeModes button:hover { color: var(--f-white); }
+.finDesk .fanaThemeModes button.active {
+  background: var(--f-panel);
+  color: var(--f-accent);
+  border-color: var(--f-border);
+  box-shadow: 0 1px 3px var(--f-hairline);
+}
+.finDesk .fanaSecondary {
+  color: var(--f-white)!important;
+  background: var(--f-panel)!important;
+  border: 1px solid var(--f-border)!important;
+  border-radius: 9px!important;
+  font-size: 10px!important;
+}
+.finDesk .fanaSecondary:hover { background: var(--f-hover)!important; border-color: var(--f-accent)!important; }
+
+.finDesk .fanaContent {max-width: 1600px;padding-top: 36px;}
+.finDesk .fanaTitle {margin-bottom: 28px;position: relative; padding-bottom: 25px; border-bottom: 1px solid var(--f-border);}
+.finDesk .fanaTitle h1 {
+  color: var(--f-white);
+  font-size: clamp(35px,4vw,53px);
+  font-weight: 400;
+  letter-spacing: -.05em;
+  margin: 10px 0 9px;
+}
+.finDesk .fanaTitle p {color: var(--f-muted);font-size: 12px;line-height: 1.65;}
+.finDesk .fanaBadge {
+  color: var(--f-accent);
+  background: var(--f-panel);
+  border: 1px solid var(--f-border);
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 10px;
+}
+.finDesk .fanaFilters {gap: 13px; margin-bottom: 22px;}
+.finDesk .fanaFilters label,.finDesk .fanaDrawer label {
+  color: var(--f-muted);font-size: 10px; font-weight: 500;letter-spacing: .02em;
+}
+.finDesk .fanaFilters input,.finDesk .fanaFilters select,
+.finDesk .fanaDrawer input,.finDesk .fanaDrawer textarea,.finDesk .fanaDrawer select {
+  background: var(--f-input)!important;
+  color: var(--f-white)!important;
+  border: 1px solid var(--f-border)!important;
+  border-radius: 9px!important;
+  font-size: 12px!important;
+}
+.finDesk .fanaFilters input:focus,.finDesk .fanaFilters select:focus,
+.finDesk .fanaDrawer input:focus,.finDesk .fanaDrawer select:focus {
+  border-color: var(--f-focus)!important;
+}
+.finDesk .fanaFilters input::placeholder,.finDesk .fanaDrawer input::placeholder {color: var(--f-muted);}
+.finDesk .fanaKpis {gap: 12px;margin-bottom: 18px;}
+.finDesk .fanaKpi {
+  background: var(--f-panel);
+  border-color: var(--f-border);
+  border-radius: 11px;
+  min-height: 123px;
+  padding: 18px 20px;
+  box-shadow: 0 3px 16px var(--f-hairline);
+}
+.finDesk .fanaKpi span {color: var(--f-muted);font-size: 10px;}
+.finDesk .fanaKpi strong {
+  color: var(--f-white);
+  font-size: clamp(22px,2.2vw,31px);
+  letter-spacing: -.05em;
+  font-weight: 500;
+}
+.finDesk .fanaKpi.warning strong {color: var(--f-warn);}
+.finDesk .fanaKpi small {color: var(--f-muted);font-size: 10px;}
+.finDesk .fanaPanel {
+  background: var(--f-panel);
+  border-color: var(--f-border);
+  border-radius: 12px;
+  padding: 22px;
+}
+.finDesk .fanaHomeGrid { gap: 14px; }
+.finDesk .fanaPanelHead {margin-bottom: 19px;}
+.finDesk .fanaPanelHead h2,.finDesk .fanaPageIntro h2 {
+  color: var(--f-white);font-size: 19px;letter-spacing: -.04em;font-weight: 500;
+}
+.finDesk .fanaActionRow {
+  color: var(--f-white);border-color: var(--f-border);
+}
+.finDesk .fanaActionRow:hover {background: var(--f-hover);}
+.finDesk .fanaActionRow small {color: var(--f-muted);}
+.finDesk .fanaActionRow>strong {color: var(--f-accent);}
+.finDesk .fanaDot {background: var(--f-accent);}
+.finDesk .fanaDot.accent {background: var(--f-fluor);outline: 1px solid var(--f-accent);}
+.finDesk .fanaDot.warn {background: var(--f-warn);}
+.finDesk .fanaProof>div {
+  background: var(--f-card-inner);
+  border-color: var(--f-border);
+  border-radius: 9px;
+}
+.finDesk .fanaProof span {color: var(--f-muted);}
+.finDesk .fanaProof strong {color: var(--f-white);}
+.finDesk .fanaHint,.finDesk .fanaPageIntro p {color: var(--f-muted);}
+.finDesk .fanaCut {border-color: var(--f-border);color: var(--f-white);}
+.finDesk .fanaCut:hover {background: var(--f-hover);}
+.finDesk .fanaCut strong {color: var(--f-accent);}
+.finDesk .fanaCut small {color: var(--f-muted);}
+.finDesk .fanaTextButton {color: var(--f-accent);}
+.finDesk .fanaTable thead th {
+  color: var(--f-muted);background: var(--f-card-inner);border-bottom: 1px solid var(--f-border);
+  font-size: 9px; letter-spacing: .12em; font-weight: 600;
+}
+.finDesk .fanaTable td {border-color: var(--f-border);color: var(--f-white);}
+.finDesk .fanaTable td b {color: var(--f-white);}
+.finDesk .fanaTable td small {color: var(--f-muted);}
+.finDesk .fanaTable tbody tr:hover {background: var(--f-hover);}
+.finDesk .fanaPill {
+  background: var(--f-pill);
+  color: var(--f-muted);
+  border-color: var(--f-border);
+  font-size: 10px;
+  border-radius: 8px;
+}
+.finDesk .fanaPill.ok {background: var(--f-ok-bg);border-color: var(--f-ok-border);color: var(--f-accent);}
+.finDesk .fanaPill.accent {color: var(--f-accent);}
+.finDesk .fanaPill.warn {background: var(--f-alert-bg);border-color: var(--f-alert-border);color: var(--f-warn);}
+.finDesk .fanaException {
+  background: var(--f-card-inner);border-color: var(--f-border);border-radius: 9px;
+}
+.finDesk .fanaException>strong {color: var(--f-warn);}
+.finDesk .fanaException>span {color: var(--f-muted);}
+.finDesk .fanaException>button {border-color: var(--f-border);color: var(--f-white);}
+.finDesk .fanaException>button:hover {color: var(--f-accent);}
+.finDesk .fanaSource {border-color: var(--f-border);}
+.finDesk .fanaSource strong {color: var(--f-white);}
+.finDesk .fanaSource small,.finDesk .fanaSource p {color: var(--f-muted);}
+.finDesk .fanaEmpty {color: var(--f-muted);}
+.finDesk .fanaUpload {
+  background: var(--f-soft);
+  border-color: var(--f-border);
+  color: var(--f-accent)!important;
+  border-radius: 8px;
+}
+.finDesk .fanaUpload:hover {border-color: var(--f-accent);}
+.finDesk .fanaFooter {color: var(--f-muted);border-color: var(--f-border);}
+.finDesk .fanaError {background: var(--f-alert-bg);border-color: var(--f-alert-border);color: var(--f-warn);}
+.finDesk .fanaNotice {
+  background: var(--f-ok-bg);border-color: var(--f-ok-border);
+  color: var(--f-accent);
+}
+.finDesk .fanaDrawer {
+  background: var(--f-panel);
+  border-color: var(--f-border);
+  color: var(--f-white);
+}
+.finDesk .fanaDrawerHead {border-color: var(--f-border);}
+.finDesk .fanaDrawerHead h2 {color: var(--f-white);}
+.finDesk .fanaDrawerHead button {
+  background: var(--f-soft);color: var(--f-white);border-radius: 8px;
+}
+.finDesk .fanaDrawerMeta {color: var(--f-muted);}
+.finDesk .fanaDrawerMeta>span:not(.fanaPill) {background: var(--f-soft);border-color: var(--f-border);}
+.finDesk .fanaCalc {
+  background: var(--f-card-inner);
+  border-color: var(--f-border);
+}
+.finDesk .fanaCalc>span {color: var(--f-accent);}
+.finDesk .fanaCalc small,.finDesk .fanaCalc p {color: var(--f-muted);}
+.finDesk .fanaCalc strong {color: var(--f-white);}
+.finDesk .fanaPrimary {
+  background: var(--f-fluor)!important;
+  color: #1b1c1c!important;
+  border: 1px solid #b0e12f!important;
+  border-radius: 9px!important;
+  font-weight: 600!important;
+}
+.finDesk .fanaPrimary:hover {background: #d7ff70!important;}
+.finDesk .fanaLoginPanel {
+  background: var(--f-panel);border-color: var(--f-border);
+  color: var(--f-white);border-radius: 12px;
+}
+.finDesk .fanaLoginPanel h1 {color: var(--f-white);}
+.finDesk .fanaLoginPanel p,.finDesk .fanaLoginPanel form label {color: var(--f-muted);}
+.finDesk .fanaLoginPanel input {
+  background: var(--f-input)!important;
+  color: var(--f-white)!important;
+  border: 1px solid var(--f-border)!important;
+}
+.finDesk .fanaLoginPanel a {color: var(--f-accent);}
+.finDesk .fanaLoading {color: var(--f-accent);}
+@media(max-width:1120px) {
+  .finDesk .fanaContent{padding-top:27px;}
+}
+@media(max-width:760px) {
+  .finDesk .fanaSidebar {
+    position:fixed;bottom:0;left:0;right:0;top:auto;
+    height:auto;padding:7px 6px;
+    background:var(--f-sidebar);
+    border-right:0;border-top:1px solid var(--f-border);
+  }
+  .finDesk .fanaNav button.active::after {display:none;}
+  .finDesk .fanaTitle h1{font-size:36px;}
+  .finDesk .fanaTopActions {gap:6px;}
+  .finDesk .fanaThemeModes {gap:1px;padding:2px;}
+  .finDesk .fanaThemeModes button{width:26px;min-width:26px;height:26px;}
+  .finDesk .fanaContent{padding-top:20px;}
+  .finDesk .fanaKpi{padding:13px;min-height:104px;}
+  .finDesk .fanaPanel{padding:15px;}
+  .finDesk .fanaFilters{gap:10px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .finDesk{transition:none;}
+  .finDesk .fanaNav button{transition:none;}
+}

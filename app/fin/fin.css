@@ -421,3 +421,150 @@
   .finDesk{transition:none;}
   .finDesk .fanaNav button{transition:none;}
 }
+
+
+/* FIN — scroll, universal folding, organization and role workspaces. */
+html:has(.finDesk),body:has(.finDesk){height:100%;overflow:hidden;}
+.finDesk{
+  height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;
+}
+.finDesk .fanaSidebar{
+  height:100dvh;max-height:100dvh;overflow-x:hidden;overflow-y:auto;
+  overscroll-behavior:contain;scrollbar-width:thin;
+}
+.finDesk .fanaMain{
+  height:100dvh;max-height:100dvh;min-height:0;
+  overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior-y:contain;scrollbar-width:thin;
+  scroll-behavior:smooth;
+}
+.finDesk .fanaTopbar{top:0;z-index:25;}
+.finDesk .fanaContent{width:100%;max-width:1600px;min-height:max-content;padding-bottom:130px;}
+.finDesk .fanaTableScroll{overflow-x:auto;overflow-y:auto;max-width:100%;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
+.finDesk .fanaDrawer{max-height:100dvh;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;}
+.finDesk .fanaPanelHead{
+  position:relative;cursor:pointer;user-select:none;
+  padding-right:31px;min-height:28px;
+  border-radius:7px;
+}
+.finDesk .fanaPanelHead::after{
+  content:"⌃";position:absolute;right:3px;top:50%;transform:translateY(-50%);
+  font-size:19px;line-height:1;color:var(--f-muted);pointer-events:none;
+  transition:transform .16s ease;
+}
+.finDesk .fanaPanelHead:focus-visible{
+  outline:2px solid var(--f-accent);outline-offset:3px;
+}
+.finDesk .fanaPanelClosed>.fanaPanelHead::after,
+.finDesk.fanaAllFolded .fanaPanelHead::after{
+  transform:translateY(-50%) rotate(180deg);
+}
+.finDesk .fanaPanelClosed>:not(.fanaPanelHead),
+.finDesk.fanaAllFolded .fanaPanel>:not(.fanaPanelHead){
+  display:none!important;
+}
+.finDesk .fanaPanelClosed,.finDesk.fanaAllFolded .fanaPanel{min-height:0;}
+.finDesk .fanaFiltersToggle{
+  display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;
+  background:var(--f-panel);border:1px solid var(--f-border);
+  border-radius:9px;padding:9px 12px;font-size:11px;color:var(--f-accent);
+}
+.finDesk .fanaFiltersToggle:hover{background:var(--f-hover);}
+.finDesk .fanaFiltersClosed{display:none;}
+.finDesk .fanaFoldAllBtn{white-space:nowrap;}
+.finDesk .fanaPageIntro{margin:10px 0 20px;}
+.finDesk .fanaKpis{position:relative;}
+.finDesk .fanaOrgPage{display:grid;gap:14px;padding-bottom:35px;}
+.finDesk .fanaOrgIntro{display:flex;justify-content:space-between;gap:20px;align-items:start;}
+.finDesk .fanaOrgIntro h2{
+  font-size:clamp(28px,3vw,40px);font-weight:400;letter-spacing:-.04em;
+  color:var(--f-white);margin:7px 0 6px;
+}
+.finDesk .fanaOrgIntro p{
+  font-size:12px;max-width:750px;line-height:1.7;color:var(--f-muted);margin:0;
+}
+.finDesk .fanaOrgStats{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+}
+.finDesk .fanaOrgStats>div{
+  background:var(--f-panel);border:1px solid var(--f-border);
+  border-radius:11px;padding:16px 18px;display:grid;gap:6px;
+}
+.finDesk .fanaOrgStats span{color:var(--f-muted);font-size:11px;}
+.finDesk .fanaOrgStats strong{font:500 23px "Space Grotesk",Inter,sans-serif;color:var(--f-white);}
+.finDesk .fanaOrgFold{
+  background:var(--f-panel);border:1px solid var(--f-border);border-radius:12px;
+  overflow:hidden;min-width:0;
+}
+.finDesk .fanaOrgFold>summary{
+  list-style:none;display:flex;justify-content:space-between;align-items:center;gap:18px;
+  padding:20px 23px;cursor:pointer;user-select:none;
+}
+.finDesk .fanaOrgFold>summary::-webkit-details-marker{display:none;}
+.finDesk .fanaOrgFold>summary>span:first-child{display:grid;gap:4px;}
+.finDesk .fanaOrgFold>summary small{color:var(--f-accent);font-size:9px;letter-spacing:.15em;}
+.finDesk .fanaOrgFold>summary strong{
+  font:500 18px "Space Grotesk",Inter,sans-serif;letter-spacing:-.03em;color:var(--f-white);
+}
+.finDesk .fanaOrgFold>summary:hover{background:var(--f-hover);}
+.finDesk .fanaFoldGlyph{font-size:22px;color:var(--f-muted);transition:transform .15s;}
+.finDesk .fanaOrgFold[open] .fanaFoldGlyph{transform:rotate(180deg);}
+.finDesk .fanaOrgFoldBody{padding:0 23px 20px;max-height:min(78dvh,960px);overflow:auto;scrollbar-width:thin;}
+.finDesk .fanaOrgRecord{
+  display:flex;justify-content:space-between;align-items:center;gap:15px;
+  padding:16px 0;border-top:1px solid var(--f-border);
+}
+.finDesk .fanaOrgRecord>div{min-width:0;display:grid;gap:4px;}
+.finDesk .fanaOrgRecord strong{font-size:12px;font-weight:600;color:var(--f-white);}
+.finDesk .fanaOrgRecord span,.finDesk .fanaOrgRecord small{font-size:10px;color:var(--f-muted);}
+.finDesk .fanaOrgRecord p{color:var(--f-muted);font-size:11px;margin:0;line-height:1.55;overflow-wrap:anywhere;}
+.finDesk .fanaOrgRecord a{white-space:nowrap;font-size:11px;}
+.finDesk .fanaOrgNested{
+  border-top:1px solid var(--f-border);padding-top:15px;margin-top:9px;
+}
+.finDesk .fanaOrgNested>summary{
+  color:var(--f-accent);cursor:pointer;font-size:11px;padding:7px 0;
+}
+.finDesk .fanaOrgForm{display:grid;gap:12px;padding:14px 0;max-width:780px;}
+.finDesk .fanaOrgForm label{
+  display:grid;gap:5px;font-size:10px;color:var(--f-muted);
+}
+.finDesk .fanaOrgForm input,.finDesk .fanaOrgForm select,.finDesk .fanaOrgForm textarea{
+  font:12px Inter,sans-serif;background:var(--f-input);color:var(--f-white);
+  border:1px solid var(--f-border);border-radius:9px;padding:11px;min-width:0;
+}
+.finDesk .fanaOrgForm button{justify-self:start;}
+.finDesk .fanaOrgTwo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.finDesk .fanaAccessRoutes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.finDesk .fanaAccessRoutes>div{
+  padding:13px;background:var(--f-card-inner);border:1px solid var(--f-border);
+  border-radius:9px;display:grid;gap:5px;
+}
+.finDesk .fanaAccessRoutes strong{font-size:11px;font-weight:600;color:var(--f-white);}
+.finDesk .fanaAccessRoutes span{font-size:10px;color:var(--f-muted);line-height:1.5;}
+@media(max-width:920px) {
+ .finDesk .fanaTopbar{padding-inline:14px;}
+ .finDesk .fanaFoldAllBtn{font-size:9px!important;padding:7px!important;}
+ .finDesk .fanaOrgStats{gap:7px;}
+}
+@media(max-width:760px) {
+ html:has(.finDesk),body:has(.finDesk){height:auto;overflow-x:hidden;overflow-y:auto;}
+ .finDesk{min-height:100dvh;height:auto;max-height:none;overflow:visible;}
+ .finDesk .fanaMain{height:auto;max-height:none;min-height:100dvh;overflow:visible;}
+ .finDesk .fanaSidebar{height:auto;max-height:none;overflow-x:auto;overflow-y:hidden;}
+ .finDesk .fanaTopbar{position:sticky;top:0;}
+ .finDesk .fanaContent{padding-bottom:125px;}
+ .finDesk .fanaOrgStats{grid-template-columns:1fr 1fr;}
+ .finDesk .fanaOrgStats>div:last-child{grid-column:1/-1;}
+ .finDesk .fanaOrgFold>summary{padding:15px;}
+ .finDesk .fanaOrgFoldBody{padding:0 15px 16px;max-height:none;}
+ .finDesk .fanaAccessRoutes,.finDesk .fanaOrgTwo{grid-template-columns:1fr;}
+ .finDesk .fanaOrgRecord{align-items:start;flex-direction:column;}
+ .finDesk .fanaTopActions{gap:4px;}
+ .finDesk .fanaFoldAllBtn{font-size:0!important;min-width:34px;}
+ .finDesk .fanaFoldAllBtn::first-letter{font-size:13px;}
+}
+@media(prefers-reduced-motion:reduce){
+ .finDesk .fanaMain{scroll-behavior:auto;}
+ .finDesk .fanaPanelHead::after{transition:none;}
+}

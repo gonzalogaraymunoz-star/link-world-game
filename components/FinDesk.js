@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { hasSupabaseConfig, supabase } from "../lib/supabase";
+import FinOrganizationPanel from "./FinOrganizationPanel";
 
 const MENUS = [
   ["inicio", "Inicio", "◈"],
@@ -9,7 +10,8 @@ const MENUS = [
   ["pagar", "A pagar", "⇄"],
   ["conciliacion", "Conciliación", "✓"],
   ["documentos", "Documentos", "▤"],
-  ["fuentes", "Fuentes", "⌁"]
+  ["fuentes", "Fuentes", "⌁"],
+  ["organizaciones", "Organización y contratos", "◌"]
 ];
 const STATUS = {
   draft: "Borrador",
@@ -128,6 +130,8 @@ export default function FinDesk() {
   const [drawer, setDrawer] = useState(null);
   const [draft, setDraft] = useState({});
   const [collapsed, setCollapsed] = useState(false);
+  const [allFolded, setAllFolded] = useState(false);
+  const [filtersFolded, setFiltersFolded] = useState(false);
   const [theme, setTheme] = useState("day");
   const [importing, setImporting] = useState(false);
 
@@ -143,26 +147,47 @@ export default function FinDesk() {
     try { window.localStorage.setItem("link-fin-appearance", value); } catch { /* Optional preference. */ }
   };
 
-  const canEdit = role === "operator" || role === "director";
+  const currentOrg = businesses.find(b => b.id === bizId);
+  const orgRole = role === "director" ? "director" : (currentOrg?.fin_role || "none");
+  const canEdit = orgRole === "director" || orgRole === "finance";
   const director = role === "director";
+  const allowedMenus = orgRole === "collaborator" ? MENUS.filter(m => m[0] === "organizaciones") :
+    orgRole === "business_owner" ? MENUS.filter(m => ["inicio","operaciones","documentos","organizaciones"].includes(m[0])) :
+    ["auditor","accountant"].includes(orgRole) ? MENUS.filter(m => ["inicio","operaciones","pagar","conciliacion","documentos","fuentes","organizaciones"].includes(m[0])) : MENUS;
+  function togglePanelFromHeader(event) {
+    if (event.type === "keydown" && !["Enter"," "].includes(event.key)) return;
+    if (event.target !== event.currentTarget && event.target.closest("button,a,input,select,label")) return;
+    if (event.type === "keydown") event.preventDefault();
+    const node = event.currentTarget.closest(".fanaPanel");
+    if (!node) return;
+    const isClosed = node.classList.toggle("fanaPanelClosed");
+    event.currentTarget.setAttribute("aria-expanded",String(!isClosed));
+  }
 
   const load = useCallback(async () => {
     if (!supabase) return;
-    const [b, o, p, s, f] = await Promise.all([
-      supabase.from("link_world_businesses").select("id,name,slug").order("name"),
-      supabase.from("fin_ana_operations").select("*").order("service_date", { ascending: false }).limit(1000),
-      supabase.from("fin_ana_payables").select("*").order("cutoff_date", { ascending: true }).limit(1000),
-      supabase.from("fin_ana_sources").select("*").order("created_at", { ascending: false }).limit(100),
-      supabase.from("link_fin_real_summary_v").select("business_id,income_gross,income_collected,net_real").limit(100)
-    ]);
-    const critical = [b, o, p, s].find(x => x.error);
+    const permitted = await supabase.rpc("fin_portal_organizations");
+    if (permitted.error) throw permitted.error;
+    const organizations = permitted.data || [];
+    setBusinesses(organizations);
+    const ids = organizations.map(x => x.id);
+    if (!ids.length) {
+      setBizId("");setOperations([]);setPayables([]);setSources([]);setSummary([]);return;
+    }
+    const isDirector = organizations.some(x => x.fin_role === "director");
+    const financeIds = organizations.filter(x => ["director","finance","business_owner","accountant","auditor"].includes(x.fin_role)).map(x => x.id);
+    const termsIds = organizations.filter(x => ["director","finance","business_owner","accountant","auditor"].includes(x.fin_role)).map(x => x.id);
+    const opQuery = financeIds.length ? supabase.from("fin_ana_operations").select("*").in("business_id",financeIds).order("service_date",{ascending:false}).limit(1000) : Promise.resolve({data:[],error:null});
+    const payQuery = termsIds.length ? supabase.from("fin_ana_payables").select("*").in("business_id",termsIds).order("cutoff_date",{ascending:true}).limit(1000) : Promise.resolve({data:[],error:null});
+    const sourceQuery = termsIds.length ? supabase.from("fin_ana_sources").select("*").in("business_id",termsIds).order("created_at",{ascending:false}).limit(100) : Promise.resolve({data:[],error:null});
+    const summaryQuery = isDirector ? supabase.from("link_fin_real_summary_v").select("business_id,income_gross,income_collected,net_real").in("business_id",ids).limit(100) : Promise.resolve({data:[],error:null});
+    const [o,p,s,f] = await Promise.all([opQuery,payQuery,sourceQuery,summaryQuery]);
+    const critical = [o,p,s].find(x=>x.error);
     if (critical) throw critical.error;
-    setBusinesses(b.data || []);
-    setOperations(o.data || []);
-    setPayables(p.data || []);
-    setSources(s.data || []);
-    setSummary(f.error ? [] : f.data || []);
-    setBizId(current => current || (b.data || []).find(x => x.slug === "hotel-experience")?.id || b.data?.[0]?.id || "");
+    setOperations(o.data||[]);setPayables(p.data||[]);setSources(s.data||[]);setSummary(f.error?[]:f.data||[]);
+    let requested = "";
+    try { requested = new URL(window.location.href).searchParams.get("business") || ""; } catch {}
+    setBizId(current => organizations.some(x=>x.id===current)?current:(organizations.find(x=>x.id===requested || x.slug===requested)?.id || organizations.find(x=>x.slug==="hotel-experience")?.id || organizations[0].id));
   }, []);
 
   const initialize = useCallback(async () => {
@@ -172,7 +197,7 @@ export default function FinDesk() {
     const sess = auth?.session || null;
     setSession(sess);
     if (sess) {
-      const rr = await supabase.rpc("fin_ana_my_role");
+      const rr = await supabase.rpc("fin_portal_role");
       const who = rr.error ? "none" : rr.data || "none";
       setRole(who);
       if (who !== "none") {
@@ -190,6 +215,15 @@ export default function FinDesk() {
     });
     return () => data.subscription.unsubscribe();
   }, [initialize]);
+
+  useEffect(() => {
+    if (!checked || !businesses.length) return;
+    const organization = businesses.find(x=>x.id===bizId);
+    const actualRole = role === "director"?"director":organization?.fin_role || "none";
+    const allowed = actualRole==="collaborator"?["organizaciones"]:
+      actualRole==="business_owner"?["inicio","operaciones","documentos","organizaciones"]:MENUS.map(x=>x[0]);
+    if (!allowed.includes(section)) setSection(allowed.includes("inicio")?"inicio":"organizaciones");
+  },[businesses,bizId,role,section,checked]);
 
   const login = async (email, password) => {
     setBusy(true); setError("");
@@ -312,7 +346,7 @@ export default function FinDesk() {
       const existing = sources.find(s => s.source_ref === ref);
       if (existing) throw Error("Este archivo ya fue importado. Revisa Fuentes para evitar duplicados.");
       const { data: src, error: srcErr } = await supabase.from("fin_ana_sources")
-        .insert({ name: file.name, source_type: "csv", source_ref: ref, period: period === "all" ? null : period, notes: "Importación de servicios: no registra pagos." }).select("id").single();
+        .insert({ business_id:bizId, name: file.name, source_type: "csv", source_ref: ref, period: period === "all" ? null : period, notes: "Importación de servicios: no registra pagos." }).select("id").single();
       if (srcErr) throw srcErr;
       const { error: rowErr } = await supabase.from("fin_ana_operations").insert(rows.map(r => ({ ...r, source_id: src.id })));
       if (rowErr) throw rowErr;
@@ -329,6 +363,7 @@ export default function FinDesk() {
 
   const selectedBusiness = businesses.find(b => b.id === bizId);
   const currentSummary = summary.find(s => s.business_id === bizId);
+  const hasFinancialAccess = orgRole !== "collaborator";
   const payableGroups = Object.entries(targetPayables.reduce((m, p) => {
     const key = p.cutoff_date || "Sin corte";
     (m[key] ||= []).push(p);
@@ -337,51 +372,52 @@ export default function FinDesk() {
   const opWithoutPay = targetOperations.filter(o => !payables.some(p => p.operation_id === o.id)).length;
   const inputFile = <label className="fanaUpload">Importar servicios CSV <input type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" disabled={importing || !canEdit} onChange={e => { importCsv(e.target.files?.[0]); e.target.value = ""; }} /></label>;
 
-  return <div className={"finDesk fanaTheme-" + theme + (collapsed ? " fanaCollapsed" : "")}>
+  return <div className={"finDesk fanaTheme-" + theme + (collapsed ? " fanaCollapsed" : "") + (allFolded ? " fanaAllFolded" : "")}>
     <aside className="fanaSidebar">
       <a className="fanaLogo" href="/"><span className="fanaMark">F</span><span className="fanaLogoWords"><b>LINK FIN</b><small>Control financiero</small></span></a>
       <button className="fanaCollapse" onClick={() => setCollapsed(v => !v)} title="Contraer menú">{collapsed ? "☰" : "☷"}</button>
       <span className="fanaSideLabel">MESA DE TRABAJO</span>
-      <nav className="fanaNav">{MENUS.map(([id, name, glyph]) =>
+      <nav className="fanaNav">{allowedMenus.map(([id, name, glyph]) =>
         <button key={id} className={section === id ? "active" : ""} onClick={() => { setSection(id); setDrawer(null); }}>
           <span className="fanaGlyph">{glyph}</span><span className="fanaNavLabel">{name}</span>
         </button>)}</nav>
-      <div className="fanaSideFoot"><span className="fanaRole">{director ? "Dirección FIN" : role === "operator" ? "Operador FIN" : "Consulta FIN"}</span><a href="/">↖ <span className="fanaNavLabel">LINK WORLD</span></a><button onClick={() => supabase.auth.signOut()}>⇥ <span className="fanaNavLabel">Salir</span></button></div>
+      <div className="fanaSideFoot"><span className="fanaRole">{director ? "Dirección FIN" : orgRole === "finance" ? "Responsable FIN" : orgRole === "business_owner" ? "Titular del negocio" : orgRole === "accountant" ? "Contabilidad" : orgRole === "auditor" ? "Auditoría" : "Colaborador"}</span><a href="/">↖ <span className="fanaNavLabel">LINK WORLD</span></a><button onClick={() => supabase.auth.signOut()}>⇥ <span className="fanaNavLabel">Salir</span></button></div>
     </aside>
     <main className="fanaMain">
-      <header className="fanaTopbar"><div><span className="fanaEyebrow">LINK WORLD / FIN / MESA ANA</span><strong>{MENUS.find(x => x[0] === section)?.[1]}</strong></div><div className="fanaTopActions"><span className="fanaLive">● Datos persistentes</span><div className="fanaThemeModes" role="group" aria-label="Apariencia de FIN">{[["day", "☼", "Día"], ["gray", "▦", "Mineral"], ["night", "☾", "Noche"]].map(([id, glyph, label]) => <button key={id} type="button" aria-label={"Modo " + label} title={"Modo " + label} aria-pressed={theme === id} className={theme === id ? "active" : ""} onClick={() => chooseTheme(id)}>{glyph}</button>)}</div><button disabled={busy} onClick={refresh} className="fanaSecondary">↻ Actualizar</button></div></header>
+      <header className="fanaTopbar"><div><span className="fanaEyebrow">LINK WORLD / FIN / MESA ANA</span><strong>{MENUS.find(x => x[0] === section)?.[1]}</strong></div><div className="fanaTopActions"><span className="fanaLive">● Datos persistentes</span><div className="fanaThemeModes" role="group" aria-label="Apariencia de FIN">{[["day", "☼", "Día"], ["gray", "▦", "Mineral"], ["night", "☾", "Noche"]].map(([id, glyph, label]) => <button key={id} type="button" aria-label={"Modo " + label} title={"Modo " + label} aria-pressed={theme === id} className={theme === id ? "active" : ""} onClick={() => chooseTheme(id)}>{glyph}</button>)}</div><button type="button" className="fanaSecondary fanaFoldAllBtn" aria-pressed={allFolded} onClick={() => setAllFolded(v=>!v)}>{allFolded ? "▤ Desplegar todo" : "▱ Plegar paneles"}</button><button disabled={busy} onClick={refresh} className="fanaSecondary">↻ Actualizar</button></div></header>
       <div className="fanaContent">
         <div className="fanaTitle"><div><span className="fanaEyebrow">LINK WORLD / FIN / CONTROL ECONÓMICO</span><h1>Control financiero</h1><p>Operación → obligación → documento → autorización → pago comprobado. Sin montos inventados.</p></div><span className="fanaBadge">Mesa de Ana</span></div>
-        <div className="fanaFilters"><label>Negocio <select value={bizId} onChange={e => setBizId(e.target.value)}>{businesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label><label>Período <select value={period} onChange={e => setPeriod(e.target.value)}><option value="2026-10">Octubre 2026</option><option value="2026-09">Septiembre 2026</option><option value="all">Todo el historial</option></select></label><label className="fanaSearch">Buscar <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Reserva, proveedor, tour, documento…" /></label></div>
+        <button type="button" className="fanaFiltersToggle" aria-expanded={!filtersFolded} onClick={()=>setFiltersFolded(v=>!v)}>▤ {filtersFolded?"Mostrar filtros":"Ocultar filtros"} · {currentOrg?.entry_path || "Dirección"}</button><div className={"fanaFilters " + (filtersFolded?"fanaFiltersClosed":"")}><label>Organización <select value={bizId} onChange={e => {setBizId(e.target.value);setDrawer(null);setAllFolded(false);}}>{businesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label><label>Período <select value={period} onChange={e => setPeriod(e.target.value)}><option value="2026-10">Octubre 2026</option><option value="2026-09">Septiembre 2026</option><option value="all">Todo el historial</option></select></label><label className="fanaSearch">Buscar <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Reserva, proveedor, tour, documento…" /></label></div>
         {error && <div className="fanaError" role="alert">{error} <button onClick={() => setError("")}>×</button></div>}
         {notice && <div className="fanaNotice" role="status">{notice} <button onClick={() => setNotice("")}>×</button></div>}
-        <div className="fanaKpis">
+        {hasFinancialAccess && <div className="fanaKpis">
           <KPI label="Servicios registrados" value={targetOperations.length} note="Operaciones del período"/>
           <KPI label="Tarifas por completar" value={tariffsMissing} note="No equivalen a $0" tone="warning"/>
           <KPI label="Transferencias calculadas" value={formatMoney(amountKnown)} note="Importe preliminar, no desembolso"/>
           <KPI label="Esperando autorización" value={approvalCount} note={paidCount + " registrados como pagados"} tone={approvalCount ? "warning" : ""}/>
-        </div>
-        {section === "inicio" && <div className="fanaHomeGrid">
-          <section className="fanaPanel"><div className="fanaPanelHead"><div><span className="fanaEyebrow">COLA DE ANA</span><h2>Qué necesita atención</h2></div></div>
+        </div>}
+        {section === "inicio" && hasFinancialAccess && <div className="fanaHomeGrid">
+          <section className="fanaPanel"><div className="fanaPanelHead" onClick={togglePanelFromHeader} onKeyDown={togglePanelFromHeader} tabIndex={0} aria-expanded="true" title="Plegar o desplegar este panel"><div><span className="fanaEyebrow">COLA DE ANA</span><h2>Qué necesita atención</h2></div></div>
             <button className="fanaActionRow" onClick={() => setSection("pagar")}><i className="fanaDot warn"/><span><b>{tariffsMissing} tarifas pendientes</b><small>Completar valor acordado y tratamiento tributario</small></span><strong>→</strong></button>
             <button className="fanaActionRow" onClick={() => setSection("operaciones")}><i className="fanaDot warn"/><span><b>{opWithoutPay} servicios sin liquidación</b><small>Relacionar proveedor y costo antes de pagar</small></span><strong>→</strong></button>
             <button className="fanaActionRow" onClick={() => setSection("documentos")}><i className="fanaDot"/><span><b>{proofMissing} registros sin documentación completa</b><small>Boleta o comprobante pendiente de revisar</small></span><strong>→</strong></button>
             <button className="fanaActionRow" onClick={() => setSection("pagar")}><i className="fanaDot accent"/><span><b>{approvalCount} solicitudes a Dirección</b><small>Aprobación independiente de la preparación</small></span><strong>→</strong></button>
           </section>
-          <section className="fanaPanel"><div className="fanaPanelHead"><div><span className="fanaEyebrow">EVIDENCIA ECONÓMICA</span><h2>FIN · {selectedBusiness?.name || "Negocio"}</h2></div></div>
+          <section className="fanaPanel"><div className="fanaPanelHead" onClick={togglePanelFromHeader} onKeyDown={togglePanelFromHeader} tabIndex={0} aria-expanded="true" title="Plegar o desplegar este panel"><div><span className="fanaEyebrow">EVIDENCIA ECONÓMICA</span><h2>FIN · {selectedBusiness?.name || "Negocio"}</h2></div></div>
             <div className="fanaProof"><div><span>Facturado respaldado</span><strong>{formatMoney(currentSummary?.income_gross)}</strong></div><div><span>Caja verificada</span><strong>{formatMoney(currentSummary?.income_collected)}</strong></div><div><span>Neto real documentado</span><strong>{formatMoney(currentSummary?.net_real)}</strong></div></div><p className="fanaHint">Estos montos provienen de FIN central. Las liquidaciones preparadas no se consideran caja ni pagos reales.</p>
           </section>
-          <section className="fanaPanel fanaWide"><div className="fanaPanelHead"><div><span className="fanaEyebrow">CORTES SEMANALES</span><h2>Próximas liquidaciones</h2></div><button className="fanaTextButton" onClick={() => setSection("pagar")}>Ver toda la mesa →</button></div>
+          <section className="fanaPanel fanaWide"><div className="fanaPanelHead" onClick={togglePanelFromHeader} onKeyDown={togglePanelFromHeader} tabIndex={0} aria-expanded="true" title="Plegar o desplegar este panel"><div><span className="fanaEyebrow">CORTES SEMANALES</span><h2>Próximas liquidaciones</h2></div><button className="fanaTextButton" onClick={() => setSection("pagar")}>Ver toda la mesa →</button></div>
           {payableGroups.length ? payableGroups.map(([date, rows]) => <button className="fanaCut" key={date} onClick={() => setSection("pagar")}><span><b>{formatDate(date)}</b><small>{rows.length} líneas · {rows.filter(p => p.tariff_amount === null).length} tarifas sin resolver</small></span><strong>{formatMoney(rows.reduce((s,p) => s + Number(p.transfer_amount || 0), 0))}</strong><span>→</span></button>) : <p className="fanaHint">No existen liquidaciones para este negocio y período.</p>}
           </section>
         </div>}
-        {section === "operaciones" && <section className="fanaPanel"><div className="fanaPanelHead"><div><span className="fanaEyebrow">SERVICIOS / OPERACIONES</span><h2>Registro por servicio</h2></div>{canEdit && inputFile}</div><div className="fanaTableScroll"><table className="fanaTable"><thead><tr><th>Fecha</th><th>Reserva / cliente</th><th>Servicio</th><th>Guía / proveedor</th><th>Pax</th><th>Entradas</th><th>Estado</th><th>FIN</th></tr></thead><tbody>{targetOperations.map(o => <tr key={o.id} onClick={() => openOp(o)} tabIndex={0} onKeyDown={e => e.key === "Enter" && openOp(o)}><td>{formatDate(o.service_date)}<small>{o.time_label}</small></td><td><b>{o.booking_code || "Sin código"}</b><small>{o.client_name}</small></td><td>{o.service_name}<small>{o.modality}</small></td><td>{o.supplier_name || "—"}</td><td>{o.pax_count ?? "—"}</td><td>{formatMoney(o.entry_cost)}</td><td><Pill status={o.service_status}/></td><td>{payables.some(p => p.operation_id === o.id) ? "Liquidación" : "Pendiente"}</td></tr>)}</tbody></table></div>{!targetOperations.length && <div className="fanaEmpty">No hay operaciones para los filtros elegidos.</div>}</section>}
-        {section === "pagar" && <div className="fanaStack"><div className="fanaPageIntro"><h2>A pagar · cortes por beneficiario</h2><p>Preparar no es aprobar. Aprobar no es pagar. Cada transferencia necesita documento y respaldo.</p></div>{payableGroups.map(([date, items]) => <section key={date} className="fanaPanel"><div className="fanaPanelHead"><div><span className="fanaEyebrow">CORTE FIN</span><h2>{formatDate(date)} · {items.length} liquidaciones</h2></div><span className="fanaBadge">{items.filter(p => p.tariff_amount === null).length} sin tarifa</span></div><div className="fanaTableScroll"><table className="fanaTable"><thead><tr><th>Beneficiario</th><th>Servicio</th><th>Tarifa líquida/bruta</th><th>Documento</th><th>Transferir</th><th>Estado</th></tr></thead><tbody>{items.map(p => <tr key={p.id} onClick={() => openPay(p)} tabIndex={0} onKeyDown={e => e.key === "Enter" && openPay(p)}><td><b>{p.beneficiary}</b><small>{p.supplier_rut || "RUT pendiente"}</small></td><td>{byOperation.get(p.operation_id)?.service_name || "Sin vínculo operativo"}<small>{formatDate(byOperation.get(p.operation_id)?.service_date)}</small></td><td>{formatMoney(p.tariff_amount)}<small>{p.tariff_basis === "net" ? "Líquida" : "Bruta"}</small></td><td>{p.document_number || "Falta documento"}</td><td>{formatMoney(p.transfer_amount)}</td><td><Pill status={p.status}/></td></tr>)}</tbody></table></div></section>)}{!payableGroups.length && <div className="fanaEmpty">No existen obligaciones en este período. Puedes crearlas desde la ficha de un servicio.</div>}</div>}
-        {section === "conciliacion" && <section className="fanaPanel"><div className="fanaPanelHead"><div><span className="fanaEyebrow">CONTROL DE EXCEPCIONES</span><h2>Conciliación operativa</h2></div></div><p className="fanaHint">Se revisan las obligaciones y los comprobantes cargados. Esta mesa no marca una transferencia como bancaria o realmente conciliada por sí sola.</p><div className="fanaExceptionGrid">
+        {section === "operaciones" && hasFinancialAccess && <section className="fanaPanel"><div className="fanaPanelHead" onClick={togglePanelFromHeader} onKeyDown={togglePanelFromHeader} tabIndex={0} aria-expanded="true" title="Plegar o desplegar este panel"><div><span className="fanaEyebrow">SERVICIOS / OPERACIONES</span><h2>Registro por servicio</h2></div>{canEdit && inputFile}</div><div className="fanaTableScroll"><table className="fanaTable"><thead><tr><th>Fecha</th><th>Reserva / cliente</th><th>Servicio</th><th>Guía / proveedor</th><th>Pax</th><th>Entradas</th><th>Estado</th><th>FIN</th></tr></thead><tbody>{targetOperations.map(o => <tr key={o.id} onClick={() => openOp(o)} tabIndex={0} onKeyDown={e => e.key === "Enter" && openOp(o)}><td>{formatDate(o.service_date)}<small>{o.time_label}</small></td><td><b>{o.booking_code || "Sin código"}</b><small>{o.client_name}</small></td><td>{o.service_name}<small>{o.modality}</small></td><td>{o.supplier_name || "—"}</td><td>{o.pax_count ?? "—"}</td><td>{formatMoney(o.entry_cost)}</td><td><Pill status={o.service_status}/></td><td>{payables.some(p => p.operation_id === o.id) ? "Liquidación" : "Pendiente"}</td></tr>)}</tbody></table></div>{!targetOperations.length && <div className="fanaEmpty">No hay operaciones para los filtros elegidos.</div>}</section>}
+        {section === "pagar" && hasFinancialAccess && <div className="fanaStack"><div className="fanaPageIntro"><h2>A pagar · cortes por beneficiario</h2><p>Preparar no es aprobar. Aprobar no es pagar. Cada transferencia necesita documento y respaldo.</p></div>{payableGroups.map(([date, items]) => <section key={date} className="fanaPanel"><div className="fanaPanelHead" onClick={togglePanelFromHeader} onKeyDown={togglePanelFromHeader} tabIndex={0} aria-expanded="true" title="Plegar o desplegar este panel"><div><span className="fanaEyebrow">CORTE FIN</span><h2>{formatDate(date)} · {items.length} liquidaciones</h2></div><span className="fanaBadge">{items.filter(p => p.tariff_amount === null).length} sin tarifa</span></div><div className="fanaTableScroll"><table className="fanaTable"><thead><tr><th>Beneficiario</th><th>Servicio</th><th>Tarifa líquida/bruta</th><th>Documento</th><th>Transferir</th><th>Estado</th></tr></thead><tbody>{items.map(p => <tr key={p.id} onClick={() => openPay(p)} tabIndex={0} onKeyDown={e => e.key === "Enter" && openPay(p)}><td><b>{p.beneficiary}</b><small>{p.supplier_rut || "RUT pendiente"}</small></td><td>{byOperation.get(p.operation_id)?.service_name || "Sin vínculo operativo"}<small>{formatDate(byOperation.get(p.operation_id)?.service_date)}</small></td><td>{formatMoney(p.tariff_amount)}<small>{p.tariff_basis === "net" ? "Líquida" : "Bruta"}</small></td><td>{p.document_number || "Falta documento"}</td><td>{formatMoney(p.transfer_amount)}</td><td><Pill status={p.status}/></td></tr>)}</tbody></table></div></section>)}{!payableGroups.length && <div className="fanaEmpty">No existen obligaciones en este período. Puedes crearlas desde la ficha de un servicio.</div>}</div>}
+        {section === "conciliacion" && hasFinancialAccess && <section className="fanaPanel"><div className="fanaPanelHead" onClick={togglePanelFromHeader} onKeyDown={togglePanelFromHeader} tabIndex={0} aria-expanded="true" title="Plegar o desplegar este panel"><div><span className="fanaEyebrow">CONTROL DE EXCEPCIONES</span><h2>Conciliación operativa</h2></div></div><p className="fanaHint">Se revisan las obligaciones y los comprobantes cargados. Esta mesa no marca una transferencia como bancaria o realmente conciliada por sí sola.</p><div className="fanaExceptionGrid">
           {[["Tarifas faltantes", targetPayables.filter(p => p.tariff_amount === null)],["Esperando aprobación", targetPayables.filter(p => p.status === "approval_requested")],["Documento faltante", targetPayables.filter(p => !p.document_number)],["Pagados sin URL de respaldo", targetPayables.filter(p => p.status === "paid" && !p.receipt_url)]].map(([label, rows]) => <div key={label} className="fanaException"><strong>{rows.length}</strong><span>{label}</span>{rows.slice(0, 5).map(p => <button key={p.id} onClick={() => openPay(p)}>{p.beneficiary} · {byOperation.get(p.operation_id)?.service_name || "Servicio"} →</button>)}</div>)}
         </div></section>}
-        {section === "documentos" && <section className="fanaPanel"><div className="fanaPanelHead"><div><span className="fanaEyebrow">EVIDENCIA POR OBLIGACIÓN</span><h2>Boletas, facturas y comprobantes</h2></div></div><div className="fanaTableScroll"><table className="fanaTable"><thead><tr><th>Beneficiario</th><th>Documento</th><th>Fecha de pago</th><th>Comprobante</th><th>Estado</th></tr></thead><tbody>{targetPayables.map(p => <tr key={p.id} onClick={() => openPay(p)}><td>{p.beneficiary}</td><td>{p.document_number || "Pendiente"}{safeHttp(p.document_url) && <a href={p.document_url} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer"> Abrir ↗</a>}</td><td>{formatDate(p.payment_date)}</td><td>{p.receipt_number || "Pendiente"}{safeHttp(p.receipt_url) && <a href={p.receipt_url} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer"> Abrir ↗</a>}</td><td><Pill status={p.status}/></td></tr>)}</tbody></table></div></section>}
-        {section === "fuentes" && <section className="fanaPanel"><div className="fanaPanelHead"><div><span className="fanaEyebrow">PROCEDENCIA / RESPALDO</span><h2>Origen de la información</h2></div>{canEdit && inputFile}</div><p className="fanaHint">Se conserva referencia del archivo y origen. La importación CSV añade servicios sin generar pagos automáticamente ni validar costos.</p>{sources.map(s => <div className="fanaSource" key={s.id}><div><strong>{s.name}</strong><small>{s.source_type} · {formatDate(s.created_at)} · {s.period || "Período abierto"}</small><p>{s.notes}</p></div>{s.source_ref?.startsWith("gmail:") && <a href="https://mail.google.com/mail/u/0/#all/1a11d553bc460daa" target="_blank" rel="noopener noreferrer">Correo de Ana ↗</a>}</div>)}</section>}
+        {section === "documentos" && hasFinancialAccess && <section className="fanaPanel"><div className="fanaPanelHead" onClick={togglePanelFromHeader} onKeyDown={togglePanelFromHeader} tabIndex={0} aria-expanded="true" title="Plegar o desplegar este panel"><div><span className="fanaEyebrow">EVIDENCIA POR OBLIGACIÓN</span><h2>Boletas, facturas y comprobantes</h2></div></div><div className="fanaTableScroll"><table className="fanaTable"><thead><tr><th>Beneficiario</th><th>Documento</th><th>Fecha de pago</th><th>Comprobante</th><th>Estado</th></tr></thead><tbody>{targetPayables.map(p => <tr key={p.id} onClick={() => openPay(p)}><td>{p.beneficiary}</td><td>{p.document_number || "Pendiente"}{safeHttp(p.document_url) && <a href={p.document_url} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer"> Abrir ↗</a>}</td><td>{formatDate(p.payment_date)}</td><td>{p.receipt_number || "Pendiente"}{safeHttp(p.receipt_url) && <a href={p.receipt_url} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer"> Abrir ↗</a>}</td><td><Pill status={p.status}/></td></tr>)}</tbody></table></div></section>}
+        {section === "fuentes" && hasFinancialAccess && <section className="fanaPanel"><div className="fanaPanelHead" onClick={togglePanelFromHeader} onKeyDown={togglePanelFromHeader} tabIndex={0} aria-expanded="true" title="Plegar o desplegar este panel"><div><span className="fanaEyebrow">PROCEDENCIA / RESPALDO</span><h2>Origen de la información</h2></div>{canEdit && inputFile}</div><p className="fanaHint">Se conserva referencia del archivo y origen. La importación CSV añade servicios sin generar pagos automáticamente ni validar costos.</p>{sources.map(s => <div className="fanaSource" key={s.id}><div><strong>{s.name}</strong><small>{s.source_type} · {formatDate(s.created_at)} · {s.period || "Período abierto"}</small><p>{s.notes}</p></div>{s.source_ref?.startsWith("gmail:") && <a href="https://mail.google.com/mail/u/0/#all/1a11d553bc460daa" target="_blank" rel="noopener noreferrer">Correo de Ana ↗</a>}</div>)}</section>}
+        {section === "organizaciones" && <FinOrganizationPanel client={supabase} business={selectedBusiness} role={orgRole} onAccessUpdated={refresh}/>} 
         <footer className="fanaFooter"><span>FIN conserva evidencia. No convierte documentos en caja ni prepara pagos automáticos.</span><span>{source ? "Origen Ana · octubre 2026" : "Sin fuente de Ana en este espacio"}</span></footer>
       </div>
     </main>

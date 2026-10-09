@@ -174,13 +174,12 @@ export default function FinDesk() {
     if (!ids.length) {
       setBizId("");setOperations([]);setPayables([]);setSources([]);setSummary([]);return;
     }
-    const isDirector = organizations.some(x => x.fin_role === "director");
     const financeIds = organizations.filter(x => ["director","finance","business_owner","accountant","auditor"].includes(x.fin_role)).map(x => x.id);
     const termsIds = organizations.filter(x => ["director","finance","business_owner","accountant","auditor"].includes(x.fin_role)).map(x => x.id);
     const opQuery = financeIds.length ? supabase.from("fin_ana_operations").select("*").in("business_id",financeIds).order("service_date",{ascending:false}).limit(1000) : Promise.resolve({data:[],error:null});
     const payQuery = termsIds.length ? supabase.from("fin_ana_payables").select("*").in("business_id",termsIds).order("cutoff_date",{ascending:true}).limit(1000) : Promise.resolve({data:[],error:null});
     const sourceQuery = termsIds.length ? supabase.from("fin_ana_sources").select("*").in("business_id",termsIds).order("created_at",{ascending:false}).limit(100) : Promise.resolve({data:[],error:null});
-    const summaryQuery = isDirector ? supabase.from("link_fin_real_summary_v").select("business_id,income_gross,income_collected,net_real").in("business_id",ids).limit(100) : Promise.resolve({data:[],error:null});
+    const summaryQuery = termsIds.length ? Promise.all(termsIds.map(p_business_id => supabase.rpc("fin_org_summary",{p_business_id}))).then(results => ({data:results.filter(x=>!x.error&&x.data).map(x=>x.data),error:results.find(x=>x.error)?.error||null})) : Promise.resolve({data:[],error:null});
     const [o,p,s,f] = await Promise.all([opQuery,payQuery,sourceQuery,summaryQuery]);
     const critical = [o,p,s].find(x=>x.error);
     if (critical) throw critical.error;

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TerritoryMap from "./TerritoryMap";
 import ConchaWorld from "./ConchaWorld";
+import FunnelApparatusMap from "./FunnelApparatusMap";
 import WorldNavigation from "./WorldNavigation";
 import WorldContextDock from "./WorldContextDock";
 import DimensionWorkspace from "./DimensionWorkspace";
@@ -665,6 +666,7 @@ function BusinessDossier({ business, progress, onShowMap, models = [], stagesByM
       {capabilities.length ? <section className="dossierList"><span className="sectionKicker">CAPACIDADES</span>{capabilities.map(item => <p key={item}>{item}</p>)}</section> : null}
       {productBranches.length ? <section className="dossierList"><span className="sectionKicker">LÍNEAS ACTIVAS</span>{productBranches.map(item => <p key={item.product_code || item.name}><b>{item.name}</b> · {item.status} · {moneyCLP(item.price_clp) || "sin precio"}</p>)}</section> : null}
       <BusinessFunnel models={models} stagesByModel={stagesByModel} evidenceByModel={evidenceByModel} businessName={business.name} />
+      <FunnelApparatusMap business={business} />
       <div className="dockActions"><button className="primaryButton" onClick={() => onShowMap(business)}>Volver al mapa →</button>{business.website ? <a className="secondaryButton" href={business.website} target="_blank" rel="noreferrer">Abrir sistema ↗</a> : null}</div>
     </article>
   );

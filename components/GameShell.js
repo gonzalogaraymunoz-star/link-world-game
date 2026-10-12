@@ -1040,20 +1040,26 @@ export default function GameShell() {
     };
   }, [privateData.gameActions, privateData.gameEvidence, privateData.integrations, privateData.events, progressByBusiness]);
 
-  const loadPublic = useCallback(async () => {
+  const loadPublic = useCallback(async (includePrivate = false) => {
     if (!supabase) return;
-    const { data, error } = await supabase
+    let query = supabase
       .from("link_world_businesses")
-      .select("id,global_id,slug,name,sector,city,country,google_place_id,website,summary,owned_facts,evidence,created_from,verification_status,public_workspace,updated_at")
-      .eq("public_workspace", true)
-      .order("name");
+      .select("id,global_id,slug,name,sector,city,country,google_place_id,website,summary,owned_facts,evidence,created_from,verification_status,public_workspace,updated_at");
+    // Never request private cells before LINK membership is verified.
+    if (!includePrivate) query = query.eq("public_workspace", true);
+    const { data, error } = await query.order("name");
     if (error) {
-      setNotice("No pudimos leer los negocios públicos de LINK CONTROL CENTRAL.");
+      setNotice("No pudimos leer las células autorizadas de LINK CONTROL CENTRAL.");
       return;
     }
     setBusinesses(data || []);
-    setSelectedId(current => current || data?.[0]?.id || null);
+    setSelectedId(current => (data || []).some(row => row.id === current) ? current : data?.[0]?.id || null);
   }, []);
+
+  useEffect(() => {
+    if (!supabase) return;
+    void loadPublic(member === true);
+  }, [member, loadPublic]);
 
   const loadPrivate = useCallback(async () => {
     if (!supabase || !member) return;

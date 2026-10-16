@@ -455,3 +455,78 @@
   .worldGameShell .worldNavigation,
   .worldGameShell .worldContextDock{transition:none!important}
 }
+
+
+/* Marketing cell: human roles first, one collapsed surface in the MAR page. */
+.worldGameShell .marketingCellShell { min-width:0; width:100%; margin:2px 0 8px; }
+.worldGameShell .marketingCellOuter { border:1px solid var(--line);border-radius:17px;background:var(--card);overflow:hidden; }
+.worldGameShell .marketingCellOuter>summary {
+  list-style:none;display:flex;align-items:center;gap:15px;padding:17px 21px;
+  cursor:pointer;min-height:86px;color:var(--ink);transition:background .16s ease;
+}
+.worldGameShell .marketingCellOuter>summary::-webkit-details-marker,
+.worldGameShell .marketingCellFold>summary::-webkit-details-marker {display:none}
+.worldGameShell .marketingCellOuter>summary:hover,.worldGameShell .marketingCellFold>summary:hover {background:color-mix(in srgb,var(--earth) 5%,var(--card));}
+.worldGameShell .marketingCellOuter summary:focus-visible {outline:2px solid var(--earth);outline-offset:-2px}
+.worldGameShell .marketingCellEmblem {width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--earth) 43%,var(--line));border-radius:50%;font-size:24px;color:var(--earth);}
+.worldGameShell .marketingCellHeading {min-width:0;display:grid;gap:5px;flex:1}
+.worldGameShell .marketingCellHeading>small {font-size:9px;letter-spacing:.13em;color:var(--earth);font-weight:600;}
+.worldGameShell .marketingCellHeading>b {font-size:clamp(15px,2vw,20px);font-weight:550;letter-spacing:-.03em}
+.worldGameShell .marketingCellHeading>span {font-size:11px;color:var(--subtle);line-height:1.5;}
+.worldGameShell .marketingCellOuterAction {display:flex;align-items:center;gap:14px;color:var(--earth);font-size:11px;font-weight:600;white-space:nowrap}
+.worldGameShell .marketingCellOuterAction span {font-size:22px;transition:transform .2s ease;line-height:1}
+.worldGameShell .marketingCellOuter[open] .marketingCellOuterAction span {transform:rotate(180deg)}
+.worldGameShell .marketingCellInner {border-top:1px solid var(--line);padding:18px 20px 20px;}
+.worldGameShell .marketingCellLead {font-size:14px;line-height:1.6;color:var(--ink);margin:0 0 9px}
+.worldGameShell .marketingCellScope {font-size:11px;line-height:1.65;color:var(--subtle);margin:0 0 17px}
+.worldGameShell .marketingCellScope b {color:var(--ink);font-weight:600}
+.worldGameShell .marketingCellFoldList {display:grid;gap:8px}
+.worldGameShell .marketingCellFold {border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.worldGameShell .marketingCellFold>summary {min-height:65px;display:flex;gap:12px;align-items:center;list-style:none;cursor:pointer;padding:12px 15px;color:var(--ink)}
+.worldGameShell .marketingCellFoldNum {font-size:12px;letter-spacing:.08em;color:var(--earth);font-weight:650;width:29px;flex:0 0 29px}
+.worldGameShell .marketingCellFoldName {min-width:0;flex:1;display:grid;gap:4px}
+.worldGameShell .marketingCellFoldName b {font-size:13px;font-weight:600}
+.worldGameShell .marketingCellFoldName small {color:var(--subtle);font-size:10px;line-height:1.4}
+.worldGameShell .marketingCellFoldArrow {color:var(--earth);font-size:22px;line-height:1}
+.worldGameShell .marketingCellFold[open] .marketingCellFoldArrow {transform:rotate(45deg)}
+.worldGameShell .marketingCellFoldContent {padding:0 15px 17px;border-top:1px solid var(--line)}
+.worldGameShell .marketingCellPeople {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-top:15px}
+.worldGameShell .marketingCellPerson {display:flex;gap:12px;min-width:0;padding:15px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.worldGameShell .marketingCellPerson>div {min-width:0}
+.worldGameShell .marketingCellAvatar {display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:50%;background:color-mix(in srgb,var(--earth) 13%,var(--card));color:var(--earth);font-size:11px;font-weight:700}
+.worldGameShell .marketingCellPerson b {display:block;font-size:13px;font-weight:600;color:var(--ink);margin:0 0 4px}
+.worldGameShell .marketingCellPerson small {display:block;font-size:10px;color:var(--earth);margin:0 0 7px}
+.worldGameShell .marketingCellPerson p {margin:0;font-size:11px;line-height:1.6;color:var(--subtle)}
+.worldGameShell .marketingCellSteps {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding-top:16px}
+.worldGameShell .marketingCellSteps article {display:flex;gap:10px;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.worldGameShell .marketingCellSteps article>span {font-size:11px;color:var(--earth);font-weight:700}
+.worldGameShell .marketingCellSteps b {font-size:12px}
+.worldGameShell .marketingCellSteps p {font-size:11px;line-height:1.6;color:var(--subtle);margin:5px 0 0}
+.worldGameShell .marketingCellRule {font-size:11px;line-height:1.6;padding:11px 0 0;margin:0;color:var(--subtle)}
+.worldGameShell .marketingCellRule b {color:var(--ink)}
+.worldGameShell .marketingCellConnectors {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding-top:15px}
+.worldGameShell .marketingCellConnector {min-width:0;display:flex;gap:10px;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--card)}
+.worldGameShell .marketingCellConnector b {font-size:12px;font-weight:600;color:var(--ink)}
+.worldGameShell .marketingCellConnector p {margin:5px 0 0;font-size:10px;line-height:1.5;color:var(--subtle)}
+.worldGameShell .marketingCellConnector>a,.worldGameShell .marketingCellConnector>span {font-size:10px;color:var(--earth);white-space:nowrap;text-decoration:none}
+.worldGameShell .marketingCellConnector>a:hover,.worldGameShell .marketingCellOutput a:hover {text-decoration:underline}
+.worldGameShell .marketingCellOutput {padding-top:17px}
+.worldGameShell .marketingCellOutput span {font-size:10px;letter-spacing:.13em;color:var(--earth)}
+.worldGameShell .marketingCellOutput h3 {font-size:clamp(20px,3.2vw,30px);font-weight:500;letter-spacing:-.05em;margin:7px 0 9px;color:var(--ink)}
+.worldGameShell .marketingCellOutput p {font-size:12px;color:var(--subtle);line-height:1.65;max-width:690px}
+.worldGameShell .marketingCellOutput a {font-size:12px;color:var(--earth);text-decoration:none;font-weight:600}
+.worldGameShell .marketingCellFooter {font-size:10px;color:var(--subtle);line-height:1.6;margin-top:15px}
+@media(max-width:780px){
+ .worldGameShell .marketingCellPeople,.worldGameShell .marketingCellConnectors {grid-template-columns:1fr}
+ .worldGameShell .marketingCellSteps {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px){
+ .worldGameShell .marketingCellOuter>summary {padding:14px;gap:10px;min-height:78px}
+ .worldGameShell .marketingCellEmblem {width:31px;height:31px;flex-basis:31px;font-size:18px}
+ .worldGameShell .marketingCellHeading>span {font-size:10px}
+ .worldGameShell .marketingCellHeading>small {font-size:8px}
+ .worldGameShell .marketingCellOuterAction {font-size:0;gap:0}
+ .worldGameShell .marketingCellOuterAction span {font-size:20px}
+ .worldGameShell .marketingCellInner {padding:14px}
+ .worldGameShell .marketingCellSteps {grid-template-columns:1fr}
+}

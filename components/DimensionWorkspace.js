@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { CONCHA_STAGES, getCellModels, getCellStages, getCellEvidence, stageSignal } from '../lib/concha.mjs';
 import { DIMENSIONS, scopeBusinessRows, scopeMissions } from '../lib/world-navigation.mjs';
+import MarketingCellPanel from './MarketingCellPanel';
 
 const READS = {
   nervioso: true,
@@ -86,6 +87,7 @@ export default function DimensionWorkspace({view,business,businesses,data,member
   return <section className="dimensionWorkspace" key={view} aria-label={`Dimensión ${DIMENSIONS[view]?.label}`}>
     <div className="ledgerHero"><span className="sectionKicker">{DIMENSIONS[view]?.groupLabel} / {business?.name||'Todo LINK'}</span><h1>{DIMENSIONS[view]?.label}</h1><p>{stage?stage.note+'. El mismo recorrido, desde una célula o desde todo LINK.':NOTES[view]}</p></div>
     {!member?<div className="ledgerAccess"><span>ESPACIO DE TRABAJO</span><h2>Entra para consultar los registros de LINK.</h2><p>La estructura está disponible. Misiones, evidencia y datos operativos requieren acceso de miembro.</p><button className="ledgerPrimary" onClick={onLogin}>Entrar al ecosistema</button></div>:<>
+      {view==='marketing'?<MarketingCellPanel business={business}/>:null}
       {(stage||['evidencias','evolucion','modelos','show','reproduccion'].includes(view))&&models.length?<label className="ledgerModel">Modelo <select value={selectedModel?.id||''} onChange={e=>onModelChange(e.target.value)}>{!business?<option value="">Todos los modelos</option>:null}{models.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>:null}
       {readKey&&remote.key===requestKey&&remote.loading?<p role="status">Consultando la fuente…</p>:null}
       {readKey&&remote.key===requestKey&&remote.error?<div className="ledgerReadError" role="alert">{remote.error}</div>:null}
